@@ -16,6 +16,7 @@ class S4Ridge:
             science_data,
             psf_template,
             alpha,
+            normalize_data=True,
             available_devices="cpu",
             half_precision=True,
             cut_radius_psf=4,
@@ -54,11 +55,13 @@ class S4Ridge:
         print("[DONE]")
 
         # 2.) Normalize the data and psf template
-        # TODO add normalization as an option
         print("Normalizing data ... ", end='')
         self.mean_frame = np.mean(science_data, axis=0)
         self.science_data = science_data - self.mean_frame
-        self.std_frame = np.std(self.science_data, axis=0)
+        if normalize_data:
+            self.std_frame = np.std(self.science_data, axis=0)
+        else:
+            self.std_frame = np.ones_like(np.std(self.science_data, axis=0))
         self.science_data_norm = self.science_data / self.std_frame
 
         self.template_norm = template_cut / np.max(np.abs(template_cut))
@@ -139,7 +142,7 @@ class S4Ridge:
         experiments = list(zip(position_splits,
                                self.available_devices))
 
-        mp.set_start_method("spawn")
+        mp.set_start_method("spawn", force=True)
 
         pool = mp.Pool(processes=self.num_devices)
         results = pool.starmap(self._fit, experiments)
