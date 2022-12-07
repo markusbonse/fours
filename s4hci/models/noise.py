@@ -39,6 +39,7 @@ class S4Ridge:
         self.num_devices = len(self.available_devices)
         self.half_precision = half_precision
         self.alpha = alpha
+        self.betas = None
 
         # 1.) Construct the right reason masks
         print("Creating masks ... ", end='')
@@ -127,14 +128,9 @@ class S4Ridge:
 
         return beta_conv
 
-    def fit_and_validate(
+    def _fit_mp(
             self,
-            step_size,
-            test_science_data):
-
-        # 1.) Compute a grid of positions to run the validation on
-        test_positions = [(y, x) for x in range(0, self.image_size, step_size)
-                          for y in range(0, self.image_size, step_size)]
+            test_positions):
 
         # 2.) Run everything with multiprocessing
         position_splits = np.array_split(test_positions, self.num_devices)
@@ -150,9 +146,21 @@ class S4Ridge:
         pool.join()
 
         # 3.) collect and betas from the mp results
-        tmp_betas = torch.cat(results, dim=0).flatten(start_dim=1)
+        return torch.cat(results, dim=0).flatten(start_dim=1)
 
-        # 4.) prepare the test data for pytorch
+    def fit_and_validate(
+            self,
+            step_size,
+            test_science_data):
+
+        # 1.) Compute a grid of positions to run the validation on
+        test_positions = [(y, x) for x in range(0, self.image_size, step_size)
+                                 for y in range(0, self.image_size, step_size)]
+
+        # 2.) Run everything with multiprocessing
+        tmp_betas = self._fit_mp(test_positions)
+
+        # 3.) prepare the test data for pytorch
         # Normalize the test data
         X_test_norm = test_science_data - self.mean_frame
         X_test_norm = X_test_norm / self.std_frame
@@ -161,10 +169,10 @@ class S4Ridge:
         if self.half_precision:
             X_test_torch = X_test_torch.float()
 
-        # 5.) make the prediction
+        # 4.) make the prediction
         Y_test = X_test_torch.float() @ tmp_betas.T
 
-        # 6.) Collect the true Y from X_test_torch and compute the errors
+        # 5.) Collect the true Y from X_test_torch and compute the errors
         idx_positions = [x * self.image_size + y for x, y in test_positions]
         abs_errors = torch.abs(Y_test - X_test_torch[:, idx_positions])
 
@@ -174,7 +182,11 @@ class S4Ridge:
         raise NotImplementedError()
 
     def fit(self):
-        raise NotImplementedError()
+        test_positions = [(y, x) for x in range(self.image_size)
+                                 for y in range(self.image_size)]
+
+        # 2.) Run everything with multiprocessing
+        self.betas = self._fit_mp(test_positions)
 
 
 
