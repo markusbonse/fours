@@ -170,7 +170,7 @@ class S4Ridge:
             X_test_torch = X_test_torch.float()
 
         # 4.) make the prediction
-        Y_test = X_test_torch.float() @ tmp_betas.T
+        Y_test = X_test_torch @ tmp_betas.T
 
         # 5.) Collect the true Y from X_test_torch and compute the errors
         idx_positions = [x * self.image_size + y for x, y in test_positions]
