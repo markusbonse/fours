@@ -19,7 +19,6 @@ setup(name='s4hci',
             'h5py',
             'astropy',
             'tensorboard',
-            'pandas',
-            'pynpoint'],
+            'pandas'],
       packages=['s4hci'],
       zip_safe=False)
