@@ -8,13 +8,12 @@ def compute_betas_least_square(
         p_torch,
         M_torch,
         alpha,
-        image_size,
         positions,
         rank="cpu",
         half_precision=False,
         verbose=True
 ):
-
+    image_size = X_torch.shape[-1]
     if half_precision:
         X_torch = X_torch.float()
         p_torch = p_torch.float()
@@ -57,7 +56,7 @@ def compute_betas_least_square(
         beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
 
         # Maks the values of beta
-        beta_cut = (beta * m_torch)
+        beta_cut = (beta.solution.squeeze() * m_torch)
         betas.append(beta_cut)
 
     # Convolve the betas
@@ -77,12 +76,13 @@ def compute_betas_svd(
         p_torch,
         M_torch,
         alphas,
-        image_size,
         positions,
         rank="cpu",
         approx_svd=-1,
         half_precision=False,
         verbose=True):
+
+    image_size = X_torch.shape[-1]
 
     if half_precision:
         X_torch = X_torch.float()
@@ -102,10 +102,8 @@ def compute_betas_svd(
     betas = []
 
     tmp_iter = positions
-    iter_alpha = alphas
     if verbose:
         tmp_iter = tqdm(positions)
-        iter_alpha = tqdm(alphas)
 
     for x, y in tmp_iter:
         tmp_idx = x * image_size + y
@@ -123,27 +121,28 @@ def compute_betas_svd(
                 X_conv_cut,
                 niter=1,
                 q=approx_svd)
+            U_torch = svd_out[0]
+            D_torch = svd_out[1]
+            V_torch = svd_out[2]
         else:
             svd_out = torch.linalg.svd(
                 X_conv_cut,
                 full_matrices=False,
                 driver="gesvd")
 
-        U_torch = svd_out.U
-        D_torch = svd_out.S
-        V_torch = svd_out.Vh.T
+            U_torch = svd_out.U
+            D_torch = svd_out.S
+            V_torch = svd_out.Vh.T
 
         # compute the betas
         local_betas = []
         rhs = torch.diag(D_torch) @ U_torch.T @ Y_torch
-        for tmp_alpha in iter_alpha:
+        for tmp_alpha in alphas:
             eye = torch.ones_like(D_torch, device=rank) * tmp_alpha
             # 1D vector
             inv_eye = 1 / (D_torch ** 2 + eye)
 
             # compute beta
-            # TODO check this
-            # beta = (V_torch.T * inv_eye).T @ rhs
             beta = V_torch * inv_eye @ rhs
 
             # cut the beta

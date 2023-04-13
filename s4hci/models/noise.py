@@ -1,9 +1,6 @@
-
-from tqdm import tqdm
 import numpy as np
 
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
@@ -87,7 +84,6 @@ class S4Ridge:
             p_torch=p_torch,
             M_torch=M_torch,
             alpha=self.alpha,
-            image_size=self.image_size,
             positions=positions,
             rank=rank,
             half_precision=self.half_precision,
