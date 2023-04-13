@@ -5,10 +5,10 @@ import torch.nn.functional as F
 
 def compute_betas_least_square(
         X_torch,
-        p_torch,
         M_torch,
         alpha,
         positions,
+        p_torch = None,
         rank="cpu",
         half_precision=False,
         verbose=True
@@ -16,23 +16,27 @@ def compute_betas_least_square(
     image_size = X_torch.shape[-1]
     if half_precision:
         X_torch = X_torch.float()
-        p_torch = p_torch.float()
         M_torch = M_torch.float()
+        if p_torch is not None:
+            p_torch = p_torch.float()
 
     # send everything to the current GPU / device
     X_torch = X_torch.to(rank)
-    p_torch = p_torch.to(rank)
     M_torch = M_torch.to(rank)
 
-    eye = torch.eye(image_size ** 2,
-                    image_size ** 2,
-                    device=rank)
-
     # convolve the data
-    X_conv = F.conv2d(X_torch, p_torch, padding="same")
+    if p_torch is not None:
+        p_torch = p_torch.to(rank)
+        X_conv = F.conv2d(X_torch, p_torch, padding="same")
+    else:
+        X_conv = X_torch
+
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
     X_conv_square = X_conv.T @ X_conv
+    eye = torch.eye(image_size ** 2,
+                    image_size ** 2,
+                    device=rank)
 
     # Compute all betas in a loop over all positions
     betas = []
@@ -63,7 +67,10 @@ def compute_betas_least_square(
     betas_conv = torch.stack(betas).reshape(
         len(betas), 1, image_size, image_size)
 
-    beta_conv = F.conv2d(betas_conv, p_torch, padding="same")
+    if p_torch is not None:
+        beta_conv = F.conv2d(betas_conv, p_torch, padding="same")
+    else:
+        beta_conv = betas_conv
 
     # bring everything back to the CPU
     beta_conv = beta_conv.squeeze().cpu()
@@ -73,29 +80,33 @@ def compute_betas_least_square(
 
 def compute_betas_svd(
         X_torch,
-        p_torch,
         M_torch,
         alphas,
         positions,
+        p_torch=None,
         rank="cpu",
         approx_svd=-1,
         half_precision=False,
         verbose=True):
 
     image_size = X_torch.shape[-1]
-
     if half_precision:
         X_torch = X_torch.float()
-        p_torch = p_torch.float()
         M_torch = M_torch.float()
+        if p_torch is not None:
+            p_torch = p_torch.float()
 
     # send everything to the current GPU / device
     X_torch = X_torch.to(rank)
-    p_torch = p_torch.to(rank)
     M_torch = M_torch.to(rank)
 
     # convolve the data
-    X_conv = F.conv2d(X_torch, p_torch, padding="same")
+    if p_torch is not None:
+        p_torch = p_torch.to(rank)
+        X_conv = F.conv2d(X_torch, p_torch, padding="same")
+    else:
+        X_conv = X_torch
+
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
     # Compute all betas in a loop over all positions
@@ -154,8 +165,11 @@ def compute_betas_svd(
         tmp_betas = torch.stack(local_betas).reshape(
             len(local_betas), 1, image_size, image_size)
 
-        tmp_betas_conv = F.conv2d(
-            tmp_betas, p_torch, padding="same")
+        if p_torch is not None:
+            tmp_betas_conv = F.conv2d(
+                tmp_betas, p_torch, padding="same")
+        else:
+            tmp_betas_conv = tmp_betas
 
         betas.append(tmp_betas_conv.squeeze().cpu())
 
