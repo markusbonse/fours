@@ -153,8 +153,14 @@ class S4Ridge:
                      for x in range(self.image_size)
                      for y in range(self.image_size)]
 
+        if self.verbose:
+            print("Fitting ... ", end='')
+
         # 2.) Run everything with multiprocessing
         self.betas = self._fit_mp(positions)
+
+        if self.verbose:
+            print("[DONE]")
 
         # clean up
         self.science_data_norm = None
