@@ -13,14 +13,15 @@ class S4Ridge:
             self,
             science_data,
             psf_template,
-            alpha,
-            verbose=True,
+            lambda_reg,
+            cut_radius_psf,
+            mask_template_setup,
             convolve=True,
             normalize_data=True,
+            verbose=True,
             available_devices="cpu",
-            half_precision=True,
-            cut_radius_psf=4,
-            mask_template_setup=("radius", 5)):
+            half_precision=False
+):
         """
 
         Args:
@@ -38,13 +39,19 @@ class S4Ridge:
             self.available_devices = available_devices
         self.num_devices = len(self.available_devices)
         self.half_precision = half_precision
-        self.alpha = alpha
-        self.betas = None
         self.verbose = verbose
+
+        # 0.) save the other parameters
+        self.lambda_reg = lambda_reg
+        self.betas = None
         self.convolve = convolve
+        self.normalize_data = normalize_data
+        self.cut_radius_psf = cut_radius_psf
+        self.mask_template_setup = mask_template_setup
 
         # 1.) Construct the right reason masks
-        print("Creating masks ... ", end='')
+        if self.verbose:
+            print("Creating masks ... ", end='')
         self.image_size = science_data.shape[1]
 
         template_cut, _ = construct_round_rfrr_template(
@@ -55,21 +62,23 @@ class S4Ridge:
             template_setup=mask_template_setup,
             psf_template_in=template_cut,
             mask_size_in=self.image_size)
-        print("[DONE]")
+        if self.verbose:
+            print("[DONE]")
 
         # 2.) Normalize the data and psf template
-        print("Normalizing data ... ", end='')
+        if self.verbose:
+            print("Normalizing data ... ", end='')
         self.mean_frame = np.mean(science_data, axis=0)
         self.science_data = science_data - self.mean_frame
-        if normalize_data:
+        if self.normalize_data:
             self.std_frame = np.std(self.science_data, axis=0)
         else:
             self.std_frame = np.ones_like(np.std(self.science_data, axis=0))
+
         self.science_data_norm = self.science_data / self.std_frame
-
         self.template_norm = template_cut / np.max(np.abs(template_cut))
-
-        print("[DONE]")
+        if self.verbose:
+            print("[DONE]")
 
     def _fit(
             self,
@@ -90,7 +99,7 @@ class S4Ridge:
             X_torch=X_torch,
             p_torch=p_torch,
             M_torch=M_torch,
-            alpha=self.alpha,
+            lambda_reg=self.lambda_reg,
             positions=positions,
             rank=rank,
             half_precision=self.half_precision,
@@ -100,7 +109,8 @@ class S4Ridge:
 
     def _fit_mp(
             self,
-            positions):
+            positions
+    ):
 
         # 2.) Run everything with multiprocessing
         position_splits = np.array_split(positions, self.num_devices)
@@ -125,6 +135,59 @@ class S4Ridge:
 
         # 2.) Run everything with multiprocessing
         self.betas = self._fit_mp(positions)
+
+    def save(
+            self,
+            result_file
+    ):
+        # create a checkpoint dict
+        checkpoint = {
+            "lambda_reg": self.lambda_reg,
+            "betas": self.betas,
+            "convolve": self.convolve,
+            "normalize_data": self.normalize_data,
+            "cut_radius_psf": self.cut_radius_psf,
+            "mask_template_setup": self.mask_template_setup,
+            "right_reason_mask": self.right_reason_mask,
+            "mean_frame": self.mean_frame,
+            "std_frame": self.std_frame,
+            "science_data_norm": self.science_data_norm,
+            "template_norm": self.template_norm,
+        }
+
+        torch.save(checkpoint, result_file)
+
+    @classmethod
+    def restore_from_checkpoint(
+            cls,
+            checkpoint_file,
+            verbose=True,
+            available_devices="cpu",
+            half_precision=False
+    ):
+
+        checkpoint = torch.load(checkpoint_file)
+
+        cls_instance = cls(
+            science_data=checkpoint["science_data_norm"],
+            psf_template=checkpoint["template_norm"],
+            lambda_reg=checkpoint["lambda_reg"],
+            cut_radius_psf=checkpoint["cut_radius_psf"],
+            mask_template_setup=checkpoint["mask_template_setup"],
+            convolve=checkpoint["convolve"],
+            normalize_data=checkpoint["normalize_data"],
+            verbose=verbose,
+            available_devices=available_devices,
+            half_precision=half_precision)
+
+        cls_instance.betas = checkpoint["betas"]
+        cls_instance.science_data_norm = checkpoint["science_data_norm"]
+        cls_instance.template_norm = checkpoint["template_norm"]
+        cls_instance.std_frame = checkpoint["std_frame"]
+        cls_instance.mean_frame = checkpoint["mean_frame"]
+        cls_instance.right_reason_mask = checkpoint["right_reason_mask"]
+
+        return cls_instance
 
     def predict(self):
         raise NotImplementedError()

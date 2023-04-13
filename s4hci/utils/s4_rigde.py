@@ -6,7 +6,7 @@ import torch.nn.functional as F
 def compute_betas_least_square(
         X_torch,
         M_torch,
-        alpha,
+        lambda_reg,
         positions,
         p_torch = None,
         rank="cpu",
@@ -53,7 +53,7 @@ def compute_betas_least_square(
         Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx]
 
         # set up the least square problem
-        lhs = ((X_conv_square * m_torch).T * m_torch).T + eye * alpha
+        lhs = ((X_conv_square * m_torch).T * m_torch).T + eye * lambda_reg
         rhs = (X_conv * m_torch).T @ Y_torch
 
         # compute beta
@@ -81,7 +81,7 @@ def compute_betas_least_square(
 def compute_betas_svd(
         X_torch,
         M_torch,
-        alphas,
+        lambda_regs,
         positions,
         p_torch=None,
         rank="cpu",
@@ -148,8 +148,8 @@ def compute_betas_svd(
         # compute the betas
         local_betas = []
         rhs = torch.diag(D_torch) @ U_torch.T @ Y_torch
-        for tmp_alpha in alphas:
-            eye = torch.ones_like(D_torch, device=rank) * tmp_alpha
+        for tmp_lambda_reg in lambda_regs:
+            eye = torch.ones_like(D_torch, device=rank) * tmp_lambda_reg
             # 1D vector
             inv_eye = 1 / (D_torch ** 2 + eye)
 
