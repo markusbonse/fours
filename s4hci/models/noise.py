@@ -11,13 +11,12 @@ class S4Ridge:
 
     def __init__(
             self,
-            science_data,
             psf_template,
             lambda_reg,
             cut_radius_psf,
             mask_template_setup,
             convolve=True,
-            normalize_data=True,
+            use_normalization=True,
             verbose=True,
             available_devices="cpu",
             half_precision=False
@@ -25,7 +24,6 @@ class S4Ridge:
         """
 
         Args:
-            science_data: X with shape (num_frames, y, x)
             psf_template: PSF template with shape (y, x)
             available_devices: can be "cpu" or a list of ints for gpus
             cut_radius_psf:
@@ -41,44 +39,60 @@ class S4Ridge:
         self.half_precision = half_precision
         self.verbose = verbose
 
-        # 0.) save the other parameters
+        # 1.) save the other parameters
         self.lambda_reg = lambda_reg
-        self.betas = None
         self.convolve = convolve
-        self.normalize_data = normalize_data
+        self.use_normalization = use_normalization
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
 
-        # 1.) Construct the right reason masks
-        if self.verbose:
-            print("Creating masks ... ", end='')
-        self.image_size = science_data.shape[1]
+        # 2.) Parameters filled during training
+        self.betas = None
+        self.right_reason_mask = None
+        self.image_size = None
+        self.mean_frame = None
+        self.std_frame = None
+        self.science_data_norm = None
 
+        # 3.) prepare the psf_template
         template_cut, _ = construct_round_rfrr_template(
-            radius=cut_radius_psf,
+            radius=self.cut_radius_psf,
             psf_template_in=psf_template)
 
+        self.template_norm = template_cut / np.max(np.abs(template_cut))
+
+    def _setup_training(
+            self,
+            science_data):
+
+        # 1.) Construct the right reason masks
+        if self.verbose:
+            print("Creating right reason mask ... ", end='')
+        self.image_size = science_data.shape[1]
+
         self.right_reason_mask = construct_rfrr_mask(
-            template_setup=mask_template_setup,
-            psf_template_in=template_cut,
+            template_setup=self.mask_template_setup,
+            psf_template_in=self.template_norm,
             mask_size_in=self.image_size)
+
         if self.verbose:
             print("[DONE]")
 
         # 2.) Normalize the data and psf template
         if self.verbose:
-            print("Normalizing data ... ", end='')
+            print("Build normalization frames ... ", end='')
         self.mean_frame = np.mean(science_data, axis=0)
-        self.science_data = science_data - self.mean_frame
         if self.normalize_data:
-            self.std_frame = np.std(self.science_data, axis=0)
+            self.std_frame = np.std(science_data, axis=0)
         else:
-            self.std_frame = np.ones_like(np.std(self.science_data, axis=0))
+            self.std_frame = np.ones_like(np.std(science_data, axis=0))
 
-        self.science_data_norm = self.science_data / self.std_frame
-        self.template_norm = template_cut / np.max(np.abs(template_cut))
         if self.verbose:
             print("[DONE]")
+
+    def normalize_data(self, science_data):
+        science_data_mean_shift = science_data - self.mean_frame
+        return science_data_mean_shift / self.std_frame
 
     def _fit(
             self,
@@ -128,13 +142,22 @@ class S4Ridge:
         # 3.) collect and betas from the mp results
         return torch.cat(results, dim=0).flatten(start_dim=1)
 
-    def fit(self):
+    def fit(
+            self,
+            science_data):
+
+        self._setup_training(science_data)
+        self.science_data_norm = self.normalize_data(science_data)
+
         positions = [(y, x)
                      for x in range(self.image_size)
                      for y in range(self.image_size)]
 
         # 2.) Run everything with multiprocessing
         self.betas = self._fit_mp(positions)
+
+        # clean up
+        self.science_data_norm = None
 
     def save(
             self,
@@ -145,13 +168,12 @@ class S4Ridge:
             "lambda_reg": self.lambda_reg,
             "betas": self.betas,
             "convolve": self.convolve,
-            "normalize_data": self.normalize_data,
+            "use_normalization": self.use_normalization,
             "cut_radius_psf": self.cut_radius_psf,
             "mask_template_setup": self.mask_template_setup,
             "right_reason_mask": self.right_reason_mask,
             "mean_frame": self.mean_frame,
             "std_frame": self.std_frame,
-            "science_data_norm": self.science_data_norm,
             "template_norm": self.template_norm,
         }
 
@@ -169,19 +191,17 @@ class S4Ridge:
         checkpoint = torch.load(checkpoint_file)
 
         cls_instance = cls(
-            science_data=checkpoint["science_data_norm"],
             psf_template=checkpoint["template_norm"],
             lambda_reg=checkpoint["lambda_reg"],
             cut_radius_psf=checkpoint["cut_radius_psf"],
             mask_template_setup=checkpoint["mask_template_setup"],
             convolve=checkpoint["convolve"],
-            normalize_data=checkpoint["normalize_data"],
+            use_normalization=checkpoint["use_normalization"],
             verbose=verbose,
             available_devices=available_devices,
             half_precision=half_precision)
 
         cls_instance.betas = checkpoint["betas"]
-        cls_instance.science_data_norm = checkpoint["science_data_norm"]
         cls_instance.template_norm = checkpoint["template_norm"]
         cls_instance.std_frame = checkpoint["std_frame"]
         cls_instance.mean_frame = checkpoint["mean_frame"]
