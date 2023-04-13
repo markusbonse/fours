@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
+from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
 
 
 class S4Ridge:
@@ -16,6 +17,7 @@ class S4Ridge:
             science_data,
             psf_template,
             alpha,
+            verbose=True,
             normalize_data=True,
             available_devices="cpu",
             half_precision=True,
@@ -40,6 +42,7 @@ class S4Ridge:
         self.half_precision = half_precision
         self.alpha = alpha
         self.betas = None
+        self.verbose = verbose
 
         # 1.) Construct the right reason masks
         print("Creating masks ... ", end='')
@@ -78,62 +81,26 @@ class S4Ridge:
         X_torch = torch.from_numpy(self.science_data_norm).unsqueeze(1)
         p_torch = torch.from_numpy(self.template_norm).unsqueeze(0).unsqueeze(0)
         M_torch = torch.from_numpy(self.right_reason_mask)
-        eye = torch.eye(self.image_size**2, self.image_size**2) * self.alpha
 
-        if self.half_precision:
-            X_torch = X_torch.float()
-            p_torch = p_torch.float()
-            M_torch = M_torch.float()
-
-        # send everything to the current GPU / device
-        X_torch = X_torch.to(rank)
-        p_torch = p_torch.to(rank)
-        M_torch = M_torch.to(rank)
-        eye = eye.to(rank)
-
-        # convolve the data
-        X_conv = F.conv2d(
-            X_torch, p_torch, padding="same").view(X_torch.shape[0], -1)
-
-        X_conv_square = X_conv.T @ X_conv
-
-        # Compute all betas in a loop over all positions
-        betas = []
-
-        for x, y in tqdm(positions):
-            tmp_idx = x * self.image_size + y
-
-            # get the current mask
-            m_torch = M_torch[tmp_idx].flatten()
-            Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx]
-
-            # compute MPX^TXPM + lambda * eye
-            matrix_within = ((X_conv_square * m_torch).T * m_torch).T + eye
-
-            # compute beta
-            beta = torch.linalg.inv(matrix_within) @ (
-                        X_conv * m_torch).T @ Y_torch
-            beta_cut = (beta * m_torch).cpu()
-
-            betas.append(beta_cut.cpu())
-
-        # Convolve the results
-        betas_conv = torch.stack(betas).reshape(
-            len(betas), 1, self.image_size, self.image_size).to(rank)
-
-        beta_conv = F.conv2d(
-            betas_conv, p_torch, padding="same")
-
-        beta_conv = beta_conv.squeeze().cpu()
+        beta_conv = compute_betas_least_square(
+            X_torch=X_torch,
+            p_torch=p_torch,
+            M_torch=M_torch,
+            alpha=self.alpha,
+            image_size=self.image_size,
+            positions=positions,
+            rank=rank,
+            half_precision=self.half_precision,
+            verbose=self.verbose)
 
         return beta_conv
 
     def _fit_mp(
             self,
-            test_positions):
+            positions):
 
         # 2.) Run everything with multiprocessing
-        position_splits = np.array_split(test_positions, self.num_devices)
+        position_splits = np.array_split(positions, self.num_devices)
 
         experiments = list(zip(position_splits,
                                self.available_devices))
@@ -148,14 +115,23 @@ class S4Ridge:
         # 3.) collect and betas from the mp results
         return torch.cat(results, dim=0).flatten(start_dim=1)
 
+    def fit(self):
+        positions = [(y, x)
+                     for x in range(self.image_size)
+                     for y in range(self.image_size)]
+
+        # 2.) Run everything with multiprocessing
+        self.betas = self._fit_mp(positions)
+
     def fit_and_validate(
             self,
             step_size,
             test_science_data):
 
         # 1.) Compute a grid of positions to run the validation on
-        test_positions = [(y, x) for x in range(0, self.image_size, step_size)
-                                 for y in range(0, self.image_size, step_size)]
+        test_positions = [(y, x)
+                          for x in range(0, self.image_size, step_size)
+                          for y in range(0, self.image_size, step_size)]
 
         # 2.) Run everything with multiprocessing
         tmp_betas = self._fit_mp(test_positions)
@@ -180,13 +156,6 @@ class S4Ridge:
 
     def predict(self):
         raise NotImplementedError()
-
-    def fit(self):
-        test_positions = [(y, x) for x in range(self.image_size)
-                                 for y in range(self.image_size)]
-
-        # 2.) Run everything with multiprocessing
-        self.betas = self._fit_mp(test_positions)
 
 
 
