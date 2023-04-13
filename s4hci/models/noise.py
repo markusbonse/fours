@@ -119,37 +119,6 @@ class S4Ridge:
         # 2.) Run everything with multiprocessing
         self.betas = self._fit_mp(positions)
 
-    def fit_and_validate(
-            self,
-            step_size,
-            test_science_data):
-
-        # 1.) Compute a grid of positions to run the validation on
-        test_positions = [(y, x)
-                          for x in range(0, self.image_size, step_size)
-                          for y in range(0, self.image_size, step_size)]
-
-        # 2.) Run everything with multiprocessing
-        tmp_betas = self._fit_mp(test_positions)
-
-        # 3.) prepare the test data for pytorch
-        # Normalize the test data
-        X_test_norm = test_science_data - self.mean_frame
-        X_test_norm = X_test_norm / self.std_frame
-        X_test_torch = torch.from_numpy(X_test_norm)
-        X_test_torch = X_test_torch.flatten(start_dim=1)
-        if self.half_precision:
-            X_test_torch = X_test_torch.float()
-
-        # 4.) make the prediction
-        Y_test = X_test_torch @ tmp_betas.T
-
-        # 5.) Collect the true Y from X_test_torch and compute the errors
-        idx_positions = [x * self.image_size + y for x, y in test_positions]
-        abs_errors = torch.abs(Y_test - X_test_torch[:, idx_positions])
-
-        return abs_errors.numpy(), tmp_betas
-
     def predict(self):
         raise NotImplementedError()
 
