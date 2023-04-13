@@ -15,6 +15,7 @@ class S4Ridge:
             psf_template,
             alpha,
             verbose=True,
+            convolve=True,
             normalize_data=True,
             available_devices="cpu",
             half_precision=True,
@@ -40,6 +41,7 @@ class S4Ridge:
         self.alpha = alpha
         self.betas = None
         self.verbose = verbose
+        self.convolve = convolve
 
         # 1.) Construct the right reason masks
         print("Creating masks ... ", end='')
@@ -76,8 +78,13 @@ class S4Ridge:
 
         # get all the data we need as pytroch tensors
         X_torch = torch.from_numpy(self.science_data_norm).unsqueeze(1)
-        p_torch = torch.from_numpy(self.template_norm).unsqueeze(0).unsqueeze(0)
         M_torch = torch.from_numpy(self.right_reason_mask)
+
+        if self.convolve:
+            p_torch = torch.from_numpy(
+                self.template_norm).unsqueeze(0).unsqueeze(0)
+        else:
+            p_torch = None
 
         beta_conv = compute_betas_least_square(
             X_torch=X_torch,
