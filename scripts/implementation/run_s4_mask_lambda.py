@@ -61,7 +61,14 @@ if __name__ == '__main__':
     # 4.) Fit the data
     print_message("Fit the data")
     # s4_ridge.fit(science_data)
+    s4_ridge._setup_training(science_data)
+    s4_ridge.science_data_norm = s4_ridge.normalize_data(science_data)
 
+    positions = [(y, x)
+                 for x in range(0, s4_ridge.image_size, 20)
+                 for y in range(0, s4_ridge.image_size, 20)]
+
+    s4_ridge.betas = s4_ridge._fit_mp(positions)
 
     # 5.) Save the result
     print_message("Save results")
