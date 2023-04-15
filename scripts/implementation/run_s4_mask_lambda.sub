@@ -1,0 +1,20 @@
+getenv = True
+
+JobIndex_raw = $(Process)
+JobIndex = $INT(JobIndex,%03d)
+
+executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/run_s4_mask_lambda.py /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/configs/config_$(JobIndex).json
+
+
+
+request_cpus = 4
+request_gpus = 1
+request_memory = 32768
+requirements = TARGET.CUDAGlobalMemoryMb > 38000
+
+output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor_$(JobIndex)_.out
+error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor_$(JobIndex)_.err
+log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor.log
+
+queue 2
