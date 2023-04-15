@@ -10,26 +10,35 @@ if __name__ == '__main__':
     setup_logger()
     print_message("Start Main")
 
-    # 1.) Read in the setup
-    dataset_config_file = str(sys.argv[1])
-    lambda_reg = float(str(sys.argv[2]))
-    convolve = bool(str(sys.argv[3]))
-    cut_radius_psf = float(str(sys.argv[4]))
-    mask_radius = float(str(sys.argv[5]))
-    save_file = str(sys.argv[6])
+    # 1.) Load the config file
+    tmp_config_file = str(sys.argv[1])
+    print_message("Current config file is: " + tmp_config_file)
+
+    with open(tmp_config_file) as json_file:
+        config_data = json.load(json_file)
+
+    # 2.) Parse all the information we need
+    dataset_path = config_data["dataset_path"]
+    data_tag = config_data["data_tag"]
+    psf_template_tag = config_data["psf_template_tag"]
+    para_tag = config_data["para_tag"]
+
+    lambda_reg = config_data["lambda_reg"]
+    mask_radius = config_data["mask_size"]
+    cut_radius_psf = config_data["cut_radius_psf"]
+    convolve = config_data["convolve"]
+    save_file = config_data["save_file"]
 
     print_message("Parameters loaded")
 
     # 2.) Load the data
-    with open(dataset_config_file) as json_file:
-        dataset_config = json.load(json_file)
-
     print_message("Loading data ...")
     science_data, raw_angles, raw_psf_template_data = \
-        load_adi_data(dataset_config["file_path"],
-                      data_tag=dataset_config["stack_key"],
-                      psf_template_tag=dataset_config["psf_template_key"],
-                      para_tag=dataset_config["parang_key"])
+        load_adi_data(
+            dataset_path,
+            data_tag=data_tag,
+            psf_template_tag=psf_template_tag,
+            para_tag=para_tag)
 
     psf_template_data = np.mean(raw_psf_template_data, axis=0)
 
@@ -51,7 +60,8 @@ if __name__ == '__main__':
 
     # 4.) Fit the data
     print_message("Fit the data")
-    s4_ridge.fit(science_data)
+    # s4_ridge.fit(science_data)
+
 
     # 5.) Save the result
     print_message("Save results")
