@@ -27,6 +27,7 @@ if __name__ == '__main__':
     mask_radius = config_data["mask_size"]
     cut_radius_psf = config_data["cut_radius_psf"]
     convolve = config_data["convolve"]
+    use_normalization = config_data["use_normalization"]
     save_file = config_data["save_file"]
 
     print_message("Parameters loaded")
@@ -52,7 +53,7 @@ if __name__ == '__main__':
         psf_template=psf_template_data,
         lambda_reg=lambda_reg,
         convolve=True,
-        use_normalization=True,
+        use_normalization=use_normalization,
         available_devices=[0],
         half_precision=False,
         cut_radius_psf=cut_radius_psf,

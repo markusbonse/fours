@@ -4,7 +4,7 @@ JobIndex_raw = $(Process)
 JobIndex = $INT(JobIndex_raw,%03d)
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/run_s4_mask_lambda.py /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/configs_non_convolved/config_$(JobIndex).json
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/run_s4_mask_lambda.py /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/configs_no_norm/config_$(JobIndex).json
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 7200
@@ -17,8 +17,8 @@ request_gpus = 1
 request_memory = 32768
 requirements = TARGET.CUDAGlobalMemoryMb > 38000
 
-output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor_$(JobIndex).out
-error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor_$(JobIndex).err
-log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor.log
+output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/htcondor_$(JobIndex).out
+error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/htcondor_$(JobIndex).err
+log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/htcondor.log
 
 queue 400
