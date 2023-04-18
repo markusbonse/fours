@@ -17,8 +17,8 @@ request_gpus = 1
 request_memory = 32768
 requirements = TARGET.CUDAGlobalMemoryMb > 38000
 
-output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor_$(JobIndex).out
-error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor_$(JobIndex).err
-log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs/htcondor.log
+output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor_$(JobIndex).out
+error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor_$(JobIndex).err
+log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_non_convolved/htcondor.log
 
-queue 160
+queue 400
