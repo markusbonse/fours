@@ -4,7 +4,7 @@ JobIndex_raw = $(Process)
 JobIndex = $INT(JobIndex_raw,%03d)
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/run_s4_mask_lambda.py /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/configs/config_$(JobIndex).json
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/run_s4_mask_lambda.py /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/configs_non_convolved/config_$(JobIndex).json
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 7200
