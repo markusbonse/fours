@@ -212,6 +212,7 @@ class S4Ridge:
         cls_instance.std_frame = checkpoint["std_frame"]
         cls_instance.mean_frame = checkpoint["mean_frame"]
         cls_instance.right_reason_mask = checkpoint["right_reason_mask"]
+        cls_instance.image_size = cls_instance.mean_frame.shape[0]
 
         return cls_instance
 
