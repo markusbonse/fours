@@ -149,7 +149,7 @@ class S4Ridge:
         self._setup_training(science_data)
         self.science_data_norm = self.normalize_data(science_data)
 
-        positions = [(y, x)
+        positions = [(x, y)
                      for x in range(self.image_size)
                      for y in range(self.image_size)]
 
