@@ -20,7 +20,7 @@ class S4Ridge:
             verbose=True,
             available_devices="cpu",
             half_precision=False
-):
+    ):
         """
 
         Args:
@@ -216,8 +216,41 @@ class S4Ridge:
 
         return cls_instance
 
-    def predict(self):
-        raise NotImplementedError()
+    def predict(
+            self,
+            science_data
+    ):
+        science_norm = torch.from_numpy(science_data)
+        science_norm = self.normalize_data(science_norm)
+
+        # reshape the science data
+        science_norm = science_norm.view(science_norm.shape[0], -1)
+
+        # move data and weights to GPU
+        science_norm = science_norm.to(self.available_devices[0])
+        self.betas = self.betas.to(self.available_devices[0])
+
+        # predict and compute residual
+        noise_estimate = science_norm @ self.betas.T
+        residual = science_norm - noise_estimate
+
+        # reshape data
+        noise_estimate = noise_estimate.view(
+            self.image_size**2,
+            self.image_size,
+            self.image_size)
+
+        residual = residual.view(
+            self.image_size ** 2,
+            self.image_size,
+            self.image_size)
+
+        # move everything back to the host
+        self.betas = self.betas.cpu()
+        noise_estimate = noise_estimate.cpu().numpy()
+        residual = residual.cpu().numpy()
+
+        return noise_estimate, residual
 
 
 

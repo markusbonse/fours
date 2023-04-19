@@ -2,6 +2,7 @@ import numpy as np
 import multiprocessing
 from scipy.ndimage import rotate
 
+
 def combine_residual_stack(residual_stack,
                            angles,
                            combine,
