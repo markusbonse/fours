@@ -82,7 +82,7 @@ class S4Ridge:
         if self.verbose:
             print("Build normalization frames ... ", end='')
         self.mean_frame = np.mean(science_data, axis=0)
-        if self.normalize_data:
+        if self.use_normalization:
             self.std_frame = np.std(science_data, axis=0)
         else:
             self.std_frame = np.ones_like(np.std(science_data, axis=0))
