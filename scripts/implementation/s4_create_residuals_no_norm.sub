@@ -16,4 +16,4 @@ output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/
 error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/htcondor_residuals_$(fake_planet_config_file)_$(mask_size).err
 log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/htcondor_residuals.log
 
-queue mask_size,fake_planet_config_file from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_no_norm/config.txt
+queue mask_size,fake_planet_config_file from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_no_norm/config.txt
