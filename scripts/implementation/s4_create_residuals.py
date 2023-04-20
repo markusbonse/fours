@@ -76,6 +76,8 @@ if __name__ == '__main__':
                       tmp_model_file.name).group(0)[6:])
 
         if tmp_mask != mask_size:
+            print("mask size " + str(tmp_mask) + " does not match"
+                  + str(mask_size))
             continue
 
         print_message("Creating residual for " + str(tmp_lambda))
