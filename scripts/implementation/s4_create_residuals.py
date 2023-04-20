@@ -69,11 +69,11 @@ if __name__ == '__main__':
         # get the current parameters
         tmp_lambda = float(
             re.search("_lamb_(\d)+.(\d)+_",
-                      tmp_model_file.name).group(0)[6:-1])
+                      tmp_model_file.name).group(0)[6:])
 
         tmp_mask = float(
             re.search("_mask_(\d)+.(\d)+",
-                      tmp_model_file.name).group(0)[6:-1])
+                      tmp_model_file.name).group(0)[6:])
 
         if tmp_mask != mask_size:
             continue
