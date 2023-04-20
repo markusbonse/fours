@@ -22,7 +22,7 @@ def combine_residual_stack(residual_stack,
     if "Mean_Residuals" in combine:
         results["Mean_Residuals" + suffix] = np.mean(de_rotated, axis=0)
 
-    if "MedianResiduals" in combine:
+    if "Median_Residuals" in combine:
         results["Median_Residuals" + suffix] = np.median(de_rotated, axis=0)
 
     if "Mean_Residuals_NoiseNorm" in combine:
