@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/s4_create_residuals.py $(fake_planet_config_file) $(mask_size) /fast/mbonse/s4/30_data/EpsEri_0100_C-0656-A.hdf5 /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/trained_models_norm/ /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm/
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/s4_create_residuals.py /fast/mbonse/s4/30_data/0100_C-0656-A/configs_cgrid/exp_ID_$(fake_planet_config_file).json $(mask_size) /fast/mbonse/s4/30_data/EpsEri_0100_C-0656-A.hdf5 /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/trained_models_norm/ /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm/
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 7200
@@ -12,8 +12,8 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 8
 request_memory = 65536
 
-output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_residuals_${$(fake_planet_config_file):-4}_$(mask_size).out
-error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_residuals_${$(fake_planet_config_file):-4}_$(mask_size).err
+output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_residuals_$(fake_planet_config_file)_$(mask_size).out
+error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_residuals_$(fake_planet_config_file)_$(mask_size).err
 log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_residuals.log
 
 queue mask_size,fake_planet_config_file from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm/config.txt
