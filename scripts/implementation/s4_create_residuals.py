@@ -93,12 +93,14 @@ if __name__ == '__main__':
         final_residual_mean = combine_residual_stack(
             residual_stack=np.array(residual),
             angles=angles_train,
-            combine=["Mean_Residuals"])
+            combine=["Mean_Residuals"],
+            num_cpus=8)
 
         final_residual_median = combine_residual_stack(
             residual_stack=np.array(residual) - np.median(residual, axis=0),
             angles=angles_train,
-            combine=["Median_Residuals"])
+            combine=["Median_Residuals"],
+            num_cpus=8)
 
         # save the result
         planet_name = fake_planet_config["exp_id"]
