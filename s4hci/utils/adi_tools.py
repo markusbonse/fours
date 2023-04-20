@@ -23,7 +23,7 @@ def combine_residual_stack(residual_stack,
         results["Mean_Residuals" + suffix] = np.mean(de_rotated, axis=0)
 
     if "MedianResiduals" in combine:
-        results["MedianResiduals" + suffix] = np.median(de_rotated, axis=0)
+        results["Median_Residuals" + suffix] = np.median(de_rotated, axis=0)
 
     if "Mean_Residuals_NoiseNorm" in combine:
         results["Mean_Residuals_NoiseNorm" + suffix] = np.divide(
