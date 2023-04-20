@@ -236,12 +236,12 @@ class S4Ridge:
 
         # reshape data
         noise_estimate = noise_estimate.view(
-            self.image_size**2,
+            science_norm.shape[0],
             self.image_size,
             self.image_size)
 
         residual = residual.view(
-            self.image_size ** 2,
+            science_norm.shape[0],
             self.image_size,
             self.image_size)
 
@@ -251,8 +251,3 @@ class S4Ridge:
         residual = residual.cpu().numpy()
 
         return noise_estimate, residual
-
-
-
-
-
