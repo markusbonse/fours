@@ -61,6 +61,7 @@ if __name__ == '__main__':
     gc.collect()
 
     # 6.) Create the residuals
+    print_message("Creating residuals")
     for tmp_model_file in models_root_dir.iterdir():
         if not tmp_model_file.name.endswith(".pkl"):
             continue
@@ -76,6 +77,8 @@ if __name__ == '__main__':
 
         if tmp_mask != mask_size:
             continue
+
+        print_message("Creating residual for " + str(tmp_lambda))
 
         # restore the model
         s4_ridge = S4Ridge.restore_from_checkpoint(
@@ -103,6 +106,7 @@ if __name__ == '__main__':
             num_cpus=8)
 
         # save the result
+        print_message("Saving residual for " + str(tmp_lambda))
         planet_name = fake_planet_config["exp_id"]
         dataset_name = planet_name + "_mask_" + str(tmp_mask) + "_lamb_" + str(
             tmp_lambda) + ".fits"
@@ -122,6 +126,3 @@ if __name__ == '__main__':
         save_as_fits(
             mean_error_frame,
             str(residual_path / Path("mean_error_" + dataset_name)))
-
-        # Remove later
-        break
