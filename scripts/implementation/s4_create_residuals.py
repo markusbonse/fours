@@ -1,4 +1,3 @@
-import sys
 import json
 import sys
 import gc
@@ -38,31 +37,24 @@ if __name__ == '__main__':
     psf_template_data = np.mean(raw_psf_template_data, axis=0)
 
     # 3.) add the fake planet
-    if fake_planet_config_file == "None":
-        X_train = science_data[0::2]
-        angles_train = raw_angles[0::2]
-        X_test = science_data[1::2]
-        angles_test = raw_angles[1::2]
+    print_message("Adding fake planet")
+    with open(fake_planet_config_file) as json_file:
+        fake_planet_config = json.load(json_file)
 
-    else:
-        print_message("Adding fake planet")
-        with open(fake_planet_config_file) as json_file:
-            fake_planet_config = json.load(json_file)
+    data_with_fake_planet = add_fake_planets(
+        input_stack=science_data,
+        psf_template=psf_template_data,
+        parang=raw_angles,
+        dit_psf_template=0.004256,
+        dit_science=0.08,
+        experiment_config=fake_planet_config,
+        scaling_factor=1.0)
 
-        data_with_fake_planet = add_fake_planets(
-            input_stack=science_data,
-            psf_template=psf_template_data,
-            parang=raw_angles,
-            dit_psf_template=0.004256,
-            dit_science=0.08,
-            experiment_config=fake_planet_config,
-            scaling_factor=1.0)
-
-        # 4.) prepare the data
-        X_train = data_with_fake_planet[0::2]
-        angles_train = raw_angles[0::2]
-        X_test = science_data[1::2]
-        angles_test = raw_angles[1::2]
+    # 4.) prepare the data
+    X_train = data_with_fake_planet[0::2]
+    angles_train = raw_angles[0::2]
+    X_test = science_data[1::2]
+    angles_test = raw_angles[1::2]
 
     # 5.) Clean up
     del science_data
