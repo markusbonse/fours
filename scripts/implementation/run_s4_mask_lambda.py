@@ -1,6 +1,7 @@
 import sys
 import json
 import numpy as np
+from pathlib import Path
 
 from s4hci.utils.data_handling import load_adi_data
 from s4hci.models.noise import S4Ridge
@@ -31,6 +32,8 @@ if __name__ == '__main__':
     save_file = config_data["save_file"]
 
     print_message("Parameters loaded")
+    if Path(save_file).is_file():
+        sys.exit()
 
     # 2.) Load the data
     print_message("Loading data ...")
