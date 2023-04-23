@@ -80,6 +80,19 @@ if __name__ == '__main__':
                   + str(mask_size))
             continue
 
+        planet_name = fake_planet_config["exp_id"]
+        dataset_name = planet_name + "_mask_" + str(tmp_mask) + "_lamb_" + str(
+            tmp_lambda) + ".fits"
+        residual_file_mean = str(residual_path / Path(
+            "mean_residual_" + dataset_name))
+
+        residual_file_median = str(residual_path / Path(
+            "mean_residual_" + dataset_name))
+
+        if Path(residual_file_median).is_file():
+            print("residual already exists")
+            continue
+
         print_message("Creating residual for " + str(tmp_lambda))
 
         # restore the model
@@ -99,27 +112,24 @@ if __name__ == '__main__':
             residual_stack=np.array(residual),
             angles=angles_train,
             combine=["Mean_Residuals"],
-            num_cpus=8)
+            num_cpus=1)
 
         final_residual_median = combine_residual_stack(
             residual_stack=np.array(residual) - np.median(residual, axis=0),
             angles=angles_train,
             combine=["Median_Residuals"],
-            num_cpus=8)
+            num_cpus=1)
 
         # save the result
         print_message("Saving residual for " + str(tmp_lambda))
-        planet_name = fake_planet_config["exp_id"]
-        dataset_name = planet_name + "_mask_" + str(tmp_mask) + "_lamb_" + str(
-            tmp_lambda) + ".fits"
 
         save_as_fits(
             final_residual_mean["Mean_Residuals"],
-            str(residual_path / Path("mean_residual_" + dataset_name)))
+            residual_file_mean)
 
         save_as_fits(
             final_residual_median["Median_Residuals"],
-            str(residual_path / Path("median_residual_" + dataset_name)))
+            residual_file_median)
 
         save_as_fits(
             median_error_frame,
