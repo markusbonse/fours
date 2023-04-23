@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # 4.) Fit the data
     print_message("Fit the data")
-    s4_ridge.fit(science_data)
+    s4_ridge.fit(X_train)
     #s4_ridge._setup_training(science_data)
     #s4_ridge.science_data_norm = s4_ridge.normalize_data(science_data)
 
