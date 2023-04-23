@@ -87,9 +87,10 @@ if __name__ == '__main__':
             "mean_residual_" + dataset_name))
 
         residual_file_median = str(residual_path / Path(
-            "mean_residual_" + dataset_name))
+            "median_residual_" + dataset_name))
 
-        if Path(residual_file_median).is_file():
+        if Path(residual_file_median).is_file() and \
+                Path(residual_file_mean).is_file():
             print("residual already exists")
             continue
 
@@ -123,18 +124,22 @@ if __name__ == '__main__':
         # save the result
         print_message("Saving residual for " + str(tmp_lambda))
 
-        save_as_fits(
-            final_residual_mean["Mean_Residuals"],
-            residual_file_mean)
+        if not Path(residual_file_mean).is_file():
+            save_as_fits(
+                final_residual_mean["Mean_Residuals"],
+                residual_file_mean)
 
-        save_as_fits(
-            final_residual_median["Median_Residuals"],
-            residual_file_median)
+        if not Path(residual_file_median).is_file():
+            save_as_fits(
+                final_residual_median["Median_Residuals"],
+                residual_file_median)
 
-        save_as_fits(
-            median_error_frame,
-            str(residual_path / Path("median_error_" + dataset_name)))
+        if not (residual_path / Path("median_error_" + dataset_name)).is_file():
+            save_as_fits(
+                median_error_frame,
+                str(residual_path / Path("median_error_" + dataset_name)))
 
-        save_as_fits(
-            mean_error_frame,
-            str(residual_path / Path("mean_error_" + dataset_name)))
+        if not (residual_path / Path("mean_error_" + dataset_name)).is_file():
+            save_as_fits(
+                mean_error_frame,
+                str(residual_path / Path("mean_error_" + dataset_name)))
