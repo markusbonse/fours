@@ -21,4 +21,4 @@ output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htc
 error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_$(JobIndex).err
 log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor.log
 
-queue 160
+queue 400
