@@ -98,7 +98,10 @@ if __name__ == '__main__':
             "median_residual_" + dataset_name))
 
         if Path(residual_file_median).is_file() and \
-                Path(residual_file_mean).is_file():
+                Path(residual_file_mean).is_file() and \
+                (residual_path / Path("median_error_" + dataset_name)).is_file() and \
+                (residual_path / Path("mean_error_" + dataset_name)).is_file():
+
             print("residual already exists")
             continue
 
