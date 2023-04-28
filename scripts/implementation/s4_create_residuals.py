@@ -9,6 +9,7 @@ from s4hci.utils.data_handling import load_adi_data
 from s4hci.models.noise import S4Ridge
 from s4hci.utils.logging import print_message, setup_logger
 from s4hci.utils.adi_tools import combine_residual_stack
+from s4hci.utils.masks import construct_rfrr_mask
 
 from applefy.utils.fake_planets import add_fake_planets
 from applefy.utils.file_handling import save_as_fits
@@ -24,6 +25,7 @@ if __name__ == '__main__':
     dataset_file = str(sys.argv[3])
     models_root_dir = Path(str(sys.argv[4]))
     residual_path = Path(str(sys.argv[5]))
+    re_mask = float(sys.argv[6])
 
     # 2.) Load the dataset
     print_message("Loading dataset")
@@ -100,8 +102,22 @@ if __name__ == '__main__':
         s4_ridge = S4Ridge.restore_from_checkpoint(
             checkpoint_file=tmp_model_file)
 
-        # predict
+        # predict training data
         noise_model, residual = s4_ridge.predict(X_train)
+
+        # mask betas again if requested
+        if re_mask >= 1:
+            new_mask = construct_rfrr_mask(
+                template_setup=('radius', re_mask),
+                psf_template_in=s4_ridge.template_norm,
+                mask_size_in=s4_ridge.image_size)
+
+            new_mask = new_mask.reshape(
+                new_mask.shape[0], -1)
+
+            s4_ridge.betas = s4_ridge.betas * new_mask
+
+        # predict test data
         noise_model_test, residual_test = s4_ridge.predict(X_test)
 
         # build error frame
