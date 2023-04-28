@@ -12,8 +12,8 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 8
 request_memory = 65536
 
-output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals_$(mask_size).out
-error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals_$(mask_size).err
+output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals_$(mask_size)_$(lambda_reg).out
+error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals_$(mask_size)_$(lambda_reg).err
 log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals.log
 
 queue mask_size,lambda_reg from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm_remask/config.txt
