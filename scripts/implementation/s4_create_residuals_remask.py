@@ -25,6 +25,8 @@ if __name__ == '__main__':
     dataset_file = str(sys.argv[3])
     models_root_dir = Path(str(sys.argv[4]))
     residual_path = Path(str(sys.argv[5]))
+    re_mask = float(sys.argv[6])
+    lambda_reg = float(sys.argv[7])
 
     # 2.) Load the dataset
     print_message("Loading dataset")
@@ -81,6 +83,11 @@ if __name__ == '__main__':
                   + str(mask_size))
             continue
 
+        if tmp_lambda != lambda_reg:
+            print("Lambda " + str(tmp_lambda) + " does not match"
+                  + str(lambda_reg))
+            continue
+
         planet_name = fake_planet_config["exp_id"]
         dataset_name = planet_name + "_mask_" + str(tmp_mask) + "_lamb_" + str(
             tmp_lambda) + ".fits"
@@ -103,6 +110,17 @@ if __name__ == '__main__':
 
         # predict training data
         noise_model, residual = s4_ridge.predict(X_train)
+
+        # mask betas again
+        new_mask = construct_rfrr_mask(
+            template_setup=('radius', re_mask),
+            psf_template_in=s4_ridge.template_norm,
+            mask_size_in=s4_ridge.image_size)
+
+        new_mask = new_mask.reshape(
+            new_mask.shape[0], -1)
+
+        s4_ridge.betas = s4_ridge.betas * new_mask
 
         # predict test data
         noise_model_test, residual_test = s4_ridge.predict(X_test)
