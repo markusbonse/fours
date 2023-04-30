@@ -8,7 +8,7 @@ def compute_betas_least_square(
         M_torch,
         lambda_reg,
         positions,
-        p_torch = None,
+        p_torch=None,
         rank="cpu",
         half_precision=False,
         verbose=True
