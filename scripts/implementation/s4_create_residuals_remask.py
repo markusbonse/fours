@@ -27,6 +27,8 @@ if __name__ == '__main__':
     residual_path = Path(str(sys.argv[5]))
     re_mask = float(sys.argv[6])
     lambda_reg = float(sys.argv[7])
+    use_template = bool(sys.argv[8])
+    mask_twice = bool(sys.argv[9])
 
     # 2.) Load the dataset
     print_message("Loading dataset")
@@ -111,19 +113,23 @@ if __name__ == '__main__':
         s4_ridge = S4Ridge.restore_from_checkpoint(
             checkpoint_file=tmp_model_file)
 
-        # predict training data
-        noise_model, residual = s4_ridge.predict(X_train)
-
         # mask betas again
         new_mask = construct_rfrr_mask(
             template_setup=('radius', re_mask),
             psf_template_in=s4_ridge.template_norm,
-            mask_size_in=s4_ridge.image_size)
+            mask_size_in=s4_ridge.image_size,
+            use_template=use_template)
 
         new_mask = new_mask.reshape(
             new_mask.shape[0], -1)
 
+        if mask_twice:
+            new_mask = new_mask * new_mask
+
         s4_ridge.betas = s4_ridge.betas * new_mask
+
+        # predict training data
+        noise_model, residual = s4_ridge.predict(X_train)
 
         # predict test data
         noise_model_test, residual_test = s4_ridge.predict(X_test)
