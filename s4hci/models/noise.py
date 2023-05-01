@@ -194,13 +194,42 @@ class S4Ridge:
 
         torch.save(checkpoint, result_file)
 
+    def validate_lambdas(
+            self,
+            num_separations,
+            lambdas,
+            science_data_train,
+            science_data_test,
+            approx_svd=-1
+    ):
+        test_image = science_data_train[0]
+        image_size_radius = int((test_image.shape[0] - 1) / 2)
+
+        separations = np.linspace(0, image_size_radius, num_separations + 1,
+                                  endpoint=False)[1:]
+
+        all_results = dict()
+        for tmp_separation in separations:
+            tmp_errors = self._validate_lambdas_separation(
+                separation=tmp_separation,
+                lambdas=lambdas,
+                science_data_train=science_data_train,
+                science_data_test=science_data_test,
+                approx_svd=approx_svd
+            )
+            all_results[tmp_separation] = tmp_errors
+
+        # TODO recommend one lambda
+        return all_results
+
     def _validate_lambdas_separation(
             self,
             separation,
             lambdas,
             science_data_train,
             science_data_test,
-            approx_svd=-1):
+            approx_svd=-1
+    ):
 
         # 1.) get the positions where we evaluate the residual error
         print("Compute validation positions for "
