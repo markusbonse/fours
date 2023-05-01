@@ -228,7 +228,8 @@ class S4Ridge:
             lambdas,
             science_data_train,
             science_data_test,
-            num_test_positions=10,
+            num_test_positions,
+            rank,
             approx_svd=-1
     ):
 
@@ -266,7 +267,7 @@ class S4Ridge:
             lambda_regs=lambdas,
             positions=positions,
             p_torch=p_torch,
-            rank=self.available_devices,
+            rank=rank,
             approx_svd=approx_svd,
             half_precision=self.half_precision,
             verbose=self.verbose)
