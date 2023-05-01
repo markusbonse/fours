@@ -330,6 +330,9 @@ class S4Ridge:
             tmp_median_error = torch.median(tmp_residual)
             median_errors.append(tmp_median_error)
 
+        # clean up
+        self.science_data_norm = None
+
         return np.array(median_errors)
 
     @classmethod
