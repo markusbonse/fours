@@ -30,6 +30,12 @@ if __name__ == '__main__':
     use_template = bool(sys.argv[8])
     mask_twice = bool(sys.argv[9])
 
+    if use_template:
+        print("using template")
+
+    if mask_twice:
+        print("mask twice")
+
     # 2.) Load the dataset
     print_message("Loading dataset")
     science_data, raw_angles, raw_psf_template_data = \
