@@ -228,6 +228,7 @@ class S4Ridge:
             lambdas,
             science_data_train,
             science_data_test,
+            num_test_positions=10,
             approx_svd=-1
     ):
 
@@ -235,6 +236,7 @@ class S4Ridge:
         print("Compute validation positions for "
               "separation " + str(separation) + " ...")
         positions = get_validation_positions(
+            num_positions=num_test_positions,
             separation=separation,
             test_image=science_data_train[0])
 
