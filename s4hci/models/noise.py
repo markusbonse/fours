@@ -343,8 +343,8 @@ class S4Ridge:
 
         # normalize
         median_errors = np.array(median_errors)
-        median_errors -= np.mean(median_errors, axis=1)
-        median_errors /= np.std(median_errors, axis=1)
+        median_errors -= np.mean(median_errors)
+        median_errors /= np.std(median_errors)
 
         return median_errors
 
