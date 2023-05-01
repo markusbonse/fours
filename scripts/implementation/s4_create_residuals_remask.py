@@ -27,8 +27,8 @@ if __name__ == '__main__':
     residual_path = Path(str(sys.argv[5]))
     re_mask = float(sys.argv[6])
     lambda_reg = float(sys.argv[7])
-    use_template = bool(sys.argv[8])
-    mask_twice = bool(sys.argv[9])
+    use_template = bool(int(sys.argv[8]))
+    mask_twice = bool(int(sys.argv[9]))
 
     if use_template:
         print_message("using template")
