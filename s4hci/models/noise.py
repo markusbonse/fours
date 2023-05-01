@@ -200,6 +200,7 @@ class S4Ridge:
             lambdas,
             science_data_train,
             science_data_test,
+            num_test_positions,
             approx_svd=-1
     ):
         test_image = science_data_train[0]
@@ -215,6 +216,8 @@ class S4Ridge:
                 lambdas=lambdas,
                 science_data_train=science_data_train,
                 science_data_test=science_data_test,
+                num_test_positions=num_test_positions,
+                rank=self.available_devices[0],
                 approx_svd=approx_svd
             )
             all_results[tmp_separation] = tmp_errors
