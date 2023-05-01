@@ -50,7 +50,8 @@ def construct_round_rfrr_template(radius,
 
 def construct_rfrr_mask(template_setup,
                         psf_template_in,
-                        mask_size_in: int):
+                        mask_size_in: int,
+                        use_template=False):
     # 1.) Create circular mask around the max PSF template value
     if template_setup[0] == "percent":
         template, template_mask = construct_rfrr_template(
@@ -68,6 +69,9 @@ def construct_rfrr_mask(template_setup,
             psf_template_in)
     else:
         raise ValueError("mask type not supported")
+
+    if use_template:
+        template_mask = template
 
     # 2.) Create the mask stack by shifting the template
     regularization_mask = np.zeros((mask_size_in, mask_size_in,
