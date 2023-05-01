@@ -341,7 +341,12 @@ class S4Ridge:
         # clean up
         self.science_data_norm = None
 
-        return np.array(median_errors)
+        # normalize
+        median_errors = np.array(median_errors)
+        median_errors -= np.mean(median_errors)
+        median_errors /= np.std(median_errors)
+
+        return median_errors
 
     @classmethod
     def restore_from_checkpoint(
