@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/s4_create_residuals_remask.py /fast/mbonse/s4/30_data/0100_C-0656-A/configs_cgrid/exp_ID_0000.json $(mask_size) /fast/mbonse/s4/30_data/EpsEri_0100_C-0656-A.hdf5 /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/trained_models_norm/ /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm_remask_tp2/ 4 $(lambda_reg) 1 $(mask_twice)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/implementation/s4_create_residuals_remask.py /fast/mbonse/s4/30_data/0100_C-0656-A/configs_cgrid/exp_ID_0000.json $(mask_size) /fast/mbonse/s4/30_data/EpsEri_0100_C-0656-A.hdf5 /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/trained_models_norm/ /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm_remask_tp/ 4 $(lambda_reg) 1 $(mask_twice)
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 12000
@@ -16,4 +16,4 @@ output = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htc
 error  = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals_$(mask_size)_$(lambda_reg).err
 log    = /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/logs_norm/htcondor_re_mask_residuals.log
 
-queue mask_size,lambda_reg,mask_twice from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm_remask_tp2/config.txt
+queue mask_size,lambda_reg,mask_twice from /fast/mbonse/s4/70_results/01_closed_form_hyperparameters/residuals_norm_remask_tp/config.txt
