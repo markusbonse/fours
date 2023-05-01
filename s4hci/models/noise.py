@@ -19,6 +19,7 @@ class S4Ridge:
             mask_template_setup,
             convolve=True,
             use_normalization=True,
+            re_mask=False,
             verbose=True,
             available_devices="cpu",
             half_precision=False
@@ -47,6 +48,7 @@ class S4Ridge:
         self.use_normalization = use_normalization
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
+        self.re_mask = re_mask
 
         # 2.) Parameters filled during training
         self.betas = None
@@ -170,6 +172,12 @@ class S4Ridge:
 
         if self.verbose:
             print("[DONE]")
+
+        # 3.) re-mask if requested
+        if self.re_mask:
+            second_mask = torch.Tensor(self.second_mask).view(
+                self.second_mask.shape[0], -1)
+            self.betas = self.betas * second_mask
 
         # clean up
         self.science_data_norm = None
