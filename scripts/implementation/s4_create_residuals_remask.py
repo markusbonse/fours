@@ -31,10 +31,10 @@ if __name__ == '__main__':
     mask_twice = bool(sys.argv[9])
 
     if use_template:
-        print("using template")
+        print_message("using template")
 
     if mask_twice:
-        print("mask twice")
+        print_message("mask twice")
 
     # 2.) Load the dataset
     print_message("Loading dataset")
