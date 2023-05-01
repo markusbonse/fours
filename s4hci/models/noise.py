@@ -222,8 +222,19 @@ class S4Ridge:
             )
             all_results[tmp_separation] = tmp_errors
 
-        # TODO recommend one lambda
-        return all_results
+        # find the best lambda
+        merged_results = np.array([i for i in all_results.values()])
+        median_result = np.median(merged_results, axis=0)
+
+        best_lambda_idx = np.argmin(median_result)
+        best_lambda = lambdas[best_lambda_idx]
+
+        if self.verbose:
+            print("Recommended Lambda = {:.2f}".format(best_lambda))
+            print("Make sure to check if the tested range of lambda values is "
+                  "covering the global minimum!")
+
+        return all_results, best_lambda
 
     def _validate_lambdas_separation(
             self,
@@ -237,23 +248,28 @@ class S4Ridge:
     ):
 
         # 1.) get the positions where we evaluate the residual error
-        print("Compute validation positions for "
-              "separation " + str(separation) + " ...")
+        if self.verbose:
+            print("Compute validation positions for "
+                  "separation " + str(separation) + " ...")
+
         positions = get_validation_positions(
             num_positions=num_test_positions,
             separation=separation,
             test_image=science_data_train[0])
 
         # 2.) Set up the training data
-        print("Setup training data for "
-              "separation " + str(separation) + " ...")
+        if self.verbose:
+            print("Setup training data for "
+                  "separation " + str(separation) + " ...")
+
         self._setup_training(science_data_train)
         self.science_data_norm = self.normalize_data(science_data_train)
 
         # 3.) Compute the betas
         # collect all parameters for the SVD
-        print("Compute betas for "
-              "separation " + str(separation) + " ...")
+        if self.verbose:
+            print("Compute betas for "
+                  "separation " + str(separation) + " ...")
 
         X_torch = torch.from_numpy(self.science_data_norm).unsqueeze(1)
         M_torch = torch.from_numpy(self.right_reason_mask)
@@ -278,8 +294,9 @@ class S4Ridge:
         # 4.) Re-mask with self.second_mask.
         # This step is needed to cut off overflow towards the identity in case
         # of small mask sizes
-        print("Re-mask betas for "
-              "separation " + str(separation) + " ...")
+        if self.verbose:
+            print("Re-mask betas for "
+                  "separation " + str(separation) + " ...")
 
         re_masked = torch.zeros_like(betas_conv)
         all_idx = []
@@ -291,8 +308,9 @@ class S4Ridge:
             re_masked[i] = betas_conv[i] * self.second_mask[tmp_idx]
 
         # 5.) Predict
-        print("Compute validation errors for "
-              "separation " + str(separation) + " ...")
+        if self.verbose:
+            print("Compute validation errors for "
+                  "separation " + str(separation) + " ...")
 
         science_test = torch.from_numpy(science_data_test)
         science_test = self.normalize_data(science_test)
