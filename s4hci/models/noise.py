@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import numpy as np
 
 import torch
@@ -5,6 +6,7 @@ import torch.multiprocessing as mp
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
 from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
+from s4hci.utils.positions import get_validation_positions
 
 
 class S4Ridge:
@@ -49,6 +51,7 @@ class S4Ridge:
         # 2.) Parameters filled during training
         self.betas = None
         self.right_reason_mask = None
+        self.second_mask = None
         self.image_size = None
         self.mean_frame = None
         self.std_frame = None
@@ -74,6 +77,12 @@ class S4Ridge:
             template_setup=self.mask_template_setup,
             psf_template_in=self.template_norm,
             mask_size_in=self.image_size)
+
+        self.second_mask = construct_rfrr_mask(
+            template_setup=self.mask_template_setup,
+            psf_template_in=self.template_norm,
+            mask_size_in=self.image_size,
+            use_template=True)
 
         if self.verbose:
             print("[DONE]")
@@ -184,6 +193,91 @@ class S4Ridge:
         }
 
         torch.save(checkpoint, result_file)
+
+    def _validate_lambdas_separation(
+            self,
+            separation,
+            lambdas,
+            science_data_train,
+            science_data_test,
+            approx_svd=-1):
+
+        # 1.) get the positions where we evaluate the residual error
+        print("Compute validation positions for "
+              "separation " + str(separation) + " ...")
+        positions = get_validation_positions(
+            separation=separation,
+            test_image=science_data_train[0])
+
+        # 2.) Set up the training data
+        print("Setup training data for "
+              "separation " + str(separation) + " ...")
+        self._setup_training(science_data_train)
+        self.science_data_norm = self.normalize_data(science_data_train)
+
+        # 3.) Compute the betas
+        # collect all parameters for the SVD
+        print("Compute betas for "
+              "separation " + str(separation) + " ...")
+
+        X_torch = torch.from_numpy(self.science_data_norm).unsqueeze(1)
+        M_torch = torch.from_numpy(self.right_reason_mask)
+
+        if self.convolve:
+            p_torch = torch.from_numpy(
+                self.template_norm).unsqueeze(0).unsqueeze(0)
+        else:
+            p_torch = None
+
+        betas_conv = compute_betas_svd(
+            X_torch=X_torch,
+            M_torch=M_torch,
+            lambda_regs=lambdas,
+            positions=positions,
+            p_torch=p_torch,
+            rank=self.available_devices,
+            approx_svd=approx_svd,
+            half_precision=self.half_precision,
+            verbose=self.verbose)
+
+        # 4.) Re-mask with self.second_mask.
+        # This step is needed to cut off overflow towards the identity in case
+        # of small mask sizes
+        print("Re-mask betas for "
+              "separation " + str(separation) + " ...")
+
+        re_masked = torch.zeros_like(betas_conv)
+        all_idx = []
+        for i, tmp_position in enumerate(positions):
+            x, y = tmp_position
+            tmp_idx = x * self.image_size + y
+            all_idx.append(tmp_idx)
+
+            re_masked[i] = betas_conv[i] * self.second_mask[tmp_idx]
+
+        # 5.) Predict
+        print("Compute validation errors for "
+              "separation " + str(separation) + " ...")
+
+        science_test = torch.from_numpy(science_data_test)
+        science_test = self.normalize_data(science_test)
+
+        science_test = science_test.view(science_test.shape[0], -1)
+        gt_values = science_test[:, all_idx]
+
+        median_errors = []
+
+        for tmp_lambda_idx in tqdm(range(re_masked.shape[1])):
+            tmp_beta = re_masked[:, tmp_lambda_idx]
+            tmp_beta = tmp_beta.view(tmp_beta.shape[0], -1)
+
+            tmp_prediction = science_test @ tmp_beta.T
+            tmp_residual = torch.abs(gt_values - tmp_prediction)
+
+            tmp_median_error = torch.median(tmp_residual)
+            median_errors.append(tmp_median_error)
+
+        return np.array(median_errors)
 
     @classmethod
     def restore_from_checkpoint(
