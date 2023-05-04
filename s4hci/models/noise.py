@@ -11,10 +11,6 @@ from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
 from s4hci.utils.positions import get_validation_positions
 
 
-class S4Noise(nn.Module):
-    pass
-
-
 class S4ClosedForm:
 
     def __init__(
@@ -416,3 +412,74 @@ class S4ClosedForm:
         residual = residual.cpu().numpy()
 
         return noise_estimate, residual
+
+
+class S4Noise(nn.Module):
+
+    def __init__(
+            self,
+            s4_closed_form: S4ClosedForm):
+
+        super(S4Noise, self).__init__()
+        self.image_size = s4_closed_form.image_size
+
+        # 1.) Create a simple linear layer
+        # TODO: check if we have to give a data type and device
+        self.layer = nn.Linear(
+            in_features=self.image_size ** 2,
+            out_features=self.image_size ** 2,
+            bias=False)
+
+        # 2.) initialize it with raw betas of the s4_closed_form
+        # TODO: check the shapes and if this assignment works
+        # TODO: check how to register this or put it into parameters
+        self.layer.weight.copy_(s4_closed_form.betas)
+
+        # 3.) register buffers for the fixed values
+        self.register_buffer(
+            "psf_model",
+            torch.from_numpy(s4_closed_form.template_norm))
+
+        self.register_buffer(
+            "right_reason_mask",
+            torch.from_numpy(s4_closed_form.right_reason_mask))
+
+        self.register_buffer(
+            "second_mask",
+            torch.from_numpy(s4_closed_form.second_mask))
+
+    def convolved_weights(self):
+        # set regularization_mask values to zero
+        tmp_weights = self.layer.weight * self.right_reason_mask
+
+        # convolve the weights
+        tmp_weights = F.conv2d(
+            tmp_weights.view(-1, 1, self.input_size, self.input_size),
+            self.psf_model,
+            padding="same").view(self.input_size**2, self.input_size**2)
+
+        tmp_weights = tmp_weights * self.second_mask
+
+        return tmp_weights
+
+    @staticmethod
+    def num_flat_features(x):
+        size = x.size()[1:]
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
+
+    def forward(
+            self,
+            x: torch.Tensor
+    ) -> torch.Tensor:
+
+        size = x.size()
+        input_flatten = x.view(-1, self.num_flat_features(x))
+        convolved_weights = self.convolved_weights()
+        result = F.linear(input, convolved_weights, None)
+        return result.view(size)
+
+
+
