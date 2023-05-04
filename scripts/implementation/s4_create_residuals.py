@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 from s4hci.utils.data_handling import load_adi_data
-from s4hci.models.noise import S4Ridge
+from s4hci.models.noise import S4ClosedForm
 from s4hci.utils.logging import print_message, setup_logger
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.masks import construct_rfrr_mask
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         print_message("Creating residual for " + str(tmp_lambda))
 
         # restore the model
-        s4_ridge = S4Ridge.restore_from_checkpoint(
+        s4_ridge = S4ClosedForm.restore_from_checkpoint(
             checkpoint_file=tmp_model_file)
 
         # predict training data

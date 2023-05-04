@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 
 from s4hci.utils.data_handling import load_adi_data
-from s4hci.models.noise import S4Ridge
+from s4hci.models.noise import S4ClosedForm
 from s4hci.utils.logging import print_message, setup_logger
 
 if __name__ == '__main__':
@@ -49,10 +49,10 @@ if __name__ == '__main__':
     X_train = science_data[0::2]
     X_test = science_data[1::2]
 
-    # 3.) Create S4Ridge
-    print_message("Creating S4Ridge")
+    # 3.) Create S4ClosedForm
+    print_message("Creating S4ClosedForm")
 
-    s4_ridge = S4Ridge(
+    s4_ridge = S4ClosedForm(
         psf_template=psf_template_data,
         lambda_reg=lambda_reg,
         convolve=True,

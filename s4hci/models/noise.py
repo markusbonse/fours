@@ -9,7 +9,7 @@ from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
 from s4hci.utils.positions import get_validation_positions
 
 
-class S4Ridge:
+class S4ClosedForm:
 
     def __init__(
             self,
@@ -22,7 +22,6 @@ class S4Ridge:
             re_mask=False,
             verbose=True,
             available_devices="cpu",
-            half_precision=False
     ):
         """
 
@@ -39,7 +38,6 @@ class S4Ridge:
         else:
             self.available_devices = available_devices
         self.num_devices = len(self.available_devices)
-        self.half_precision = half_precision
         self.verbose = verbose
 
         # 1.) save the other parameters
@@ -127,7 +125,6 @@ class S4Ridge:
             lambda_reg=self.lambda_reg,
             positions=positions,
             rank=rank,
-            half_precision=self.half_precision,
             verbose=self.verbose)
 
         return beta_conv
@@ -296,7 +293,6 @@ class S4Ridge:
             p_torch=p_torch,
             rank=rank,
             approx_svd=approx_svd,
-            half_precision=self.half_precision,
             verbose=self.verbose)
 
         # 4.) Re-mask with self.second_mask.

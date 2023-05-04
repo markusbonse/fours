@@ -10,15 +10,9 @@ def compute_betas_least_square(
         positions,
         p_torch=None,
         rank="cpu",
-        half_precision=False,
         verbose=True
 ):
     image_size = X_torch.shape[-1]
-    if half_precision:
-        X_torch = X_torch.float()
-        M_torch = M_torch.float()
-        if p_torch is not None:
-            p_torch = p_torch.float()
 
     # send everything to the current GPU / device
     X_torch = X_torch.to(rank)
@@ -86,15 +80,9 @@ def compute_betas_svd(
         p_torch=None,
         rank="cpu",
         approx_svd=-1,
-        half_precision=False,
         verbose=True):
 
     image_size = X_torch.shape[-1]
-    if half_precision:
-        X_torch = X_torch.float()
-        M_torch = M_torch.float()
-        if p_torch is not None:
-            p_torch = p_torch.float()
 
     # send everything to the current GPU / device
     X_torch = X_torch.to(rank)
