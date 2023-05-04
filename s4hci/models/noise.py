@@ -2,11 +2,17 @@ from tqdm import tqdm
 import numpy as np
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
 from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
 from s4hci.utils.positions import get_validation_positions
+
+
+class S4Noise(nn.Module):
+    pass
 
 
 class S4ClosedForm:
