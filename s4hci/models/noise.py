@@ -351,8 +351,7 @@ class S4ClosedForm:
             cls,
             checkpoint_file,
             verbose=True,
-            available_devices="cpu",
-            half_precision=False
+            available_devices="cpu"
     ):
 
         checkpoint = torch.load(checkpoint_file)
@@ -365,8 +364,7 @@ class S4ClosedForm:
             convolve=checkpoint["convolve"],
             use_normalization=checkpoint["use_normalization"],
             verbose=verbose,
-            available_devices=available_devices,
-            half_precision=half_precision)
+            available_devices=available_devices)
 
         cls_instance.betas = checkpoint["betas"]
         cls_instance.template_norm = checkpoint["template_norm"]
