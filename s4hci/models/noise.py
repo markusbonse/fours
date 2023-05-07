@@ -416,7 +416,8 @@ class S4Noise(nn.Module):
 
     def __init__(
             self,
-            s4_closed_form: S4ClosedForm):
+            s4_closed_form: S4ClosedForm,
+            fine_tune=False):
 
         super(S4Noise, self).__init__()
         self.image_size = s4_closed_form.image_size
@@ -429,32 +430,35 @@ class S4Noise(nn.Module):
             bias=False)
 
         # 2.) initialize it with raw betas of the s4_closed_form
-        # TODO: check the shapes and if this assignment works
-        # TODO: check how to register this or put it into parameters
-        self.layer.weight.copy_(s4_closed_form.betas)
+        if fine_tune:
+            self.beta_raw = nn.Parameter(s4_closed_form.betas)
+        else:
+            self.register_buffer(
+                "beta_raw",
+                s4_closed_form.betas)
 
         # 3.) register buffers for the fixed values
         self.register_buffer(
             "psf_model",
-            torch.from_numpy(s4_closed_form.template_norm))
+            torch.from_numpy(s4_closed_form.template_norm).unsqueeze(0).unsqueeze(0))
 
         self.register_buffer(
             "right_reason_mask",
-            torch.from_numpy(s4_closed_form.right_reason_mask))
+            torch.from_numpy(s4_closed_form.right_reason_mask).flatten(start_dim=1))
 
         self.register_buffer(
             "second_mask",
-            torch.from_numpy(s4_closed_form.second_mask))
+            torch.from_numpy(s4_closed_form.second_mask).flatten(start_dim=1))
 
     def convolved_weights(self):
         # set regularization_mask values to zero
-        tmp_weights = self.layer.weight * self.right_reason_mask
+        tmp_weights = self.beta_raw * self.right_reason_mask
 
         # convolve the weights
         tmp_weights = F.conv2d(
-            tmp_weights.view(-1, 1, self.input_size, self.input_size),
+            tmp_weights.view(-1, 1, self.image_size, self.image_size),
             self.psf_model,
-            padding="same").view(self.input_size**2, self.input_size**2)
+            padding="same").view(self.image_size**2, self.image_size**2)
 
         tmp_weights = tmp_weights * self.second_mask
 
@@ -475,9 +479,6 @@ class S4Noise(nn.Module):
 
         size = x.size()
         input_flatten = x.view(-1, self.num_flat_features(x))
-        convolved_weights = self.convolved_weights()
-        result = F.linear(input, convolved_weights, None)
+        convolved_weights = self.beta_raw # convolved_weights()
+        result = F.linear(input_flatten, convolved_weights, None)
         return result.view(size)
-
-
-
