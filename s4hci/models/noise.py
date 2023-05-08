@@ -20,22 +20,20 @@ class S4Noise(nn.Module):
             cut_radius_psf,
             mask_template_setup,
             convolve=True,
-            use_normalization=True,
             re_mask=False,
             verbose=True,
-            rank="cpu"):
+            available_device="cpu"):
 
         super(S4Noise, self).__init__()
 
         # 1.) save the non-model related parameters
-        self.rank = rank
+        self.available_device = available_device
         self.verbose = verbose
 
         # 2.) save the simple information
         self.image_size = data_image_size
         self.lambda_reg = lambda_reg
         self.convolve = convolve
-        self.use_normalization = use_normalization
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
         self.re_mask = re_mask
@@ -61,7 +59,7 @@ class S4Noise(nn.Module):
 
         right_reason_mask = construct_rfrr_mask(
             template_setup=self.mask_template_setup,
-            psf_template_in=self.template_norm,
+            psf_template_in=template_norm,
             mask_size_in=self.image_size)
 
         self.register_buffer(
@@ -70,7 +68,7 @@ class S4Noise(nn.Module):
 
         second_mask = construct_rfrr_mask(
             template_setup=self.mask_template_setup,
-            psf_template_in=self.template_norm,
+            psf_template_in=template_norm,
             mask_size_in=self.image_size,
             use_template=True)
 
@@ -111,13 +109,13 @@ class S4Noise(nn.Module):
             cls,
             file_path,
             verbose=True,
-            available_devices="cpu"):
+            available_device="cpu"):
 
         state_dict = torch.load(file_path)
 
         # create a dummy psf template
-        psf_size = state_dict["psf_model"].shape[0]
-        dummy_template = np.zeros((psf_size, psf_size))
+        psf_size = state_dict["psf_model"].shape[-1]
+        dummy_template = np.ones((psf_size, psf_size))
 
         obj = cls(
             data_image_size=state_dict.pop('image_size'),
@@ -128,7 +126,7 @@ class S4Noise(nn.Module):
             convolve=state_dict.pop('convolve'),
             re_mask=state_dict.pop('re_mask'),
             verbose=verbose,
-            available_devices=available_devices)
+            available_device=available_device)
 
         obj.load_state_dict(state_dict)
         return obj
