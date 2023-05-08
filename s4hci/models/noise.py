@@ -54,6 +54,8 @@ class S4Noise(nn.Module):
             self.image_size ** 2, self.image_size ** 2,
             dtype=torch.double))
 
+        self.prev_betas = None
+
         # 5.) Set up the buffers for the two masks
         if self.verbose:
             print("Creating right reason mask ... ", end='')
@@ -321,6 +323,12 @@ class S4Noise(nn.Module):
 
     @property
     def betas(self):
+        if self.prev_betas is None:
+            self.compute_betas()
+
+        return self.prev_betas
+
+    def compute_betas(self):
         # reshape the raw betas
         raw_betas = self.betas_raw.view(
             -1,
@@ -338,9 +346,10 @@ class S4Noise(nn.Module):
             self.image_size ** 2,
             self.image_size ** 2)
 
-        # tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
+        if self.re_mask:
+            tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
 
-        return tmp_weights
+        self.prev_betas = tmp_weights
 
     def predict(
             self,
