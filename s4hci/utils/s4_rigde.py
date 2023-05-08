@@ -9,18 +9,19 @@ def compute_betas_least_square(
         lambda_reg,
         positions,
         p_torch=None,
-        rank="cpu",
         verbose=True
 ):
-    image_size = X_torch.shape[-1]
+    """
+    X_torch: (num_images, images_size, images_size) (normalized!)
+    M_torch: (images_size**2, images_size**2)
+    p_torch: (x, y, 1, 1)
+    """
 
-    # send everything to the current GPU / device
-    X_torch = X_torch.to(rank)
-    M_torch = M_torch.to(rank)
+    X_torch = X_torch.unsqueeze(1)
+    image_size = X_torch.shape[-1]
 
     # convolve the data
     if p_torch is not None:
-        p_torch = p_torch.to(rank)
         X_conv = F.conv2d(X_torch, p_torch, padding="same")
     else:
         X_conv = X_torch
@@ -30,7 +31,7 @@ def compute_betas_least_square(
     X_conv_square = X_conv.T @ X_conv
     eye = torch.eye(image_size ** 2,
                     image_size ** 2,
-                    device=rank)
+                    device=X_torch.device)
 
     # Compute all betas in a loop over all positions
     betas = []
@@ -58,18 +59,10 @@ def compute_betas_least_square(
         betas.append(beta_cut)
 
     # Convolve the betas
-    betas_conv = torch.stack(betas).reshape(
-        len(betas), 1, image_size, image_size)
+    betas_final = torch.stack(betas).reshape(
+        len(betas), image_size**2)
 
-    if p_torch is not None:
-        beta_conv = F.conv2d(betas_conv, p_torch, padding="same")
-    else:
-        beta_conv = betas_conv
-
-    # bring everything back to the CPU
-    beta_conv = beta_conv.squeeze().cpu()
-
-    return beta_conv
+    return betas_final
 
 
 def compute_betas_svd(
