@@ -54,9 +54,7 @@ def compute_betas_least_square(
         # compute beta
         beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
 
-        # Maks the values of beta
-        beta_cut = (beta.solution.squeeze() * m_torch)
-        betas.append(beta_cut)
+        betas.append(beta.solution.squeeze())
 
     # Convolve the betas
     betas_final = torch.stack(betas).reshape(

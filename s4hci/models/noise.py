@@ -338,7 +338,7 @@ class S4Noise(nn.Module):
             self.image_size ** 2,
             self.image_size ** 2)
 
-        tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
+        # tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
 
         return tmp_weights
 
@@ -346,11 +346,13 @@ class S4Noise(nn.Module):
             self,
             science_data
     ):
+
         with torch.no_grad():
             noise_estimate = self.forward(science_data)
 
         # 1.) normalize the data
-        science_norm = science_data.view(science_data.shape[0], -1)
+        science_norm = self.normalize_data(science_data)
+        science_norm = science_norm.view(science_norm.shape[0], -1)
 
         # 3.) compute the residual
         residual = science_norm - noise_estimate.view(
@@ -369,7 +371,9 @@ class S4Noise(nn.Module):
     ) -> torch.Tensor:
 
         # 1.) normalize the data
-        science_norm = x.view(x.shape[0], -1)
+
+        science_norm = self.normalize_data(x)
+        science_norm = science_norm.view(science_norm.shape[0], -1)
 
         # 2.) predict
         noise_estimate = science_norm @ self.betas.T
