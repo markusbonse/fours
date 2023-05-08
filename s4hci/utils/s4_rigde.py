@@ -71,19 +71,13 @@ def compute_betas_svd(
         lambda_regs,
         positions,
         p_torch=None,
-        rank="cpu",
         approx_svd=-1,
         verbose=True):
 
     image_size = X_torch.shape[-1]
 
-    # send everything to the current GPU / device
-    X_torch = X_torch.to(rank)
-    M_torch = M_torch.to(rank)
-
     # convolve the data
     if p_torch is not None:
-        p_torch = p_torch.to(rank)
         X_conv = F.conv2d(X_torch, p_torch, padding="same")
     else:
         X_conv = X_torch
@@ -130,7 +124,8 @@ def compute_betas_svd(
         local_betas = []
         rhs = torch.diag(D_torch) @ U_torch.T @ Y_torch
         for tmp_lambda_reg in lambda_regs:
-            eye = torch.ones_like(D_torch, device=rank) * tmp_lambda_reg
+            eye = torch.ones_like(D_torch,
+                                  device=X_torch.device) * tmp_lambda_reg
             # 1D vector
             inv_eye = 1 / (D_torch ** 2 + eye)
 
@@ -152,7 +147,7 @@ def compute_betas_svd(
         else:
             tmp_betas_conv = tmp_betas
 
-        betas.append(tmp_betas_conv.squeeze().cpu())
+        betas.append(tmp_betas_conv.squeeze())
 
     # Stack all results and return them
     betas_final = torch.stack(betas)
