@@ -51,7 +51,8 @@ class S4Noise(nn.Module):
 
         # 4.) Initialize the raw beta values
         self.betas_raw = nn.Parameter(torch.zeros(
-            self.image_size**2, self.image_size**2))
+            self.image_size ** 2, self.image_size ** 2,
+            dtype=torch.double))
 
         # 5.) Set up the buffers for the two masks
         if self.verbose:
@@ -84,13 +85,15 @@ class S4Noise(nn.Module):
             "mean_frame",
             torch.zeros(
                 self.image_size,
-                self.image_size))
+                self.image_size,
+                dtype=torch.double))
 
         self.register_buffer(
             "std_frame",
             torch.zeros(
                 self.image_size,
-                self.image_size))
+                self.image_size,
+                dtype=torch.double))
 
     def save(self, file_path):
         state_dict = self.state_dict()
@@ -179,13 +182,6 @@ class S4Noise(nn.Module):
         if self.verbose:
             print("[DONE]")
 
-        # TODO Check this I think it has to go in a conv fuction
-        # 3.) re-mask if requested
-        #if self.re_mask:
-        #    second_mask = self.second_mask.view(
-        #        self.second_mask.shape[0], -1)
-        #    self.betas.data = self.betas.data * second_mask
-
     def _validate_lambdas_separation(
             self,
             separation,
@@ -204,7 +200,7 @@ class S4Noise(nn.Module):
         positions = get_validation_positions(
             num_positions=num_test_positions,
             separation=separation,
-            test_image=science_data_train[0].numpy())
+            test_image=science_data_train[0].cpu().numpy())
 
         # 2.) Set up the training data
         if self.verbose:
@@ -271,7 +267,7 @@ class S4Noise(nn.Module):
             tmp_residual = torch.abs(gt_values - tmp_prediction)
 
             tmp_median_error = torch.median(tmp_residual)
-            median_errors.append(tmp_median_error)
+            median_errors.append(tmp_median_error.cpu())
 
         # normalize
         median_errors = np.array(median_errors)
@@ -323,35 +319,65 @@ class S4Noise(nn.Module):
 
         return all_results, best_lambda
 
-    def convolved_weights(self):
+    @property
+    def betas(self):
+        # reshape the raw betas
+        raw_betas = self.betas_raw.view(
+            -1,
+            self.image_size,
+            self.image_size)
+
         # set regularization_mask values to zero
-        tmp_weights = self.beta_raw * self.right_reason_mask
+        tmp_weights = raw_betas * self.right_reason_mask
 
         # convolve the weights
         tmp_weights = F.conv2d(
-            tmp_weights.view(-1, 1, self.image_size, self.image_size),
+            tmp_weights.unsqueeze(1),
             self.psf_model,
-            padding="same").view(self.image_size**2, self.image_size**2)
+            padding="same").view(
+            self.image_size ** 2,
+            self.image_size ** 2)
 
-        tmp_weights = tmp_weights * self.second_mask
+        tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
 
         return tmp_weights
 
-    @staticmethod
-    def num_flat_features(x):
-        size = x.size()[1:]
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
+    def predict(
+            self,
+            science_data
+    ):
+        with torch.no_grad():
+            noise_estimate = self.forward(science_data)
+
+        # 1.) normalize the data
+        science_norm = science_data.view(science_data.shape[0], -1)
+
+        # 3.) compute the residual
+        residual = science_norm - noise_estimate.view(
+            science_data.shape[0], -1)
+
+        residual = residual.view(
+            science_norm.shape[0],
+            self.image_size,
+            self.image_size)
+
+        return residual, noise_estimate
 
     def forward(
             self,
             x: torch.Tensor
     ) -> torch.Tensor:
 
-        size = x.size()
-        input_flatten = x.view(-1, self.num_flat_features(x))
-        convolved_weights = self.convolved_weights()
-        result = F.linear(input_flatten, convolved_weights, None)
-        return result.view(size)
+        # 1.) normalize the data
+        science_norm = x.view(x.shape[0], -1)
+
+        # 2.) predict
+        noise_estimate = science_norm @ self.betas.T
+
+        # 3.) reshape
+        noise_estimate = noise_estimate.view(
+            science_norm.shape[0],
+            self.image_size,
+            self.image_size)
+
+        return noise_estimate
