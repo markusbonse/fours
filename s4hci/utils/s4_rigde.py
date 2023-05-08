@@ -75,6 +75,7 @@ def compute_betas_svd(
         verbose=True):
 
     image_size = X_torch.shape[-1]
+    X_torch = X_torch.unsqueeze(1)
 
     # convolve the data
     if p_torch is not None:
