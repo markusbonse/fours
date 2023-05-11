@@ -355,19 +355,29 @@ class S4Noise(nn.Module):
             self,
             science_data
     ):
+        """
+        science_data: shape: (time, x, y), not normalized raw data
+        """
 
-        with torch.no_grad():
-            noise_estimate = self.forward(science_data)
-
-        # 1.) normalize the data
+        # 1.) normalize the science_data
         science_norm = self.normalize_data(science_data)
-        science_norm = science_norm.view(science_norm.shape[0], -1)
+
+        # 2.) predict the noise
+        with torch.no_grad():
+            science_norm_flatten = science_norm.view(
+                science_norm.shape[0], -1)
+
+            noise_estimate = self.forward(science_norm_flatten)
 
         # 3.) compute the residual
-        residual = science_norm - noise_estimate.view(
-            science_data.shape[0], -1)
+        residual = science_norm_flatten - noise_estimate
 
         residual = residual.view(
+            science_norm.shape[0],
+            self.image_size,
+            self.image_size)
+
+        noise_estimate = noise_estimate.view(
             science_norm.shape[0],
             self.image_size,
             self.image_size)
@@ -376,21 +386,12 @@ class S4Noise(nn.Module):
 
     def forward(
             self,
-            x: torch.Tensor
+            science_norm_flatten: torch.Tensor
     ) -> torch.Tensor:
+        """
+        science_norm_flatten: shape: (time, x*y) already normalized
+        """
 
-        # 1.) normalize the data
-
-        science_norm = self.normalize_data(x)
-        science_norm = science_norm.view(science_norm.shape[0], -1)
-
-        # 2.) predict
-        noise_estimate = science_norm @ self.betas.T
-
-        # 3.) reshape
-        noise_estimate = noise_estimate.view(
-            science_norm.shape[0],
-            self.image_size,
-            self.image_size)
+        noise_estimate = science_norm_flatten @ self.betas.T
 
         return noise_estimate
