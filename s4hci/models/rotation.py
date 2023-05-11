@@ -24,12 +24,13 @@ class FieldRotationModel(nn.Module):
         self.m_register_grid = register_grid
 
         if register_grid:
-            self.register_buffer("m_grid",
-                                 self._build_grid_from_angles(all_angles,
-                                                              self.m_subsample))
+            self.register_buffer(
+                "m_grid",
+                self._build_grid_from_angles(
+                    all_angles, self.m_subsample))
         else:
-            self.m_grid = self._build_grid_from_angles(all_angles,
-                                                       self.m_subsample)
+            self.m_grid = self._build_grid_from_angles(
+                all_angles, self.m_subsample)
 
     def _build_grid_from_angles(self,
                                 angles,
@@ -52,11 +53,12 @@ class FieldRotationModel(nn.Module):
         theta[:, 0, 1] = torch.sin(angles_rad)
         theta[:, 1, 1] = torch.cos(angles_rad)
 
-        grid = F.affine_grid(theta,
-                             torch.Size((len(sub_angles), 1,
-                                         self.m_input_size,
-                                         self.m_input_size)),
-                             align_corners=True)
+        grid = F.affine_grid(
+            theta,
+            torch.Size((len(sub_angles), 1,
+                        self.m_input_size,
+                        self.m_input_size)),
+            align_corners=True)
         return grid
 
     def forward(self,
