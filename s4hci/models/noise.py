@@ -20,7 +20,6 @@ class S4Noise(nn.Module):
             cut_radius_psf,
             mask_template_setup,
             convolve=True,
-            re_mask=False,
             verbose=True,
             available_device="cpu"):
 
@@ -36,7 +35,6 @@ class S4Noise(nn.Module):
         self.convolve = convolve
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
-        self.re_mask = re_mask
 
         # 3.) prepare the psf_template
         template_cut, _ = construct_round_rfrr_template(
@@ -106,7 +104,6 @@ class S4Noise(nn.Module):
         state_dict["convolve"] = self.convolve
         state_dict["cut_radius_psf"] = self.cut_radius_psf
         state_dict["mask_template_setup"] = self.mask_template_setup
-        state_dict["re_mask"] = self.re_mask
         torch.save(state_dict, file_path)
 
     @classmethod
@@ -129,7 +126,6 @@ class S4Noise(nn.Module):
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
             mask_template_setup=state_dict.pop('mask_template_setup'),
             convolve=state_dict.pop('convolve'),
-            re_mask=state_dict.pop('re_mask'),
             verbose=verbose,
             available_device=available_device)
 
@@ -346,9 +342,6 @@ class S4Noise(nn.Module):
             self.image_size ** 2,
             self.image_size ** 2)
 
-        if self.re_mask:
-            tmp_weights = tmp_weights * self.second_mask.flatten(start_dim=1)
-
         self.prev_betas = tmp_weights
 
     def predict(
@@ -367,6 +360,7 @@ class S4Noise(nn.Module):
             science_norm_flatten = science_norm.view(
                 science_norm.shape[0], -1)
 
+            self.compute_betas()
             noise_estimate = self.forward(science_norm_flatten)
 
         # 3.) compute the residual
