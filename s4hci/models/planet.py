@@ -16,7 +16,7 @@ class S4Planet(nn.Module):
             data_image_size,
             psf_template,
             # used for the inner radius of the planet mask
-            fwhm=0,
+            inner_mask_radius=0,
             use_up_sample=1):
 
         super(S4Planet, self).__init__()
@@ -34,7 +34,7 @@ class S4Planet(nn.Module):
 
         self.output_size = data_image_size
         self.input_size = int(data_image_size * use_up_sample)
-        self.fwhm_size = fwhm
+        self.inner_mask_radius = inner_mask_radius
 
         # 2.) Init the planet model
         # values equal to zero can cause numerical instability
@@ -47,7 +47,7 @@ class S4Planet(nn.Module):
         # 3.) Set up the planet mask
         planet_mask = construct_planet_mask(
             self.m_input_size,
-            int(fwhm * use_up_sample))  # inner region mask
+            int(inner_mask_radius * use_up_sample))  # inner region mask
 
         # the mask is not trainable but also send to the gpu.
         self.register_buffer(
@@ -65,7 +65,7 @@ class S4Planet(nn.Module):
         # add the other information we want to keep
         state_dict["use_up_sample"] = self.use_up_sample
         state_dict["output_size"] = self.output_size
-        state_dict["fwhm_size"] = self.fwhm_size
+        state_dict["inner_mask_radius"] = self.inner_mask_radius
 
         torch.save(state_dict, file_path)
 
@@ -80,7 +80,7 @@ class S4Planet(nn.Module):
         obj = cls(
             data_image_size=state_dict.pop('output_size'),
             psf_template=dummy_template,
-            fwhm=state_dict.pop('fwhm_size'),
+            inner_mask_radius=state_dict.pop('inner_mask_radius'),
             use_up_sample=state_dict.pop('use_up_sample'))
 
         obj.load_state_dict(state_dict)
