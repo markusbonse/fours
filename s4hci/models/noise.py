@@ -67,16 +67,6 @@ class S4Noise(nn.Module):
             "right_reason_mask",
             torch.from_numpy(right_reason_mask))
 
-        second_mask = construct_rfrr_mask(
-            template_setup=self.mask_template_setup,
-            psf_template_in=template_norm,
-            mask_size_in=self.image_size,
-            use_template=True)
-
-        self.register_buffer(
-            "second_mask",
-            torch.from_numpy(second_mask))
-
         if self.verbose:
             print("[DONE]")
 
@@ -228,9 +218,19 @@ class S4Noise(nn.Module):
             approx_svd=approx_svd,
             verbose=self.verbose)
 
-        # 4.) Re-mask with self.second_mask.
+        # 4.) Re-mask with second_mask.
         # This step is needed to cut off overflow towards the identity in case
         # of small mask sizes
+
+        second_mask = construct_rfrr_mask(
+            template_setup=self.mask_template_setup,
+            psf_template_in=self.psf_model.cpu().numpy()[0, 0],
+            mask_size_in=self.image_size,
+            use_template=True)
+
+        second_mask = torch.from_numpy(second_mask)
+        second_mask = second_mask.to(betas_conv.device)
+
         if self.verbose:
             print("Re-mask betas for "
                   "separation " + str(separation) + " ...")
@@ -242,7 +242,7 @@ class S4Noise(nn.Module):
             tmp_idx = x * self.image_size + y
             all_idx.append(tmp_idx)
 
-            re_masked[i] = betas_conv[i] * self.second_mask[tmp_idx]
+            re_masked[i] = betas_conv[i] * second_mask[tmp_idx]
 
         # 5.) Predict
         if self.verbose:
