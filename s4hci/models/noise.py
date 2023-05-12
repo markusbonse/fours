@@ -20,13 +20,11 @@ class S4Noise(nn.Module):
             cut_radius_psf,
             mask_template_setup,
             convolve=True,
-            verbose=True,
-            available_device="cpu"):
+            verbose=True):
 
         super(S4Noise, self).__init__()
 
         # 1.) save the non-model related parameters
-        self.available_device = available_device
         self.verbose = verbose
 
         # 2.) save the simple information
@@ -100,8 +98,7 @@ class S4Noise(nn.Module):
     def load(
             cls,
             file_path,
-            verbose=True,
-            available_device="cpu"):
+            verbose=True):
 
         state_dict = torch.load(file_path)
 
@@ -116,8 +113,7 @@ class S4Noise(nn.Module):
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
             mask_template_setup=state_dict.pop('mask_template_setup'),
             convolve=state_dict.pop('convolve'),
-            verbose=verbose,
-            available_device=available_device)
+            verbose=verbose)
 
         obj.load_state_dict(state_dict)
         return obj
