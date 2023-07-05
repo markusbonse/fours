@@ -17,7 +17,8 @@ class S4Planet(nn.Module):
             psf_template,
             # used for the inner radius of the planet mask
             inner_mask_radius=0,
-            use_up_sample=1):
+            use_up_sample=1,
+            init_noise_factor=0.00001):
 
         super(S4Planet, self).__init__()
 
@@ -39,14 +40,15 @@ class S4Planet(nn.Module):
         # 2.) Init the planet model
         # values equal to zero can cause numerical instability
         self.planet_model = nn.Parameter(
-            torch.ones(1,
-                       self.m_input_size,
-                       self.m_input_size).float() * 0.0000001,
+            torch.abs(torch.randn(
+                1,
+                self.input_size,
+                self.input_size).float()) * init_noise_factor,
             requires_grad=True)
 
         # 3.) Set up the planet mask
         planet_mask = construct_planet_mask(
-            self.m_input_size,
+            self.input_size,
             int(inner_mask_radius * use_up_sample))  # inner region mask
 
         # the mask is not trainable but also send to the gpu.
@@ -97,14 +99,14 @@ class S4Planet(nn.Module):
         # we have to rotate into the opposite direction
         self.rotation = FieldRotationModel(
             all_angles,
-            input_size=self.m_input_size,
+            input_size=self.input_size,
             inverse=True,
             subsample=rotation_grid_down_sample,
             register_grid=upload_rotation_grid)
 
     @property
     def planet_parameters(self):
-        return self.m_planet_model ** 2
+        return self.planet_model ** 2
 
     def get_planet_signal(self):
         planet_signal = F.conv2d(
@@ -113,7 +115,7 @@ class S4Planet(nn.Module):
             padding="same")
 
         # mask circular pattern
-        masked_planet_signal = planet_signal.squeeze(0) * self.m_planet_mask
+        masked_planet_signal = planet_signal.squeeze(0) * self.planet_mask
         return masked_planet_signal
 
     def forward(self,
@@ -132,12 +134,13 @@ class S4Planet(nn.Module):
         planet_stack = raw_planet_signal.repeat(num_copies, 1, 1).clone()
 
         # 2.) Rotate the planet frames
-        output_dim = (self.m_output_size,
-                      self.m_output_size)
+        output_dim = (self.output_size,
+                      self.output_size)
 
-        planet_stack = self.m_rotation(planet_stack.unsqueeze(1),
-                                       parang_idx=parang_idx,
-                                       new_angles=new_angles,
-                                       output_dimensions=output_dim)
+        planet_stack = self.rotation(
+            planet_stack.unsqueeze(1),
+            parang_idx=parang_idx,
+            new_angles=new_angles,
+            output_dimensions=output_dim)
 
         return planet_stack
