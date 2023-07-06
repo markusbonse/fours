@@ -15,6 +15,7 @@ class S4Planet(nn.Module):
             self,
             data_image_size,
             psf_template,
+            convolve_second=False,
             # used for the inner radius of the planet mask
             inner_mask_radius=0,
             use_up_sample=1,
@@ -36,6 +37,7 @@ class S4Planet(nn.Module):
         self.output_size = data_image_size
         self.input_size = int(data_image_size * use_up_sample)
         self.inner_mask_radius = inner_mask_radius
+        self.convolve_second = convolve_second
 
         # 2.) Init the planet model
         # values equal to zero can cause numerical instability
@@ -68,6 +70,7 @@ class S4Planet(nn.Module):
         state_dict["use_up_sample"] = self.use_up_sample
         state_dict["output_size"] = self.output_size
         state_dict["inner_mask_radius"] = self.inner_mask_radius
+        state_dict["convolve_second"] = self.convolve_second
 
         torch.save(state_dict, file_path)
 
@@ -83,7 +86,8 @@ class S4Planet(nn.Module):
             data_image_size=state_dict.pop('output_size'),
             psf_template=dummy_template,
             inner_mask_radius=state_dict.pop('inner_mask_radius'),
-            use_up_sample=state_dict.pop('use_up_sample'))
+            use_up_sample=state_dict.pop('use_up_sample'),
+            convolve_second=state_dict.pop('convolve_second'))
 
         obj.load_state_dict(state_dict)
 
@@ -109,13 +113,17 @@ class S4Planet(nn.Module):
         return self.planet_model ** 2
 
     def get_planet_signal(self):
-        planet_signal = F.conv2d(
-            self.planet_parameters.unsqueeze(0),
-            self.psf_model,
-            padding="same")
+
+        if self.convolve_second:
+            planet_signal = self.planet_parameters
+        else:
+            planet_signal = F.conv2d(
+                self.planet_parameters.unsqueeze(0),
+                self.psf_model,
+                padding="same").squeeze(0)
 
         # mask circular pattern
-        masked_planet_signal = planet_signal.squeeze(0) * self.planet_mask
+        masked_planet_signal = planet_signal * self.planet_mask
         return masked_planet_signal
 
     def forward(self,
@@ -142,5 +150,11 @@ class S4Planet(nn.Module):
             parang_idx=parang_idx,
             new_angles=new_angles,
             output_dimensions=output_dim)
+
+        if self.convolve_second:
+            planet_stack = F.conv2d(
+                planet_stack,
+                self.psf_model,
+                padding="same")
 
         return planet_stack
