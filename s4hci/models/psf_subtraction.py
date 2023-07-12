@@ -1,5 +1,6 @@
 from pathlib import Path
 from copy import deepcopy
+from datetime import datetime
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -13,6 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from s4hci.models.noise import S4Noise
 from s4hci.models.planet import S4Planet
 from s4hci.utils.adi_tools import combine_residual_stack
+from s4hci.utils.data_handling import save_as_fits
 
 
 class S4:
@@ -139,6 +141,73 @@ class S4:
         # 2.) Save the noise model
         self.noise_model.save(self.models_dir / "noise_model_closed_form.pkl")
 
+    def _logg_fine_tune_status(
+            self,
+            epoch,
+            loss_reg,
+            loss_recon,
+            logging_interval,
+            planet_signal):
+
+        if self.work_dir is None:
+            return
+
+        if epoch == 0:
+            start_reg_loss = loss_reg.item()
+            start_recon_loss = loss_recon.item()
+
+        self.tensorboard_logger.add_scalar(
+            "Loss/Reconstruction_delta",
+            loss_recon.item() - start_recon_loss,
+            epoch)
+
+        self.tensorboard_logger.add_scalar(
+            "Loss/Regularization_delta",
+            loss_reg.item() - start_reg_loss,
+            epoch)
+
+        if not epoch % logging_interval == logging_interval - 1:
+            return
+
+        with torch.no_grad():
+            tmp_frame = planet_signal.detach()[-1, 0].cpu().numpy()
+            self.tensorboard_logger.add_image(
+                "Images/Planet_signal_estimate",
+                self.normalize_for_tensorboard(tmp_frame),
+                epoch,
+                dataformats="HW")
+
+            save_as_fits(
+                tmp_frame,
+                self.residuals_dir / Path(
+                    "Planet_signal_estimate_epoch_" + str(epoch) + ".fits"),
+                overwrite=True)
+
+            tmp_frame = self.planet_model.get_planet_signal()
+            tmp_frame = tmp_frame.detach()[0].cpu().numpy()
+            self.tensorboard_logger.add_image(
+                "Images/Planet_raw_parameters",
+                self.normalize_for_tensorboard(tmp_frame),
+                epoch,
+                dataformats="HW")
+
+            save_as_fits(
+                tmp_frame,
+                self.residuals_dir / Path(
+                    "Planet_raw_parameters_" + str(epoch) + ".fits"),
+                overwrite=True)
+
+            self.noise_model.compute_betas()
+            betas = self.noise_model.prev_betas.detach().cpu().numpy()
+            beta_frame = np.abs(betas[6500].reshape(
+                self.data_image_size, self.data_image_size))
+
+            self.tensorboard_logger.add_image(
+                "Images/Noise_model_reasons",
+                self.normalize_for_tensorboard(beta_frame),
+                epoch,
+                dataformats="HW")
+
     def fine_tune_model_with_planet(
             self,
             num_epochs,
@@ -160,7 +229,10 @@ class S4:
             upload_rotation_grid=upload_rotation_grid)
 
         if self.work_dir is not None:
-            self.tensorboard_logger = SummaryWriter(self.tensorboard_dir)
+            time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
+            current_logdir = self.tensorboard_dir / Path(time_str)
+            current_logdir.mkdir()
+            self.tensorboard_logger = SummaryWriter(current_logdir)
 
         # 2.) move models to the GPU
         self.planet_model = self.planet_model.to(self.device)
@@ -250,53 +322,12 @@ class S4:
             optimizer.step()
 
             # 6.) Logg the information
-            if self.work_dir is None:
-                continue
-
-            if epoch == 0:
-                start_reg_loss = loss_reg.item()
-                start_recon_loss = loss_recon.item()
-
-            self.tensorboard_logger.add_scalar(
-                "Loss/Reconstruction_delta",
-                loss_recon.item() - start_recon_loss,
-                epoch)
-
-            self.tensorboard_logger.add_scalar(
-                "Loss/Regularization_delta",
-                loss_reg.item() - start_reg_loss,
-                epoch)
-
-            if not epoch % logging_interval == logging_interval - 1:
-                continue
-
-            with torch.no_grad():
-
-                tmp_frame = planet_signal.detach()[-1, 0].cpu().numpy()
-                self.tensorboard_logger.add_image(
-                    "Images/Planet_signal_estimate",
-                    self.normalize_for_tensorboard(tmp_frame),
-                    epoch,
-                    dataformats="HW")
-
-                tmp_frame = self.planet_model.get_planet_signal()
-                tmp_frame = tmp_frame.detach()[0].cpu().numpy()
-                self.tensorboard_logger.add_image(
-                    "Images/Planet_raw_parameters",
-                    self.normalize_for_tensorboard(tmp_frame),
-                    epoch,
-                    dataformats="HW")
-
-                self.noise_model.compute_betas()
-                betas = self.noise_model.prev_betas.detach().cpu().numpy()
-                beta_frame = np.abs(betas[6500].reshape(
-                    self.data_image_size, self.data_image_size))
-
-                self.tensorboard_logger.add_image(
-                    "Images/Noise_model_reasons",
-                    self.normalize_for_tensorboard(beta_frame),
-                    epoch,
-                    dataformats="HW")
+            self._logg_fine_tune_status(
+                epoch=epoch,
+                loss_reg=loss_reg,
+                loss_recon=loss_recon,
+                logging_interval=logging_interval,
+                planet_signal=planet_signal)
 
         # 8.) Clean up GPU
         del x_norm, x_std
