@@ -66,6 +66,7 @@ class S4:
 
         # 4.) Create the tensorboard logger for the fine_tuning
         self.tensorboard_logger = None
+        self.fine_tune_start_time = None
 
     def _setup_working_dir(self):
         if self.work_dir is None:
@@ -145,16 +146,14 @@ class S4:
             self,
             epoch,
             loss_reg,
+            start_reg_loss,
             loss_recon,
+            start_recon_loss,
             logging_interval,
             planet_signal):
 
         if self.work_dir is None:
             return
-
-        if epoch == 0:
-            start_reg_loss = loss_reg.item()
-            start_recon_loss = loss_recon.item()
 
         self.tensorboard_logger.add_scalar(
             "Loss/Reconstruction_delta",
@@ -177,10 +176,14 @@ class S4:
                 epoch,
                 dataformats="HW")
 
+            tmp_residual_dir = self.residuals_dir / \
+                Path(self.fine_tune_start_time)
+            tmp_residual_dir.mkdir(exist_ok=True)
+
             save_as_fits(
                 tmp_frame,
-                self.residuals_dir / Path(
-                    "Planet_signal_estimate_epoch_" + str(epoch) + ".fits"),
+                tmp_residual_dir /
+                Path("Planet_signal_estimate_epoch_" + str(epoch) + ".fits"),
                 overwrite=True)
 
             tmp_frame = self.planet_model.get_planet_signal()
@@ -193,8 +196,8 @@ class S4:
 
             save_as_fits(
                 tmp_frame,
-                self.residuals_dir / Path(
-                    "Planet_raw_parameters_" + str(epoch) + ".fits"),
+                tmp_residual_dir /
+                Path("Planet_raw_parameters_" + str(epoch) + ".fits"),
                 overwrite=True)
 
             self.noise_model.compute_betas()
@@ -230,7 +233,9 @@ class S4:
 
         if self.work_dir is not None:
             time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
-            current_logdir = self.tensorboard_dir / Path(time_str)
+            self.fine_tune_start_time = time_str
+            current_logdir = self.tensorboard_dir /\
+                Path(self.fine_tune_start_time)
             current_logdir.mkdir()
             self.tensorboard_logger = SummaryWriter(current_logdir)
 
@@ -322,10 +327,16 @@ class S4:
             optimizer.step()
 
             # 6.) Logg the information
+            if epoch == 0:
+                start_reg_loss = loss_reg.item()
+                start_recon_loss = loss_recon.item()
+
             self._logg_fine_tune_status(
                 epoch=epoch,
                 loss_reg=loss_reg,
+                start_reg_loss=start_reg_loss,
                 loss_recon=loss_recon,
+                start_recon_loss=start_recon_loss,
                 logging_interval=logging_interval,
                 planet_signal=planet_signal)
 
