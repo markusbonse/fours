@@ -38,6 +38,7 @@ class S4Planet(nn.Module):
         self.input_size = int(data_image_size * use_up_sample)
         self.inner_mask_radius = inner_mask_radius
         self.convolve_second = convolve_second
+        self.use_up_sample = use_up_sample
 
         # 2.) Init the planet model
         # values equal to zero can cause numerical instability
