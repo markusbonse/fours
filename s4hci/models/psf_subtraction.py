@@ -333,6 +333,7 @@ class S4:
         del x_norm, x_std
         self.noise_model = self.noise_model.cpu()
         self.planet_model = self.planet_model.cpu()
+        torch.cuda.empty_cache()
 
     @staticmethod
     def normalize_for_tensorboard(frame_in):
