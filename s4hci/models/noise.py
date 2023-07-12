@@ -83,6 +83,11 @@ class S4Noise(nn.Module):
                 self.image_size,
                 dtype=torch.double))
 
+    def _apply(self, fn):
+        super(S4Noise, self)._apply(fn)
+        self.prev_betas = None
+        return self
+
     def save(self, file_path):
         state_dict = self.state_dict()
 
