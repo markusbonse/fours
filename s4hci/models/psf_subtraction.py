@@ -373,6 +373,7 @@ class S4:
 
             # 3.) Get the current data without the planet
             data_no_planet = x_train - planet_signal.squeeze().detach()
+            del planet_signal
         else:
             data_no_planet = x_train
 
@@ -383,6 +384,7 @@ class S4:
         # 5.) get the current normalized data
         x_norm = (x_train - x_mu) / x_std
         x_no_planet = (data_no_planet - x_mu) / x_std
+        del data_no_planet
 
         # 6.) reshape everything
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
@@ -406,6 +408,7 @@ class S4:
             self.noise_model.image_size).detach().cpu().numpy()
 
         unbiased_median_frame = np.median(residuals_unbiased, axis=0)
+        del residuals_unbiased
 
         # 10.) Compute the residual image
         residual_stack = residual_stack - unbiased_median_frame
