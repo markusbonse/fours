@@ -348,6 +348,10 @@ class S4:
         self.planet_model = self.planet_model.cpu()
         torch.cuda.empty_cache()
 
+        # 9.) Save the models
+        self.noise_model.save(self.models_dir / "noise_model_fine_tuned.pkl")
+        self.planet_model.save(self.models_dir / "planet_model_fine_tuned.pkl")
+
     @staticmethod
     def normalize_for_tensorboard(frame_in):
         image_for_tb = deepcopy(frame_in)
