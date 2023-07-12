@@ -28,7 +28,7 @@ def load_adi_data(hdf5_dataset: str,
 def save_as_fits(
         data: np.ndarray,
         file_name: str,
-        overwrite:bool
+        overwrite:bool = False
 ) -> None:
     """
     Saves data as .fits file.
@@ -36,6 +36,7 @@ def save_as_fits(
     Args:
         data: The data to be saved.
         file_name: The filename of the fits file.
+        overwrite: Overwrite existing files
     """
 
     hdu = fits.PrimaryHDU(data)
