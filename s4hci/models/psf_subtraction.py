@@ -183,7 +183,8 @@ class S4:
             save_as_fits(
                 tmp_frame,
                 tmp_residual_dir /
-                Path("Planet_signal_estimate_epoch_" + str(epoch) + ".fits"),
+                Path("Planet_signal_estimate_epoch_" + str(epoch).zfill(4)
+                     + ".fits"),
                 overwrite=True)
 
             tmp_frame = self.planet_model.get_planet_signal()
@@ -197,7 +198,8 @@ class S4:
             save_as_fits(
                 tmp_frame,
                 tmp_residual_dir /
-                Path("Planet_raw_parameters_" + str(epoch) + ".fits"),
+                Path("Planet_raw_parameters_" + str(epoch).zfill(4)
+                     + ".fits"),
                 overwrite=True)
 
             self.noise_model.compute_betas()
