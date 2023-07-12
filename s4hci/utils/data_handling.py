@@ -1,6 +1,8 @@
 import numpy as np
 import h5py
 
+from astropy.io import fits
+
 
 def load_adi_data(hdf5_dataset: str,
                   data_tag: str,
@@ -21,3 +23,22 @@ def load_adi_data(hdf5_dataset: str,
     hdf5_file.close()
 
     return data, angles, psf_template_data
+
+
+def save_as_fits(
+        data: np.ndarray,
+        file_name: str,
+        overwrite:bool
+) -> None:
+    """
+    Saves data as .fits file.
+
+    Args:
+        data: The data to be saved.
+        file_name: The filename of the fits file.
+    """
+
+    hdu = fits.PrimaryHDU(data)
+    hdul = fits.HDUList([hdu])
+
+    hdul.writeto(file_name, overwrite=overwrite)
