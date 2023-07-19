@@ -336,7 +336,7 @@ class S4:
 
                 # 4.) Compute the loss
                 loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
-                               - science_norm_flatten) ** 2).mean()
+                               - tmp_frames) ** 2).mean()
 
                 loss_reg = (self.noise_model.betas_raw ** 2).mean() \
                     * self.noise_model.lambda_reg
