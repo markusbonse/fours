@@ -9,7 +9,8 @@ def compute_betas_least_square(
         lambda_reg,
         positions,
         p_torch=None,
-        verbose=True
+        verbose=True,
+        device="cpu"
 ):
     """
     X_torch: (num_images, images_size, images_size) (normalized!)
@@ -28,10 +29,9 @@ def compute_betas_least_square(
 
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
+    # move the convolved data to the GPU
+    X_conv = X_conv.to(device)
     X_conv_square = X_conv.T @ X_conv
-    eye = torch.eye(image_size ** 2,
-                    image_size ** 2,
-                    device=X_torch.device)
 
     # Compute all betas in a loop over all positions
     betas = []
@@ -44,11 +44,16 @@ def compute_betas_least_square(
         tmp_idx = x * image_size + y
 
         # get the current mask
-        m_torch = M_torch[tmp_idx].flatten()
-        Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx]
+        m_torch = M_torch[tmp_idx].flatten().to(device)
+        Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx].to(device)
 
         # set up the least square problem
-        lhs = ((X_conv_square * m_torch).T * m_torch).T + eye * lambda_reg
+        lhs = ((X_conv_square * m_torch).T * m_torch).T + \
+              torch.eye(
+                  image_size ** 2,
+                  image_size ** 2,
+                  device=X_conv_square.device) * lambda_reg
+
         rhs = (X_conv * m_torch).T @ Y_torch
 
         # compute beta
@@ -57,8 +62,9 @@ def compute_betas_least_square(
         betas.append(beta.solution.squeeze())
 
     # Convolve the betas
+    # We move the beta matrix to the device of the noise model (usually cpu)
     betas_final = torch.stack(betas).reshape(
-        len(betas), image_size**2)
+        len(betas), image_size**2).to(M_torch.device)
 
     return betas_final
 

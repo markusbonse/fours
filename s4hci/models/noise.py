@@ -142,7 +142,8 @@ class S4Noise(nn.Module):
 
     def fit(
             self,
-            science_data):
+            science_data,
+            device="cpu"):
 
         self._prepare_normalization(science_data)
         science_data_norm = self.normalize_data(science_data)
@@ -166,7 +167,8 @@ class S4Noise(nn.Module):
             M_torch=self.right_reason_mask,
             lambda_reg=self.lambda_reg,
             positions=positions,
-            verbose=self.verbose)
+            verbose=self.verbose,
+            device=device)
 
         if self.verbose:
             print("[DONE]")

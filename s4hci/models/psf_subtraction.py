@@ -125,22 +125,21 @@ class S4:
 
         return all_results, best_lambda
 
-    def find_closed_form_noise_model(self):
+    def find_closed_form_noise_model(
+            self,
+            save_model=False):
         """
         Second processing step
         """
 
         # 1.) Train the noise model
-        x_train = torch.from_numpy(self.data_cube).float().to(self.device)
-        self.noise_model = self.noise_model.to(self.device)
-        self.noise_model.fit(x_train)
-
-        # 2.) clean up
-        del x_train
-        self.noise_model = self.noise_model.cpu()
+        x_train = torch.from_numpy(self.data_cube).float()
+        self.noise_model.fit(x_train, device=self.device)
 
         # 2.) Save the noise model
-        self.noise_model.save(self.models_dir / "noise_model_closed_form.pkl")
+        if save_model:
+            self.noise_model.save(
+                self.models_dir / "noise_model_closed_form.pkl")
 
     def _logg_fine_tune_status(
             self,
