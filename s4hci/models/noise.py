@@ -265,11 +265,12 @@ class S4Noise(nn.Module):
             tmp_beta = re_masked[:, tmp_lambda_idx]
             tmp_beta = tmp_beta.view(tmp_beta.shape[0], -1)
 
-            tmp_prediction = science_test @ tmp_beta.T
-            tmp_residual = torch.abs(gt_values - tmp_prediction)
+            tmp_prediction = science_test.to(device) @ tmp_beta.T.to(device)
+            tmp_residual = torch.abs(
+                gt_values.to(device) - tmp_prediction).cpu()
 
             tmp_median_error = torch.median(tmp_residual)
-            median_errors.append(tmp_median_error.cpu())
+            median_errors.append(tmp_median_error)
 
         # normalize
         median_errors = np.array(median_errors)
