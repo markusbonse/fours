@@ -21,16 +21,21 @@ def compute_betas_least_square(
     X_torch = X_torch.unsqueeze(1)
     image_size = X_torch.shape[-1]
 
-    # convolve the data
-    if p_torch is not None:
-        X_conv = F.conv2d(X_torch, p_torch, padding="same")
-    else:
-        X_conv = X_torch
+    # convolve the data on the GPU
+    X_torch = X_torch.to(device)
 
+    if p_torch is not None:
+        X_conv = F.conv2d(
+            X_torch,
+            p_torch.to(device),
+            padding="same")
+    else:
+        X_conv = X_torch.to(device)
+
+    X_torch = X_torch.cpu()
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
     # move the convolved data to the GPU
-    X_conv = X_conv.to(device)
     X_conv_square = X_conv.T @ X_conv
 
     # Compute all betas in a loop over all positions
@@ -83,12 +88,16 @@ def compute_betas_svd(
 
     # convolve the data on the GPU
     X_torch = X_torch.to(device)
+    p_torch = p_torch.to(device)
     if p_torch is not None:
-        X_conv = F.conv2d(X_torch.to(device),
-                          p_torch.to(device), padding="same")
+        X_conv = F.conv2d(
+            X_torch,
+            p_torch, padding="same")
     else:
         X_conv = X_torch.to(device)
+
     X_torch = X_torch.cpu()
+    p_torch = p_torch.cpu()
 
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
