@@ -233,7 +233,6 @@ class S4Noise(nn.Module):
             use_template=True)
 
         second_mask = torch.from_numpy(second_mask)
-        second_mask = second_mask.to(betas_conv.device)
 
         if self.verbose:
             print("Re-mask betas for "
@@ -259,18 +258,25 @@ class S4Noise(nn.Module):
         science_test = science_test.view(science_test.shape[0], -1)
         gt_values = science_test[:, all_idx]
 
+        # move to GPU
+        gt_values = gt_values.to(device)
+        re_masked = re_masked.to(device)
+        science_test = science_test.to(device)
+
         median_errors = []
 
         for tmp_lambda_idx in tqdm(range(re_masked.shape[1])):
             tmp_beta = re_masked[:, tmp_lambda_idx]
             tmp_beta = tmp_beta.view(tmp_beta.shape[0], -1)
 
-            tmp_prediction = science_test.to(device) @ tmp_beta.T.to(device)
-            tmp_residual = torch.abs(
-                gt_values.to(device) - tmp_prediction).cpu()
+            tmp_prediction = science_test @ tmp_beta.T
+            tmp_residual = torch.abs(gt_values - tmp_prediction).cpu()
 
             tmp_median_error = torch.median(tmp_residual)
             median_errors.append(tmp_median_error)
+
+        # clean up memory
+        del gt_values, re_masked, science_test
 
         # normalize
         median_errors = np.array(median_errors)
