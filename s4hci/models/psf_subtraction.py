@@ -273,9 +273,11 @@ class S4:
         # if the noise model is not fine-tuned we can compute the noise estimate
         # once at the start of the training loop
         if not fine_tune_noise_model:
-            noise_estimate = self.noise_model(science_norm_flatten)
+            pre_build_noise_noise_estimate = self.noise_model(
+                science_norm_flatten.to(self.device))
         else:
-            noise_estimate = None
+            pre_build_noise_noise_estimate = torch.ones(
+                science_norm_flatten.shape[0])
 
         # The index list is needed to get all planet frames during fine-tuning.
         planet_model_idx = torch.from_numpy(np.arange(x_norm.shape[0]))
@@ -289,6 +291,7 @@ class S4:
         # create the DataLoader
         merged_dataset = TensorDataset(
             science_norm_flatten,
+            pre_build_noise_noise_estimate,
             planet_model_idx)
 
         if batch_size == -1:
@@ -314,7 +317,7 @@ class S4:
             running_reg_loss = 0
             running_recon_loss = 0
 
-            for tmp_frames, tmp_planet_idx in data_loader:
+            for tmp_frames, noise_estimate, tmp_planet_idx in data_loader:
                 # 1.) move the data to the GPU
                 tmp_frames = tmp_frames.to(0)
 
