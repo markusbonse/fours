@@ -246,8 +246,9 @@ class S4:
         x_std = torch.std(x_train, axis=0)
         x_norm = (x_train - x_mu) / x_std
 
-        # move std frame to GPU
+        # move the data to the GPU
         x_std = x_std.to(self.device)
+        x_norm = x_norm.to(self.device)
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
         # 4.) Create the optimizer
@@ -318,10 +319,7 @@ class S4:
             running_recon_loss = 0
 
             for tmp_frames, noise_estimate, tmp_planet_idx in data_loader:
-                # 1.) move the data to the GPU
-                tmp_frames = tmp_frames.to(0)
-
-                # 2.) Get the current planet signal estimate
+                # 1.) Get the current planet signal estimate
                 planet_signal = self.planet_model.forward(tmp_planet_idx)
 
                 # 2.) normalize and reshape the planet signal
