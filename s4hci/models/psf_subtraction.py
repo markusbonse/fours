@@ -214,6 +214,7 @@ class S4:
             rotation_grid_down_sample=10,
             upload_rotation_grid=True,
             logging_interval=10,
+            save_model=False
     ):
         """
         This is the last step of optimization
@@ -322,8 +323,8 @@ class S4:
 
             # 6.) Logg the information
             if epoch == 0:
-                start_reg_loss = loss_reg.item()
-                start_recon_loss = loss_recon.item()
+                start_reg_loss = loss_reg.detach().item()
+                start_recon_loss = loss_recon.detach().item()
 
             self._logg_fine_tune_status(
                 epoch=epoch,
@@ -341,8 +342,11 @@ class S4:
         torch.cuda.empty_cache()
 
         # 9.) Save the models
-        self.noise_model.save(self.models_dir / "noise_model_fine_tuned.pkl")
-        self.planet_model.save(self.models_dir / "planet_model_fine_tuned.pkl")
+        if save_model:
+            self.noise_model.save(
+                self.models_dir / "noise_model_fine_tuned.pkl")
+            self.planet_model.save(
+                self.models_dir / "planet_model_fine_tuned.pkl")
 
     @staticmethod
     def normalize_for_tensorboard(frame_in):
