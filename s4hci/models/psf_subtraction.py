@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 import torch
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import TensorDataset, DataLoader
 
 from s4hci.models.noise import S4Noise
 from s4hci.models.planet import S4Planet
@@ -149,12 +150,12 @@ class S4:
 
         self.tensorboard_logger.add_scalar(
             "Loss/Reconstruction_delta",
-            loss_recon.item() - start_recon_loss,
+            loss_recon - start_recon_loss,
             epoch)
 
         self.tensorboard_logger.add_scalar(
             "Loss/Regularization_delta",
-            loss_reg.item() - start_reg_loss,
+            loss_reg - start_reg_loss,
             epoch)
 
         if not epoch % logging_interval == logging_interval - 1:
@@ -214,7 +215,8 @@ class S4:
             rotation_grid_down_sample=10,
             upload_rotation_grid=True,
             logging_interval=10,
-            save_model=False
+            save_model=False,
+            batch_size=-1
     ):
         """
         This is the last step of optimization
@@ -244,10 +246,8 @@ class S4:
         x_std = torch.std(x_train, axis=0)
         x_norm = (x_train - x_mu) / x_std
 
-        # move data to GPU
-        x_norm = x_norm.to(self.device)
+        # move std frame to GPU
         x_std = x_std.to(self.device)
-
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
         # 4.) Create the optimizer
@@ -286,51 +286,82 @@ class S4:
         else:
             epoch_range = range(num_epochs)
 
+        # create the DataLoader
+        merged_dataset = TensorDataset(
+            science_norm_flatten,
+            planet_model_idx)
+
+        if batch_size == -1:
+            bs = x_norm.shape[0]
+        else:
+            bs = batch_size
+        data_loader = DataLoader(
+            merged_dataset,
+            batch_size=bs,
+            shuffle=False)
+
+        # needed for gradient accumulation in order to normalize the loss
+        num_steps_per_epoch = len(data_loader)
+
         # values needed to plot the difference in loss
-        start_reg_loss = 0
-        start_recon_loss = 0
+        start_reg_loss = 0.
+        start_recon_loss = 0.
 
         for epoch in epoch_range:
             optimizer.zero_grad()
 
-            # 1.) Get the current planet signal estimate
-            planet_signal = self.planet_model.forward(planet_model_idx)
+            # we have to keep track of the loss sum within gradient accumulation
+            running_reg_loss = 0
+            running_recon_loss = 0
 
-            # 2.) normalize and reshape the planet signal
-            planet_signal = planet_signal / x_std
-            planet_signal_norm = planet_signal.view(x_norm.shape[0], -1)
+            for tmp_frames, tmp_planet_idx in data_loader:
+                # 1.) move the data to the GPU
+                tmp_frames = tmp_frames.to(0)
 
-            # 3.) run the forward path
-            if fine_tune_noise_model:
-                self.noise_model.compute_betas()
-                noise_estimate = self.noise_model(science_norm_flatten)
+                # 2.) Get the current planet signal estimate
+                planet_signal = self.planet_model.forward(tmp_planet_idx)
 
-            p_hat_n = self.noise_model(planet_signal_norm)
-            p_hat_n[p_hat_n > 0] = 0
+                # 2.) normalize and reshape the planet signal
+                planet_signal = planet_signal / x_std
+                planet_signal_norm = planet_signal.view(
+                    planet_signal.shape[0], -1)
 
-            # 4.) Compute the loss
-            loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
-                           - science_norm_flatten) ** 2).mean()
+                # 3.) run the forward path
+                if fine_tune_noise_model:
+                    self.noise_model.compute_betas()
+                    noise_estimate = self.noise_model(tmp_frames)
 
-            loss_reg = (self.noise_model.betas_raw ** 2).mean() \
-                * self.noise_model.lambda_reg
+                p_hat_n = self.noise_model(planet_signal_norm)
+                p_hat_n[p_hat_n > 0] = 0
 
-            # 5.) Backward
-            loss = loss_recon + loss_reg
-            loss.backward()
+                # 4.) Compute the loss
+                loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
+                               - science_norm_flatten) ** 2).mean()
 
+                loss_reg = (self.noise_model.betas_raw ** 2).mean() \
+                    * self.noise_model.lambda_reg
+
+                # 5.) Backward
+                loss = (loss_recon + loss_reg) / num_steps_per_epoch
+                loss.backward(retain_graph=True)
+
+                # 6.) Track the current loss
+                running_reg_loss += loss_reg.detach().item()
+                running_recon_loss += loss_recon.detach().item()
+
+            # Make one accumulated gradient step
             optimizer.step()
 
             # 6.) Logg the information
             if epoch == 0:
-                start_reg_loss = loss_reg.detach().item()
-                start_recon_loss = loss_recon.detach().item()
+                start_reg_loss = running_reg_loss
+                start_recon_loss = running_recon_loss
 
             self._logg_fine_tune_status(
                 epoch=epoch,
-                loss_reg=loss_reg,
+                loss_reg=running_reg_loss,
                 start_reg_loss=start_reg_loss,
-                loss_recon=loss_recon,
+                loss_recon=running_recon_loss,
                 start_recon_loss=start_recon_loss,
                 logging_interval=logging_interval,
                 planet_signal=planet_signal)
