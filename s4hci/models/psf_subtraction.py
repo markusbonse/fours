@@ -104,9 +104,8 @@ class S4:
             shuffle=False)
 
         # 2.) validate the lambda values of the noise model
-        x_train = torch.from_numpy(x_train).float().to(self.device)
-        x_test = torch.from_numpy(x_test).float().to(self.device)
-        self.noise_model = self.noise_model.to(self.device)
+        x_train = torch.from_numpy(x_train).float()
+        x_test = torch.from_numpy(x_test).float()
 
         all_results, best_lambda = self.noise_model.validate_lambdas(
             num_separations=num_separations,
@@ -114,14 +113,8 @@ class S4:
             science_data_train=x_train,
             science_data_test=x_test,
             num_test_positions=num_test_positions,
-            approx_svd=approx_svd)
-
-        # 3.) free gpu space
-        del x_train, x_test
-        self.noise_model = self.noise_model.cpu()
-
-        # 4.) save the model
-        self.noise_model.save(self.models_dir / "noise_model_lambda_val.pkl")
+            approx_svd=approx_svd,
+            device=self.device)
 
         return all_results, best_lambda
 

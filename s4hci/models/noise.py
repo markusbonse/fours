@@ -180,8 +180,8 @@ class S4Noise(nn.Module):
             science_data_train,
             science_data_test,
             num_test_positions,
-            approx_svd=-1
-    ):
+            approx_svd=-1,
+            device="cpu"):
 
         # 1.) get the positions where we evaluate the residual error
         if self.verbose:
@@ -219,7 +219,8 @@ class S4Noise(nn.Module):
             positions=positions,
             p_torch=p_torch,
             approx_svd=approx_svd,
-            verbose=self.verbose)
+            verbose=self.verbose,
+            device=device)
 
         # 4.) Re-mask with second_mask.
         # This step is needed to cut off overflow towards the identity in case
@@ -284,7 +285,8 @@ class S4Noise(nn.Module):
             science_data_train,
             science_data_test,
             num_test_positions,
-            approx_svd=-1
+            approx_svd=-1,
+            device="cpu"
     ):
         test_image = science_data_train[0]
         image_size_radius = int((test_image.shape[0] - 1) / 2)
@@ -300,8 +302,9 @@ class S4Noise(nn.Module):
                 science_data_train=science_data_train,
                 science_data_test=science_data_test,
                 num_test_positions=num_test_positions,
-                approx_svd=approx_svd
-            )
+                approx_svd=approx_svd,
+                device=device)
+
             all_results[tmp_separation] = tmp_errors
 
         # find the best lambda

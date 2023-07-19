@@ -61,7 +61,6 @@ def compute_betas_least_square(
 
         betas.append(beta.solution.squeeze())
 
-    # Convolve the betas
     # We move the beta matrix to the device of the noise model (usually cpu)
     betas_final = torch.stack(betas).reshape(
         len(betas), image_size**2).to(M_torch.device)
@@ -76,7 +75,8 @@ def compute_betas_svd(
         positions,
         p_torch=None,
         approx_svd=-1,
-        verbose=True):
+        verbose=True,
+        device="cpu"):
 
     image_size = X_torch.shape[-1]
     X_torch = X_torch.unsqueeze(1)
@@ -89,6 +89,9 @@ def compute_betas_svd(
 
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
+    # move the convolved data to the GPU
+    X_conv = X_conv.to(device)
+
     # Compute all betas in a loop over all positions
     betas = []
 
@@ -100,8 +103,8 @@ def compute_betas_svd(
         tmp_idx = x * image_size + y
 
         # get the current mask
-        m_torch = M_torch[tmp_idx].flatten()
-        Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx]
+        m_torch = M_torch[tmp_idx].flatten().to(device)
+        Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx].to(device)
 
         # mask the data
         X_conv_cut = X_conv * m_torch
@@ -148,13 +151,13 @@ def compute_betas_svd(
 
         if p_torch is not None:
             tmp_betas_conv = F.conv2d(
-                tmp_betas, p_torch, padding="same")
+                tmp_betas, p_torch.to(device), padding="same")
         else:
             tmp_betas_conv = tmp_betas
 
         betas.append(tmp_betas_conv.squeeze())
 
     # Stack all results and return them
-    betas_final = torch.stack(betas)
+    betas_final = torch.stack(betas).to(M_torch.device)
 
     return betas_final
