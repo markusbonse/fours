@@ -160,13 +160,9 @@ def compute_betas_svd(
         else:
             tmp_betas_conv = tmp_betas
 
-        betas.append(tmp_betas_conv.squeeze())
-
-        # clean up memory
-        del m_torch, eye, U_torch, D_torch, V_torch, rhs, \
-            inv_eye, beta, local_betas
+        betas.append(tmp_betas_conv.squeeze().to(M_torch.device))
 
     # Stack all results and return them
-    betas_final = torch.stack(betas).to(M_torch.device)
+    betas_final = torch.stack(betas)
 
     return betas_final
