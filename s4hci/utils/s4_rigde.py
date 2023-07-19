@@ -128,12 +128,17 @@ def compute_betas_svd(
             D_torch = svd_out.S
             V_torch = svd_out.Vh.T
 
+        # clean up memory
+        del X_conv_cut
+
         # compute the betas
         local_betas = []
         rhs = torch.diag(D_torch) @ U_torch.T @ Y_torch
         for tmp_lambda_reg in lambda_regs:
-            eye = torch.ones_like(D_torch,
-                                  device=D_torch.device) * tmp_lambda_reg
+            eye = torch.ones_like(
+                D_torch,
+                device=D_torch.device) * tmp_lambda_reg
+
             # 1D vector
             inv_eye = 1 / (D_torch ** 2 + eye)
 
@@ -156,6 +161,10 @@ def compute_betas_svd(
             tmp_betas_conv = tmp_betas
 
         betas.append(tmp_betas_conv.squeeze())
+
+        # clean up memory
+        del m_torch, eye, U_torch, D_torch, V_torch, rhs, \
+            inv_eye, beta, local_betas
 
     # Stack all results and return them
     betas_final = torch.stack(betas).to(M_torch.device)
