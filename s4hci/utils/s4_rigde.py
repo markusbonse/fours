@@ -133,7 +133,7 @@ def compute_betas_svd(
         rhs = torch.diag(D_torch) @ U_torch.T @ Y_torch
         for tmp_lambda_reg in lambda_regs:
             eye = torch.ones_like(D_torch,
-                                  device=X_torch.device) * tmp_lambda_reg
+                                  device=D_torch.device) * tmp_lambda_reg
             # 1D vector
             inv_eye = 1 / (D_torch ** 2 + eye)
 
