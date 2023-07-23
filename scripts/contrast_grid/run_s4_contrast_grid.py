@@ -84,7 +84,8 @@ if __name__ == '__main__':
         learning_rate_noise=1e-6,
         fine_tune_noise_model=False,
         rotation_grid_down_sample=10,
-        upload_rotation_grid=True)
+        upload_rotation_grid=True,
+        batch_size=10000)
 
     # save the models
     s4_model.noise_model.save(
@@ -124,7 +125,8 @@ if __name__ == '__main__':
         learning_rate_noise=1e-6,
         fine_tune_noise_model=True,
         rotation_grid_down_sample=10,
-        upload_rotation_grid=True)
+        upload_rotation_grid=True,
+        batch_size=10000)
 
     # save the models
     s4_model.noise_model.save(

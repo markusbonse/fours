@@ -1,0 +1,21 @@
+getenv = True
+
+executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grid/run_s4_contrast_grid.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/configs_cgrid/exp_ID_$(fake_planet_config_id).json reg_lambda /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/results/$(fake_planet_config_id)/
+
+# Maximum expected execution time for the job, in seconds
+MaxTime = 18000
+
+# Commenting the two previous line and uncommenting this one would just kill the jobs without warning
+periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
+
+request_cpus = 4
+request_gpus = 1
+request_memory = 32768
+requirements = TARGET.CUDAGlobalMemoryMb > 38000
+
+output = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id)_$.out
+error  = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id)_$.err
+log    = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_residuals.log
+
+queue dataset_name,fake_planet_config_id,reg_lambda,s4_work_dir from /fast/mbonse/s4/70_results/03_contrast_grid/first_test_config.txt
