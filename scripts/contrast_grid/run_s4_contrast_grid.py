@@ -169,3 +169,5 @@ if __name__ == '__main__':
             s4_model.residuals_dir / Path(
                 "03_Residual_Fine_tune_np.fits"),
             overwrite=True)
+
+    print_message("Finished Main")
