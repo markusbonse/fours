@@ -25,9 +25,9 @@ if __name__ == '__main__':
     science_data, raw_angles, raw_psf_template_data = \
         load_adi_data(
             hdf5_dataset=dataset_hdf5_file,
-            data_tag="13_object_final",
-            psf_template_tag="10_psf",
-            para_tag="header_13_object_final/PARANG")
+            data_tag="object",
+            psf_template_tag="psf_template",
+            para_tag="header_object/PARANG")
 
     psf_template_data = np.mean(raw_psf_template_data, axis=0)
 
