@@ -75,49 +75,55 @@ if __name__ == '__main__':
 
     # 5.) Create the residual
     print_message("Compute residuals")
-    residual_before_fine_tuning = s4_model.compute_residual(
-        account_for_planet=False)
+    raw_residual_file = s4_model.residuals_dir / Path("01_Residual_Raw.fits")
 
-    save_as_fits(
-        residual_before_fine_tuning,
-        s4_model.residuals_dir / Path(
-            "01_Residual_Raw.fits"),
-        overwrite=True)
+    if not raw_residual_file.is_file():
+        residual_before_fine_tuning = s4_model.compute_residual(
+            account_for_planet=False)
+
+        save_as_fits(
+            residual_before_fine_tuning,
+            raw_residual_file,
+            overwrite=True)
 
     # 6.) Fine-tune the model (only planet model)
     print_message("Fine-tune model")
-    s4_model.fine_tune_model_with_planet(
-        200,
-        learning_rate_planet=1e-3,
-        learning_rate_noise=1e-6,
-        fine_tune_noise_model=False,
-        rotation_grid_down_sample=10,
-        upload_rotation_grid=True,
-        batch_size=10000)
+    test_model_file = s4_model.models_dir / \
+        "noise_model_fine_tuned_only_planet.pkl"
 
-    # save the models
-    s4_model.noise_model.save(
-        s4_model.models_dir / "noise_model_fine_tuned_only_planet.pkl")
-    s4_model.planet_model.save(
-        s4_model.models_dir / "planet_model_fine_tuned_only_planet.pkl")
+    if not test_model_file.is_file():
+        s4_model.fine_tune_model_with_planet(
+            200,
+            learning_rate_planet=1e-3,
+            learning_rate_noise=1e-6,
+            fine_tune_noise_model=False,
+            rotation_grid_down_sample=10,
+            upload_rotation_grid=True,
+            batch_size=10000)
 
-    # 7.) Compute residuals
-    print_message("Compute residuals")
-    residual_with_planet_model = s4_model.compute_residual(
-        account_for_planet=True)
-    save_as_fits(
-        residual_with_planet_model,
-        s4_model.residuals_dir / Path(
-            "02_Residual_Fine_tune_planet_only_wp.fits"),
-        overwrite=True)
+        # save the models
+        s4_model.noise_model.save(
+            s4_model.models_dir / "noise_model_fine_tuned_only_planet.pkl")
+        s4_model.planet_model.save(
+            s4_model.models_dir / "planet_model_fine_tuned_only_planet.pkl")
 
-    residual_no_planet_model = s4_model.compute_residual(
-        account_for_planet=False)
-    save_as_fits(
-        residual_no_planet_model,
-        s4_model.residuals_dir / Path(
-            "02_Residual_Fine_tune_planet_only_np.fits"),
-        overwrite=True)
+        # 7.) Compute residuals
+        print_message("Compute residuals")
+        residual_with_planet_model = s4_model.compute_residual(
+            account_for_planet=True)
+        save_as_fits(
+            residual_with_planet_model,
+            s4_model.residuals_dir / Path(
+                "02_Residual_Fine_tune_planet_only_wp.fits"),
+            overwrite=True)
+
+        residual_no_planet_model = s4_model.compute_residual(
+            account_for_planet=False)
+        save_as_fits(
+            residual_no_planet_model,
+            s4_model.residuals_dir / Path(
+                "02_Residual_Fine_tune_planet_only_np.fits"),
+            overwrite=True)
 
     # 8.) Restore the raw model
     print_message("Load previous model")
@@ -127,36 +133,39 @@ if __name__ == '__main__':
 
     # 9.) Fine-tune the model (with noise model)
     print_message("Fine-tune model")
-    s4_model.fine_tune_model_with_planet(
-        200,
-        learning_rate_planet=1e-3,
-        learning_rate_noise=1e-6,
-        fine_tune_noise_model=True,
-        rotation_grid_down_sample=10,
-        upload_rotation_grid=True,
-        batch_size=10000)
+    test_model_file = s4_model.models_dir / "noise_model_fine_tuned.pkl"
 
-    # save the models
-    s4_model.noise_model.save(
-        s4_model.models_dir / "noise_model_fine_tuned.pkl")
-    s4_model.planet_model.save(
-        s4_model.models_dir / "planet_model_fine_tuned.pkl")
+    if not test_model_file.is_file():
+        s4_model.fine_tune_model_with_planet(
+            200,
+            learning_rate_planet=1e-3,
+            learning_rate_noise=1e-6,
+            fine_tune_noise_model=True,
+            rotation_grid_down_sample=10,
+            upload_rotation_grid=True,
+            batch_size=10000)
 
-    # 10.) Compute residuals
-    print_message("Compute residuals")
-    residual_with_planet_model = s4_model.compute_residual(
-        account_for_planet=True)
+        # save the models
+        s4_model.noise_model.save(
+            s4_model.models_dir / "noise_model_fine_tuned.pkl")
+        s4_model.planet_model.save(
+            s4_model.models_dir / "planet_model_fine_tuned.pkl")
 
-    save_as_fits(
-        residual_with_planet_model,
-        s4_model.residuals_dir / Path(
-            "03_Residual_Fine_tune_wp.fits"),
-        overwrite=True)
+        # 10.) Compute residuals
+        print_message("Compute residuals")
+        residual_with_planet_model = s4_model.compute_residual(
+            account_for_planet=True)
 
-    residual_no_planet_model = s4_model.compute_residual(
-        account_for_planet=False)
-    save_as_fits(
-        residual_no_planet_model,
-        s4_model.residuals_dir / Path(
-            "03_Residual_Fine_tune_np.fits"),
-        overwrite=True)
+        save_as_fits(
+            residual_with_planet_model,
+            s4_model.residuals_dir / Path(
+                "03_Residual_Fine_tune_wp.fits"),
+            overwrite=True)
+
+        residual_no_planet_model = s4_model.compute_residual(
+            account_for_planet=False)
+        save_as_fits(
+            residual_no_planet_model,
+            s4_model.residuals_dir / Path(
+                "03_Residual_Fine_tune_np.fits"),
+            overwrite=True)
