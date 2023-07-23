@@ -9,9 +9,9 @@ MaxTime = 18000
 # Commenting the two previous line and uncommenting this one would just kill the jobs without warning
 periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
 
-request_cpus = 4
+request_cpus = 8
 request_gpus = 1
-request_memory = 32768
+request_memory = 65536
 requirements = TARGET.CUDAGlobalMemoryMb > 38000
 
 output = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id).out
