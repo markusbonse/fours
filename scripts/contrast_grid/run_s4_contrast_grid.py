@@ -64,6 +64,13 @@ if __name__ == '__main__':
         work_dir=s4_work_dir,
         verbose=True)
 
+    # Check if a noise model exists from a previous run
+    save_path_final = s4_model.models_dir / Path("noise_model_closed_form.pkl")
+    if save_path_final.is_file():
+        print("Found noise model and restoring it.")
+        s4_noise = S4Noise.load(save_path_final)
+        s4_model.noise_model = s4_noise
+
     s4_model.find_closed_form_noise_model(save_model=True)
 
     # 5.) Create the residual
