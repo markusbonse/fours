@@ -29,9 +29,10 @@ if __name__ == '__main__':
             psf_template_tag="psf_template",
             para_tag="header_object/PARANG")
 
-    psf_template_data = np.mean(raw_psf_template_data, axis=0)
+    science_data = science_data[:, 12:-12, 12:-12]
 
     # Background subtraction of the PSF template
+    psf_template_data = np.median(raw_psf_template_data, axis=0)
     psf_template_data = psf_template_data - np.min(psf_template_data)
 
     # 3.) Add the fake planet
