@@ -48,7 +48,7 @@ class S4Noise(nn.Module):
         # 4.) Initialize the raw beta values
         self.betas_raw = nn.Parameter(torch.zeros(
             self.image_size ** 2, self.image_size ** 2,
-            dtype=torch.double))
+            dtype=torch.float32))
 
         self.prev_betas = None
 
@@ -74,14 +74,14 @@ class S4Noise(nn.Module):
             torch.zeros(
                 self.image_size,
                 self.image_size,
-                dtype=torch.double))
+                dtype=torch.float32))
 
         self.register_buffer(
             "std_frame",
             torch.zeros(
                 self.image_size,
                 self.image_size,
-                dtype=torch.double))
+                dtype=torch.float32))
 
     def _apply(self, fn):
         super(S4Noise, self)._apply(fn)

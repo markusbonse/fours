@@ -69,9 +69,9 @@ if __name__ == '__main__':
     if save_path_final.is_file():
         print("Found noise model and restoring it.")
         s4_noise = S4Noise.load(save_path_final)
-        s4_model.noise_model = s4_noise
-
-    s4_model.find_closed_form_noise_model(save_model=True)
+        s4_model.noise_model = s4_noise.float()
+    else:
+        s4_model.find_closed_form_noise_model(save_model=True)
 
     # 5.) Create the residual
     print_message("Compute residuals")
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     print_message("Load previous model")
     save_path_final = s4_model.models_dir / "noise_model_closed_form.pkl"
     s4_noise = S4Noise.load(save_path_final)
-    s4_model.noise_model = s4_noise
+    s4_model.noise_model = s4_noise.float()
 
     # 9.) Fine-tune the model (with noise model)
     print_message("Fine-tune model")
