@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcond
 error  = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id)_$.err
 log    = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_residuals.log
 
-queue dataset_name,fake_planet_config_id,reg_lambda from /fast/mbonse/s4/70_results/03_contrast_grid/first_test_config.txt
+queue dataset_name,fake_planet_config_id,reg_lambda from /fast/mbonse/s4/70_results/03_contrast_grid/01_config_test.txt
