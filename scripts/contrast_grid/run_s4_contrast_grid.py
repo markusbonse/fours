@@ -20,6 +20,8 @@ if __name__ == '__main__':
     reg_lambda = float(sys.argv[3])
     s4_work_dir = str(sys.argv[4])
 
+    Path(s4_work_dir).mkdir(exist_ok=True, parents=True)
+
     print(dataset_hdf5_file)
     print(fake_planet_config_file)
     print(reg_lambda)
