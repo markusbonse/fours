@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grid/run_s4_contrast_grid.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/configs_cgrid/exp_ID_$(fake_planet_config_id).json $(reg_lambda) /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/results/$(fake_planet_config_id)/
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grid/run_s4_contrast_grid.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/configs_cgrid/exp_ID_$(fake_planet_config_id).json $(reg_lambda) /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/results/$(reg_lambda)/$(fake_planet_config_id)/
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 18000
@@ -14,8 +14,8 @@ request_gpus = 1
 request_memory = 65536
 requirements = TARGET.CUDAGlobalMemoryMb > 38000
 
-output = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id).out
-error  = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id).err
+output = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id)_$(reg_lambda).out
+error  = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_$(fake_planet_config_id)_$(reg_lambda).err
 log    = /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/logs/htcondor_residuals.log
 
 queue dataset_name,fake_planet_config_id,reg_lambda from /fast/mbonse/s4/70_results/03_contrast_grid/03_config_limit_subset.txt

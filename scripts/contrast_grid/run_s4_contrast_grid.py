@@ -20,6 +20,11 @@ if __name__ == '__main__':
     reg_lambda = float(sys.argv[3])
     s4_work_dir = str(sys.argv[4])
 
+    print(dataset_hdf5_file)
+    print(fake_planet_config_file)
+    print(reg_lambda)
+    print(s4_work_dir)
+
     # 2.) Load the dataset
     print_message("Loading dataset")
     science_data, raw_angles, raw_psf_template_data = \
@@ -85,6 +90,8 @@ if __name__ == '__main__':
             residual_before_fine_tuning,
             raw_residual_file,
             overwrite=True)
+
+    sys.exit()
 
     # 6.) Fine-tune the model (only planet model)
     print_message("Fine-tune model")
