@@ -98,11 +98,16 @@ class S4:
         """
 
         # 1.) split the data into training and test data
-        x_train, x_test, = train_test_split(
-            self.data_cube,
-            test_size=test_size,
-            random_state=42,
-            shuffle=False)
+        if isinstance(test_size, float):
+            x_train, x_test, = train_test_split(
+                self.data_cube,
+                test_size=test_size,
+                random_state=42,
+                shuffle=True)
+        else:
+            # Use an even/odd split
+            x_train = self.data_cube[0::2]
+            x_test = self.data_cube[1::2]
 
         # 2.) validate the lambda values of the noise model
         x_train = torch.from_numpy(x_train).float()
