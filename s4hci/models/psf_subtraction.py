@@ -398,7 +398,8 @@ class S4:
 
     def compute_residual(
             self,
-            account_for_planet
+            account_for_planet,
+            combine="median"
     ):
         # 1.) move everything to the GPU
         x_train = torch.from_numpy(self.data_cube).float()
@@ -437,24 +438,30 @@ class S4:
             self.noise_model.image_size,
             self.noise_model.image_size).detach().cpu().numpy()
 
-        # 9.) Compute the unbiased median frame
+        # 9.) Compute the unbiased median / mean frame
         residuals_unbiased = science_norm_flatten_no_planet - noise_estimate
         residuals_unbiased = residuals_unbiased.view(
             x_train.shape[0],
             self.noise_model.image_size,
             self.noise_model.image_size).detach().cpu().numpy()
 
-        unbiased_median_frame = np.median(residuals_unbiased, axis=0)
+        if combine == "mean":
+            unbiased_me_frame = np.mean(residuals_unbiased, axis=0)
+            combine_tag = "Mean_Residuals"
+        else:
+            unbiased_me_frame = np.median(residuals_unbiased, axis=0)
+            combine_tag = "Median_Residuals"
+
         del residuals_unbiased
 
         # 10.) Compute the residual image
-        residual_stack = residual_stack - unbiased_median_frame
+        residual_stack = residual_stack - unbiased_me_frame
 
         residual_after_fine_tuning = combine_residual_stack(
             residual_stack=residual_stack,
             angles=self.parang,
-            combine=["Median_Residuals", ],
+            combine=[combine_tag, ],
             suffix="",
-            num_cpus=8)["Median_Residuals"]
+            num_cpus=8)[combine_tag]
 
         return residual_after_fine_tuning
