@@ -95,8 +95,6 @@ if __name__ == '__main__':
             raw_residual_file,
             overwrite=True)
 
-    sys.exit()
-
     # 6.) Fine-tune the model (only planet model)
     print_message("Fine-tune model")
     test_model_file = s4_model.models_dir / \
