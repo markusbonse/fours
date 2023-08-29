@@ -126,14 +126,18 @@ class S4:
 
     def find_closed_form_noise_model(
             self,
-            save_model=False):
+            save_model=False,
+            fp_precision="float32"):
         """
         Second processing step
         """
 
         # 1.) Train the noise model
         x_train = torch.from_numpy(self.data_cube).float()
-        self.noise_model.fit(x_train, device=self.device)
+        self.noise_model.fit(
+            x_train,
+            device=self.device,
+            fp_precision=fp_precision)
 
         # 2.) Save the noise model
         if save_model:

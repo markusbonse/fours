@@ -10,7 +10,8 @@ def compute_betas_least_square(
         positions,
         p_torch=None,
         verbose=True,
-        device="cpu"
+        device="cpu",
+        fp_precision="float32",
 ):
     """
     X_torch: (num_images, images_size, images_size) (normalized!)
@@ -60,10 +61,14 @@ def compute_betas_least_square(
                   image_size ** 2,
                   device=X_conv_square.device) * lambda_reg
 
-        rhs = (X_conv * m_torch).T @ Y_torch
-
         # compute beta
-        beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
+        if fp_precision == "float64":
+            rhs = (X_conv * m_torch).T @ Y_torch
+            beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
+
+        else:
+            rhs = (X_conv.double() * m_torch.double()).T @ Y_torch.double()
+            beta = torch.linalg.lstsq(lhs.double(), rhs.view(-1, 1)).float()
 
         betas.append(beta.solution.squeeze())
 
