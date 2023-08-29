@@ -78,7 +78,9 @@ if __name__ == '__main__':
         s4_noise = S4Noise.load(save_path_final)
         s4_model.noise_model = s4_noise.float()
     else:
-        s4_model.find_closed_form_noise_model(save_model=True)
+        s4_model.find_closed_form_noise_model(
+            save_model=True,
+            fp_precision="float64")
 
     # 5.) Create the residual
     print_message("Compute residuals")
