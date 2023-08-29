@@ -35,8 +35,9 @@ def compute_betas_least_square(
     X_torch = X_torch.cpu()
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
-    # move the convolved data to the GPU
-    X_conv_square = X_conv.T @ X_conv
+    # Compute the multiplication in double precision.
+    # Float32 can cause numerical instability.
+    X_conv_square = (X_conv.T.double() @ X_conv.double()).float()
 
     # Compute all betas in a loop over all positions
     betas = []
