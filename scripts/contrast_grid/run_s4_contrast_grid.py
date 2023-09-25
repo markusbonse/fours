@@ -217,7 +217,7 @@ if __name__ == '__main__':
 
         residual_no_planet_model = s4_model.compute_residual(
             account_for_planet=False,
-            combine="median")
+            combine="mean")
 
         save_as_fits(
             residual_no_planet_model,
