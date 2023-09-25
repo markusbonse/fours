@@ -64,13 +64,15 @@ def compute_betas_least_square(
         # compute beta
         if fp_precision == "float32":
             rhs = (X_conv * m_torch).T @ Y_torch
-            beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
+            beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1)).solution.squeeze()
 
         else:
             rhs = (X_conv * m_torch).T.double() @ Y_torch.double()
-            beta = torch.linalg.lstsq(lhs.double(), rhs.view(-1, 1)).float()
+            beta = torch.linalg.lstsq(
+                lhs.double(),
+                rhs.view(-1, 1)).solution.squeeze().float()
 
-        betas.append(beta.solution.squeeze())
+        betas.append(beta)
 
     # We move the beta matrix to the device of the noise model (usually cpu)
     betas_final = torch.stack(betas).reshape(
