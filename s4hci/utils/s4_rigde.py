@@ -62,12 +62,12 @@ def compute_betas_least_square(
                   device=X_conv_square.device) * lambda_reg
 
         # compute beta
-        if fp_precision == "float64":
+        if fp_precision == "float32":
             rhs = (X_conv * m_torch).T @ Y_torch
             beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1))
 
         else:
-            rhs = (X_conv.double() * m_torch.double()).T @ Y_torch.double()
+            rhs = (X_conv * m_torch).T.double() @ Y_torch.double()
             beta = torch.linalg.lstsq(lhs.double(), rhs.view(-1, 1)).float()
 
         betas.append(beta.solution.squeeze())
