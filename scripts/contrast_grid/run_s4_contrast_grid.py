@@ -131,8 +131,8 @@ if __name__ == '__main__':
         s4_model.planet_model.save(
             s4_model.models_dir / "planet_model_fine_tuned_only_planet.pkl")
 
-        # 7.) Compute residuals
-        print_message("Compute residuals")
+        # 7.) Compute residuals - median
+        print_message("Compute residuals median")
         residual_with_planet_model = s4_model.compute_residual(
             account_for_planet=True,
             combine="median")
@@ -140,17 +140,19 @@ if __name__ == '__main__':
         save_as_fits(
             residual_with_planet_model,
             s4_model.residuals_dir / Path(
-                "02_Residual_Fine_tune_planet_only_wp.fits"),
+                "02_Residual_Fine_tune_planet_only_wp_median.fits"),
             overwrite=True)
 
-        residual_no_planet_model = s4_model.compute_residual(
-            account_for_planet=False,
-            combine="median")
+        # 8.) Compute residuals - mean
+        print_message("Compute residuals mean")
+        residual_with_planet_model = s4_model.compute_residual(
+            account_for_planet=True,
+            combine="mean")
 
         save_as_fits(
-            residual_no_planet_model,
+            residual_with_planet_model,
             s4_model.residuals_dir / Path(
-                "02_Residual_Fine_tune_planet_only_np.fits"),
+                "02_Residual_Fine_tune_planet_only_wp_mean.fits"),
             overwrite=True)
 
     # 8.) Restore the raw model
@@ -180,7 +182,7 @@ if __name__ == '__main__':
             s4_model.models_dir / "planet_model_fine_tuned.pkl")
 
         # 10.) Compute residuals
-        print_message("Compute residuals")
+        print_message("Compute residuals median")
         residual_with_planet_model = s4_model.compute_residual(
             account_for_planet=True,
             combine="median")
@@ -188,7 +190,7 @@ if __name__ == '__main__':
         save_as_fits(
             residual_with_planet_model,
             s4_model.residuals_dir / Path(
-                "03_Residual_Fine_tune_wp.fits"),
+                "03_Residual_Fine_tune_wp_median.fits"),
             overwrite=True)
 
         residual_no_planet_model = s4_model.compute_residual(
@@ -198,7 +200,29 @@ if __name__ == '__main__':
         save_as_fits(
             residual_no_planet_model,
             s4_model.residuals_dir / Path(
-                "03_Residual_Fine_tune_np.fits"),
+                "03_Residual_Fine_tune_np_median.fits"),
+            overwrite=True)
+
+        # 11.) Compute residuals - mean
+        print_message("Compute residuals mean")
+        residual_with_planet_model = s4_model.compute_residual(
+            account_for_planet=True,
+            combine="mean")
+
+        save_as_fits(
+            residual_with_planet_model,
+            s4_model.residuals_dir / Path(
+                "03_Residual_Fine_tune_wp_mean.fits"),
+            overwrite=True)
+
+        residual_no_planet_model = s4_model.compute_residual(
+            account_for_planet=False,
+            combine="median")
+
+        save_as_fits(
+            residual_no_planet_model,
+            s4_model.residuals_dir / Path(
+                "03_Residual_Fine_tune_np_mean.fits"),
             overwrite=True)
 
     print_message("Finished Main")
