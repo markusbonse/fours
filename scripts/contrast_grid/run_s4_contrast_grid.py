@@ -80,7 +80,7 @@ if __name__ == '__main__':
     else:
         s4_model.find_closed_form_noise_model(
             save_model=True,
-            fp_precision="float64")
+            fp_precision="float32")
 
     # 5.) Create the residual
     print_message("Compute residuals")
