@@ -39,7 +39,8 @@ if __name__ == '__main__':
     science_data = science_data[:, 12:-12, 12:-12]
 
     # Test if the central pixel is the problem
-    science_data[:, 58, 58] = 0
+    science_data[:, 58, 58] = \
+        (science_data[:, 58, 57] + science_data[:, 58, 59]) / 2.
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
