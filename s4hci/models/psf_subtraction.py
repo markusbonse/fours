@@ -215,12 +215,13 @@ class S4:
                 epoch,
                 dataformats="HW")
 
-    def fine_tune_model_with_planet(
+    def fine_tune_model(
             self,
             num_epochs,
             learning_rate_planet=1e-3,
             learning_rate_noise=1e-6,
             fine_tune_noise_model=False,
+            lean_planet_model=True,
             rotation_grid_down_sample=10,
             upload_rotation_grid=True,
             logging_interval=10,
@@ -260,20 +261,22 @@ class S4:
         x_norm = x_norm.to(self.device)
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
-        # 4.) Create the optimizer
+        # 4.) Create the optimizer and add the parameters we want to optimize
+        parameters = []
         if fine_tune_noise_model:
-            parameters = [
+            parameters.append(
                 {"params": self.noise_model.betas_raw,
-                 'lr': learning_rate_noise},
-                {"params": self.planet_model.planet_model,
-                 'lr': learning_rate_planet}
-            ]
+                 'lr': learning_rate_noise})
         else:
             self.noise_model.betas_raw.requires_grad = False
-            parameters = [
+
+        if lean_planet_model:
+            parameters.append(
                 {"params": self.planet_model.planet_model,
                  'lr': learning_rate_planet}
-            ]
+            )
+        else:
+            self.planet_model.planet_model.requires_grad = False
 
         # The default learning rate is not needed
         optimizer = optim.Adam(

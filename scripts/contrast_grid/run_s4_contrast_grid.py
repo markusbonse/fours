@@ -120,7 +120,7 @@ if __name__ == '__main__':
         "noise_model_fine_tuned_only_planet.pkl"
 
     if not test_model_file.is_file():
-        s4_model.fine_tune_model_with_planet(
+        s4_model.fine_tune_model(
             200,
             learning_rate_planet=1e-3,
             learning_rate_noise=1e-6,
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     test_model_file = s4_model.models_dir / "noise_model_fine_tuned.pkl"
 
     if not test_model_file.is_file():
-        s4_model.fine_tune_model_with_planet(
+        s4_model.fine_tune_model(
             200,
             learning_rate_planet=1e-3,
             learning_rate_noise=1e-6,
