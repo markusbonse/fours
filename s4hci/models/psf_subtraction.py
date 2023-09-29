@@ -3,6 +3,7 @@ from copy import deepcopy
 from datetime import datetime
 
 import numpy as np
+from scipy.stats import iqr
 from tqdm.auto import tqdm
 
 from sklearn.model_selection import train_test_split
@@ -422,8 +423,15 @@ class S4:
             data_no_planet = x_train
 
         # 4.) Set up the normalization
-        x_mu = torch.mean(data_no_planet, axis=0)
-        x_std = torch.std(data_no_planet, axis=0)
+        if self.noise_model.normalization == "normal":
+            x_mu = torch.mean(data_no_planet, axis=0)
+            x_std = torch.std(data_no_planet, axis=0)
+        elif self.noise_model.normalization == "robust":
+            x_mu = torch.median(data_no_planet, dim=0).values
+            iqr_frame = iqr(data_no_planet.numpy(), axis=0, scale=1.349)
+            x_std = torch.from_numpy(iqr_frame).float()
+        else:
+            raise ValueError("normalization type unknown.")
 
         # 5.) get the current normalized data
         x_norm = (x_train - x_mu) / x_std
