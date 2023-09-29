@@ -141,7 +141,7 @@ class S4Noise(nn.Module):
         elif self.normalization == "robust":
             self.mean_frame = torch.median(science_data, dim=0).values
             iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
-            self.std_frame = torch.from_numpy(iqr_frame)
+            self.std_frame = torch.from_numpy(iqr_frame).float()
         else:
             raise ValueError("normalization type unknown.")
 
