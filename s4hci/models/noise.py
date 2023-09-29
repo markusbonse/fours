@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import numpy as np
+from scipy.stats import iqr
 
 import torch
 import torch.nn as nn
@@ -19,6 +20,7 @@ class S4Noise(nn.Module):
             lambda_reg,
             cut_radius_psf,
             mask_template_setup,
+            normalization="normal",
             convolve=True,
             verbose=True):
 
@@ -33,6 +35,7 @@ class S4Noise(nn.Module):
         self.convolve = convolve
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
+        self.normalization = normalization
 
         # 3.) prepare the psf_template
         template_cut, _ = construct_round_rfrr_template(
@@ -97,6 +100,7 @@ class S4Noise(nn.Module):
         state_dict["convolve"] = self.convolve
         state_dict["cut_radius_psf"] = self.cut_radius_psf
         state_dict["mask_template_setup"] = self.mask_template_setup
+        state_dict["normalization"] = self.normalization
         torch.save(state_dict, file_path)
 
     @classmethod
@@ -117,6 +121,7 @@ class S4Noise(nn.Module):
             lambda_reg=state_dict.pop('lambda_reg'),
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
             mask_template_setup=state_dict.pop('mask_template_setup'),
+            normalization=state_dict.pop('normalization'),
             convolve=state_dict.pop('convolve'),
             verbose=verbose)
 
@@ -130,8 +135,15 @@ class S4Noise(nn.Module):
         if self.verbose:
             print("Build normalization frames ... ", end='')
 
-        self.mean_frame = torch.mean(science_data, axis=0)
-        self.std_frame = torch.std(science_data, axis=0)
+        if self.normalization == "normal":
+            self.mean_frame = torch.mean(science_data, axis=0)
+            self.std_frame = torch.std(science_data, axis=0)
+        elif self.normalization == "robust":
+            self.mean_frame = torch.median(science_data, axis=0)
+            iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
+            self.std_frame = torch.from_numpy(iqr_frame)
+        else:
+            raise ValueError("normalization type unknown.")
 
         if self.verbose:
             print("[DONE]")

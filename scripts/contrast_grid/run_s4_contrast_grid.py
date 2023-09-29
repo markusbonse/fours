@@ -38,10 +38,6 @@ if __name__ == '__main__':
 
     science_data = science_data[:, 12:-12, 12:-12]
 
-    # Test if the central pixel is the problem
-    science_data[:, 58, 58] = \
-        (science_data[:, 58, 57] + science_data[:, 58, 59]) / 2.
-
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
     psf_template_data = psf_template_data - np.min(psf_template_data)
@@ -70,6 +66,7 @@ if __name__ == '__main__':
         noise_mask_radius=5.5,
         device=0,
         noise_lambda_init=reg_lambda,
+        noise_normalization="robust",
         planet_convolve_second=True,
         planet_use_up_sample=1,
         work_dir=s4_work_dir,
@@ -114,6 +111,7 @@ if __name__ == '__main__':
             raw_residual_file,
             overwrite=True)
 
+    sys.exit()
     # 6.) Fine-tune the model (only planet model)
     print_message("Fine-tune model")
     test_model_file = s4_model.models_dir / \

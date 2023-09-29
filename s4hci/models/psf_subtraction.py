@@ -28,6 +28,7 @@ class S4:
             noise_noise_cut_radius_psf,
             noise_mask_radius,
             device=0,
+            noise_normalization="normal",
             noise_lambda_init=1e3,
             planet_convolve_second=True,
             planet_use_up_sample=1,
@@ -54,6 +55,7 @@ class S4:
             lambda_reg=noise_lambda_init,
             cut_radius_psf=noise_noise_cut_radius_psf,
             mask_template_setup=("radius", noise_mask_radius),
+            normalization=noise_normalization,
             convolve=True,
             verbose=verbose).float()
 
@@ -251,6 +253,7 @@ class S4:
         self.noise_model = self.noise_model.to(self.device)
 
         # 3.) set up the normalization
+        # TODO update this code in case the robust normalization works
         x_train = torch.from_numpy(self.data_cube).float()
         x_mu = torch.mean(x_train, axis=0)
         x_std = torch.std(x_train, axis=0)
