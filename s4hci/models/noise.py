@@ -139,7 +139,7 @@ class S4Noise(nn.Module):
             self.mean_frame = torch.mean(science_data, axis=0)
             self.std_frame = torch.std(science_data, axis=0)
         elif self.normalization == "robust":
-            self.mean_frame = torch.median(science_data, axis=0)
+            self.mean_frame = torch.median(science_data, dim=0).values
             iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
             self.std_frame = torch.from_numpy(iqr_frame)
         else:
