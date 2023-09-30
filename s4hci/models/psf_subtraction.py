@@ -130,7 +130,8 @@ class S4:
     def find_closed_form_noise_model(
             self,
             save_model=False,
-            fp_precision="float32"):
+            fp_precision="float32",
+            lstrq_mode="LSTSQ"):
         """
         Second processing step
         """
@@ -140,6 +141,7 @@ class S4:
         self.noise_model.fit(
             x_train,
             device=self.device,
+            mode=lstrq_mode,
             fp_precision=fp_precision)
 
         # 2.) Save the noise model

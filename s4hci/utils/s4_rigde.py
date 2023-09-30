@@ -3,11 +3,12 @@ import torch
 import torch.nn.functional as F
 
 
-def compute_betas_least_square(
+def compute_betas(
         X_torch,
         M_torch,
         lambda_reg,
         positions,
+        mode="LSTSQ",
         p_torch=None,
         verbose=True,
         device="cpu",
@@ -36,9 +37,12 @@ def compute_betas_least_square(
     X_torch = X_torch.cpu()
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
-    # Compute the multiplication in double precision.
-    # Float32 can cause numerical instability.
-    X_conv_square = (X_conv.T.double() @ X_conv.double()).float()
+    if mode == "LSTSQ":
+        # Compute the multiplication in double precision.
+        # Float32 can cause numerical instability.
+        X_conv_square = (X_conv.T.double() @ X_conv.double()).float()
+    else:
+        X_conv_square = None
 
     # Compute all betas in a loop over all positions
     betas = []
@@ -54,23 +58,36 @@ def compute_betas_least_square(
         m_torch = M_torch[tmp_idx].flatten().to(device)
         Y_torch = X_torch.view(X_torch.shape[0], -1)[:, tmp_idx].to(device)
 
-        # set up the least square problem
-        lhs = ((X_conv_square * m_torch).T * m_torch).T + \
-              torch.eye(
-                  image_size ** 2,
-                  image_size ** 2,
-                  device=X_conv_square.device) * lambda_reg
+        if mode == "LSTSQ":
+            # set up the least square problem
+            lhs = ((X_conv_square * m_torch).T * m_torch).T + \
+                  torch.eye(
+                      image_size ** 2,
+                      image_size ** 2,
+                      device=X_conv_square.device) * lambda_reg
 
-        # compute beta
-        if fp_precision == "float32":
-            rhs = (X_conv * m_torch).T @ Y_torch
-            beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1)).solution.squeeze()
+            # compute beta
+            if fp_precision == "float32":
+                rhs = (X_conv * m_torch).T @ Y_torch
+                beta = torch.linalg.lstsq(lhs, rhs.view(-1, 1)).solution.squeeze()
 
+            else:
+                rhs = (X_conv * m_torch).T.double() @ Y_torch.double()
+                beta = torch.linalg.lstsq(
+                    lhs.double(),
+                    rhs.view(-1, 1)).solution.squeeze().float()
         else:
-            rhs = (X_conv * m_torch).T.double() @ Y_torch.double()
-            beta = torch.linalg.lstsq(
-                lhs.double(),
-                rhs.view(-1, 1)).solution.squeeze().float()
+            eye = torch.eye(image_size ** 2, image_size ** 2,
+                            device=device) * torch.sqrt(lambda_reg)
+
+            X_conv_cut = X_conv * m_torch
+            B = torch.concat([X_conv_cut, eye])
+            Y_torch_new = torch.concat([
+                Y_torch,
+                torch.zeros(image_size ** 2, device=device)])
+
+            beta = torch.linalg.lstsq(B, Y_torch_new.view(
+                -1, 1)).solution.squeeze()
 
         betas.append(beta)
 

@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
-from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
+from s4hci.utils.s4_rigde import compute_betas, compute_betas_svd
 from s4hci.utils.positions import get_validation_positions
 
 
@@ -156,7 +156,8 @@ class S4Noise(nn.Module):
             self,
             science_data,
             device="cpu",
-            fp_precision="float32"):
+            fp_precision="float32",
+            mode="LSTSQ"):
 
         self._prepare_normalization(science_data)
         science_data_norm = self.normalize_data(science_data)
@@ -174,7 +175,7 @@ class S4Noise(nn.Module):
         else:
             p_torch = None
 
-        self.betas_raw.data = compute_betas_least_square(
+        self.betas_raw.data = compute_betas(
             X_torch=science_data_norm,
             p_torch=p_torch,
             M_torch=self.right_reason_mask,
@@ -182,6 +183,7 @@ class S4Noise(nn.Module):
             positions=positions,
             verbose=self.verbose,
             device=device,
+            mode=mode,
             fp_precision=fp_precision)
 
         if self.verbose:

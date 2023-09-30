@@ -5,7 +5,7 @@ import torch
 import torch.multiprocessing as mp
 
 from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
-from s4hci.utils.s4_rigde import compute_betas_least_square, compute_betas_svd
+from s4hci.utils.s4_rigde import compute_betas, compute_betas_svd
 from s4hci.utils.positions import get_validation_positions
 
 
@@ -118,7 +118,7 @@ class S4ClosedForm:
         else:
             p_torch = None
 
-        beta_conv = compute_betas_least_square(
+        beta_conv = compute_betas(
             X_torch=X_torch,
             p_torch=p_torch,
             M_torch=M_torch,
