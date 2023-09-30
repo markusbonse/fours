@@ -66,7 +66,7 @@ if __name__ == '__main__':
         noise_mask_radius=5.5,
         device=0,
         noise_lambda_init=reg_lambda,
-        noise_normalization="robust",
+        noise_normalization="normal",
         planet_convolve_second=True,
         planet_use_up_sample=1,
         work_dir=s4_work_dir,
@@ -81,6 +81,7 @@ if __name__ == '__main__':
     else:
         s4_model.find_closed_form_noise_model(
             save_model=True,
+            lstrq_mode="QR",
             fp_precision="float32")
 
     # 5.) Create the residual
