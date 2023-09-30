@@ -1,4 +1,6 @@
 from tqdm import tqdm
+import numpy as np
+
 import torch
 import torch.nn.functional as F
 
@@ -78,7 +80,7 @@ def compute_betas(
                     rhs.view(-1, 1)).solution.squeeze().float()
         else:
             eye = torch.eye(image_size ** 2, image_size ** 2,
-                            device=device) * torch.sqrt(lambda_reg)
+                            device=device) * np.sqrt(lambda_reg)
 
             X_conv_cut = X_conv * m_torch
             B = torch.concat([X_conv_cut, eye])
