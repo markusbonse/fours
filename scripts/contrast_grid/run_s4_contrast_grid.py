@@ -36,7 +36,7 @@ if __name__ == '__main__':
             psf_template_tag="psf_template",
             para_tag="header_object/PARANG")
 
-    science_data = science_data[:, 12:-12, 12:-12]
+    science_data = science_data[:, 17:-17, 17:-17]
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     else:
         s4_model.find_closed_form_noise_model(
             save_model=True,
-            lstrq_mode="QR",
+            lstrq_mode="LSTSQ",
             fp_precision="float32")
 
     # 5.) Create the residual
