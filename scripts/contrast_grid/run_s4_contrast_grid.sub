@@ -14,8 +14,8 @@ request_gpus = 1
 request_memory = 65536
 requirements = TARGET.CUDAGlobalMemoryMb > 38000
 
-output = /fast/mbonse/s4/70_results/03_contrast_grid/finished_new_data/$(dataset_name)/logs/htcondor_$(frame_sel)_$(fake_planet_config_id)_$(reg_lambda).out
-error  = /fast/mbonse/s4/70_results/03_contrast_grid/finished_new_data/$(dataset_name)/logs/htcondor_$(frame_sel)_$(fake_planet_config_id)_$(reg_lambda).err
-log    = /fast/mbonse/s4/70_results/03_contrast_grid/finished_new_data/$(dataset_name)/logs/htcondor_residuals.log
+output = /fast/mbonse/s4/70_results/03_contrast_grid/finished_frame_sel/$(dataset_name)/logs/htcondor_$(frame_sel)_$(fake_planet_config_id)_$(reg_lambda).out
+error  = /fast/mbonse/s4/70_results/03_contrast_grid/finished_frame_sel/$(dataset_name)/logs/htcondor_$(frame_sel)_$(fake_planet_config_id)_$(reg_lambda).err
+log    = /fast/mbonse/s4/70_results/03_contrast_grid/finished_frame_sel/$(dataset_name)/logs/htcondor_residuals.log
 
 queue dataset_name,fake_planet_config_id,reg_lambda,frame_sel from /fast/mbonse/s4/70_results/03_contrast_grid/02_config_each_dataset_once.txt
