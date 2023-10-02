@@ -36,7 +36,7 @@ if __name__ == '__main__':
             psf_template_tag="psf_selected", #10_psf
             para_tag="header_object_raw/PARANG")
 
-    science_data = science_data[:, 17:-17, 17:-17]
+    science_data = science_data[:, 76:-76, 76:-76]#[:, 17:-17, 17:-17]
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
