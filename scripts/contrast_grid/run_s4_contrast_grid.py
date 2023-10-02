@@ -59,8 +59,9 @@ if __name__ == '__main__':
         scaling_factor=1.0)
 
     # 3.1) Use MSE frame selection
-    data_with_fake_planet = mse_frame_selection(
+    data_with_fake_planet, raw_angles = mse_frame_selection(
         data_with_fake_planet,
+        raw_angles,
         frame_selection_cutoff)
 
     # 4.) Build the Raw model
