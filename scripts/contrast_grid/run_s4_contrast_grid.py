@@ -7,6 +7,7 @@ from s4hci.utils.data_handling import load_adi_data, save_as_fits
 from s4hci.models.psf_subtraction import S4
 from s4hci.models.noise import S4Noise
 from s4hci.utils.logging import print_message, setup_logger
+from s4hci.utils.frame_selection import mse_frame_selection
 
 from applefy.utils.fake_planets import add_fake_planets
 
@@ -19,6 +20,7 @@ if __name__ == '__main__':
     fake_planet_config_file = str(sys.argv[2])
     reg_lambda = float(sys.argv[3])
     s4_work_dir = str(sys.argv[4])
+    frame_selection_cutoff = int(sys.argv[5])
 
     Path(s4_work_dir).mkdir(exist_ok=True, parents=True)
 
@@ -32,11 +34,11 @@ if __name__ == '__main__':
     science_data, raw_angles, raw_psf_template_data = \
         load_adi_data(
             hdf5_dataset=dataset_hdf5_file,
-            data_tag="object_raw",  #13_object_final
-            psf_template_tag="psf_selected", #10_psf
-            para_tag="header_object_raw/PARANG")
+            data_tag="object",  #13_object_final
+            psf_template_tag="psf_template", #10_psf
+            para_tag="header_object/PARANG")
 
-    science_data = science_data[:, 76:-76, 76:-76]#[:, 17:-17, 17:-17]
+    science_data = science_data[:, 17:-17, 17:-17]
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
@@ -55,6 +57,11 @@ if __name__ == '__main__':
         dit_science=0.08,
         experiment_config=fake_planet_config,
         scaling_factor=1.0)
+
+    # 3.1) Use MSE frame selection
+    data_with_fake_planet = mse_frame_selection(
+        data_with_fake_planet,
+        frame_selection_cutoff)
 
     # 4.) Build the Raw model
     print_message("Find closed form solution")
