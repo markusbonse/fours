@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grid/run_s4_contrast_grid.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/configs_cgrid/exp_ID_$(fake_planet_config_id).json $(reg_lambda) /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/results/$(fake_planet_config_id)/
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grid/run_s4_contrast_grid.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/03_contrast_grid/$(dataset_name)/configs_cgrid/exp_ID_$(fake_planet_config_id).json $(reg_lambda) /fast/mbonse/s4/70_results/03_contrast_grid/finished_old_data/$(dataset_name)/results/$(fake_planet_config_id)/
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 86400
