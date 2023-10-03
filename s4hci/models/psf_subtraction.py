@@ -34,6 +34,7 @@ class S4:
             planet_convolve_second=True,
             planet_use_up_sample=1,
             work_dir=None,
+            convolve=True,
             verbose=True
     ):
         # 1.) Save all member data
@@ -57,7 +58,7 @@ class S4:
             cut_radius_psf=noise_noise_cut_radius_psf,
             mask_template_setup=("radius", noise_mask_radius),
             normalization=noise_normalization,
-            convolve=True,
+            convolve=convolve,
             verbose=verbose).float()
 
         # 3.) Create the planet model
