@@ -228,7 +228,7 @@ class S4Noise(nn.Module):
         else:
             p_torch = None
 
-        betas_conv = compute_betas_svd(
+        betas_final = compute_betas_svd(
             X_torch=science_data_norm,
             M_torch=self.right_reason_mask,
             lambda_regs=lambdas,
@@ -254,14 +254,14 @@ class S4Noise(nn.Module):
             print("Re-mask betas for "
                   "separation " + str(separation) + " ...")
 
-        re_masked = torch.zeros_like(betas_conv)
+        re_masked = torch.zeros_like(betas_final)
         all_idx = []
         for i, tmp_position in enumerate(positions):
             x, y = tmp_position
             tmp_idx = x * self.image_size + y
             all_idx.append(tmp_idx)
 
-            re_masked[i] = betas_conv[i] * second_mask[tmp_idx]
+            re_masked[i] = betas_final[i] * second_mask[tmp_idx]
 
         # 5.) Predict
         if self.verbose:
@@ -364,12 +364,18 @@ class S4Noise(nn.Module):
         tmp_weights = raw_betas * self.right_reason_mask
 
         # convolve the weights
-        tmp_weights = F.conv2d(
-            tmp_weights.unsqueeze(1),
-            self.psf_model,
-            padding="same").view(
-            self.image_size ** 2,
-            self.image_size ** 2)
+        if self.convolve:
+            tmp_weights = F.conv2d(
+                tmp_weights.unsqueeze(1),
+                self.psf_model,
+                padding="same").view(
+                self.image_size ** 2,
+                self.image_size ** 2)
+
+        else:
+            tmp_weights = tmp_weights.view(
+                self.image_size ** 2,
+                self.image_size ** 2)
 
         self.prev_betas = tmp_weights
 

@@ -115,17 +115,17 @@ def compute_betas_svd(
 
     # convolve the data on the GPU
     X_torch = X_torch.to(device)
-    p_torch = p_torch.to(device)
+
     if p_torch is not None:
+        p_torch = p_torch.to(device)
         X_conv = F.conv2d(
             X_torch,
             p_torch, padding="same")
+        p_torch = p_torch.cpu()
     else:
         X_conv = X_torch.to(device)
 
     X_torch = X_torch.cpu()
-    p_torch = p_torch.cpu()
-
     X_conv = X_conv.view(X_torch.shape[0], -1)
 
     # Compute all betas in a loop over all positions
