@@ -38,7 +38,7 @@ if __name__ == '__main__':
             psf_template_tag="psf_template", #10_psf
             para_tag="header_object/PARANG")
 
-    science_data = science_data[:, 17:-17, 17:-17]
+    science_data = science_data[:, 12:-12, 12:-12]
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
@@ -73,6 +73,7 @@ if __name__ == '__main__':
         noise_noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         device=0,
+        convolve=False,
         noise_lambda_init=reg_lambda,
         noise_normalization="normal",
         planet_convolve_second=True,
@@ -120,7 +121,6 @@ if __name__ == '__main__':
             raw_residual_file,
             overwrite=True)
 
-    sys.exit()
     # 6.) Fine-tune the model (only planet model)
     print_message("Fine-tune model")
     test_model_file = s4_model.models_dir / \
