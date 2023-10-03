@@ -29,8 +29,6 @@ def compute_betas(
     # convolve the data on the GPU
     X_torch = X_torch.to(device)
 
-    print(X_torch.shape)
-
     if p_torch is not None:
         X_conv = F.conv2d(
             X_torch,
@@ -40,8 +38,6 @@ def compute_betas(
         X_conv = X_torch.clone().to(device)
 
     X_torch = X_torch.cpu()
-    print(X_torch.shape)
-    print(X_conv.shape)
     X_conv = X_conv.view(num_frames, -1)
 
     if mode == "LSTSQ":

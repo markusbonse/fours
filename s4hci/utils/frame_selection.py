@@ -5,6 +5,9 @@ def mse_frame_selection(dataset_in,
                         angles,
                         percent_cutoff):
 
+    if percent_cutoff == 0:
+        return dataset_in, angles
+
     mean_frame = np.mean(dataset_in, axis=0)
     residual_sequence = (dataset_in - mean_frame) ** 2
     mse_sequence = np.mean(residual_sequence, axis=(1, 2))
