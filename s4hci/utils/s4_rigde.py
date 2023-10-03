@@ -24,6 +24,7 @@ def compute_betas(
 
     X_torch = X_torch.unsqueeze(1)
     image_size = X_torch.shape[-1]
+    num_frames = X_torch.shape[0]
 
     # convolve the data on the GPU
     X_torch = X_torch.to(device)
@@ -34,10 +35,10 @@ def compute_betas(
             p_torch.to(device),
             padding="same")
     else:
-        X_conv = X_torch.to(device)
+        X_conv = X_torch.clone().to(device)
 
     X_torch = X_torch.cpu()
-    X_conv = X_conv.view(X_torch.shape[0], -1)
+    X_conv = X_conv.view(num_frames, -1)
 
     if mode == "LSTSQ":
         # Compute the multiplication in double precision.
