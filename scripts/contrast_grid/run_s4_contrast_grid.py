@@ -7,8 +7,10 @@ from s4hci.utils.data_handling import load_adi_data, save_as_fits
 from s4hci.models.psf_subtraction import S4
 from s4hci.models.noise import S4Noise
 from s4hci.utils.logging import print_message, setup_logger
-from s4hci.utils.frame_selection import mse_frame_selection
+from s4hci.utils.frame_selection import mse_frame_selection, \
+    shift_frame_selection
 
+from applefy.utils.file_handling import open_fits
 from applefy.utils.fake_planets import add_fake_planets
 
 if __name__ == '__main__':
@@ -20,7 +22,8 @@ if __name__ == '__main__':
     fake_planet_config_file = str(sys.argv[2])
     reg_lambda = float(sys.argv[3])
     s4_work_dir = str(sys.argv[4])
-    frame_selection_cutoff = int(sys.argv[5])
+    shift_selection_cutoff = float(sys.argv[5])
+    recenter = bool(int(sys.argv[6]))
 
     Path(s4_work_dir).mkdir(exist_ok=True, parents=True)
 
@@ -28,6 +31,8 @@ if __name__ == '__main__':
     print(fake_planet_config_file)
     print(reg_lambda)
     print(s4_work_dir)
+    print(shift_selection_cutoff)
+    print(recenter)
 
     # 2.) Load the dataset
     print_message("Loading dataset")
@@ -44,6 +49,18 @@ if __name__ == '__main__':
     psf_template_data = np.median(raw_psf_template_data, axis=0)
     psf_template_data = psf_template_data - np.min(psf_template_data)
 
+    # 2.1) Run frame selection
+    # Load the Ref PSF
+    reference = open_fits("/fast/mbonse/s4/30_data/Ref_PSF/ref_psf.fits")
+    reference = reference[77:-77, 77:-77]
+
+    science_data, raw_angles = shift_frame_selection(
+        dataset_in=science_data,
+        angles=raw_angles,
+        reference_frame=reference,
+        shift_cutoff=shift_selection_cutoff,
+        recenter=recenter)
+
     # 3.) Add the fake planet
     print_message("Add fake planet")
     with open(fake_planet_config_file) as json_file:
@@ -58,12 +75,6 @@ if __name__ == '__main__':
         experiment_config=fake_planet_config,
         scaling_factor=1.0)
 
-    # 3.1) Use MSE frame selection
-    data_with_fake_planet, raw_angles = mse_frame_selection(
-        data_with_fake_planet,
-        raw_angles,
-        frame_selection_cutoff)
-
     # 4.) Build the Raw model
     print_message("Find closed form solution")
     s4_model = S4(
@@ -73,7 +84,7 @@ if __name__ == '__main__':
         noise_noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         device=0,
-        convolve=False,
+        convolve=True,
         noise_lambda_init=reg_lambda,
         noise_normalization="normal",
         planet_convolve_second=True,
