@@ -257,7 +257,6 @@ class S4:
         self.noise_model = self.noise_model.to(self.device)
 
         # 3.) set up the normalization
-        # TODO update this code in case the robust normalization works
         x_train = torch.from_numpy(self.data_cube).float()
         x_mu = torch.mean(x_train, axis=0)
         x_std = torch.std(x_train, axis=0)
@@ -321,7 +320,7 @@ class S4:
         data_loader = DataLoader(
             merged_dataset,
             batch_size=bs,
-            shuffle=False)
+            shuffle=True)
 
         # needed for gradient accumulation in order to normalize the loss
         num_steps_per_epoch = len(data_loader)
@@ -363,7 +362,7 @@ class S4:
 
                 # 5.) Backward
                 loss = (loss_recon + loss_reg) / num_steps_per_epoch
-                loss.backward(retain_graph=True)
+                loss.backward()
 
                 # 6.) Track the current loss
                 running_reg_loss += loss_reg.detach().item()
