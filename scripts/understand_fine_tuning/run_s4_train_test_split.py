@@ -40,7 +40,7 @@ if __name__ == '__main__':
     psf_template_data = psf_template_data - np.min(psf_template_data)
 
     # 3.) Build the Raw model
-    print_message("Find closed form solution")
+    print_message("Build S4 model")
     s4_model = S4(
         data_cube=science_data_train,
         parang=angles_train,
@@ -56,6 +56,7 @@ if __name__ == '__main__':
         verbose=True)
 
     # 4.) Run the validation to find the best lambda value
+    print_message("Find best lambda value")
     lambdas = np.logspace(1, 8, 200)
     validation_results, _ = s4_model.validate_lambdas_noise(
         num_separations=20,
@@ -72,6 +73,7 @@ if __name__ == '__main__':
                     protocol=pickle.HIGHEST_PROTOCOL)
 
     # 5.) Find the closed form solution
+    print_message("Find closed form solution")
     s4_model.find_closed_form_noise_model(
         save_model=True,
         lstrq_mode="LSTSQ",
