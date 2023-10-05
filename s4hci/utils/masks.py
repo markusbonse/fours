@@ -134,3 +134,16 @@ def construct_planet_mask(frame_size,
     mask[rr_grid > outer_size] = 0.
 
     return mask
+
+
+def construct_central_mask(
+        frame_size,
+        central_mask_size_radius):
+    image_center = (frame_size - 1) / 2.
+
+    aperture = CircularAperture(
+        positions=(image_center, image_center),
+        r=central_mask_size_radius)
+
+    template_mask = aperture.to_mask().to_image((frame_size, frame_size))
+    return 1 - template_mask
