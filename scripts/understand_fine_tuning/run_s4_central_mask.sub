@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/understand_fine_tuning/run_s4_central_mask.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/05_understand_fine_tuning/02_central_mask/$(dataset_name)/
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/understand_fine_tuning/run_s4_central_mask.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/05_understand_fine_tuning/02_central_mask/mask_6/$(dataset_name)/
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 86400
