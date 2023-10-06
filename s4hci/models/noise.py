@@ -150,7 +150,9 @@ class S4Noise(nn.Module):
 
     def normalize_data(self, science_data):
         science_data_mean_shift = science_data - self.mean_frame
-        return science_data_mean_shift / self.std_frame
+        normalized_data = science_data_mean_shift / self.std_frame
+
+        return torch.nan_to_num(normalized_data, 0)
 
     def fit(
             self,

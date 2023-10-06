@@ -261,6 +261,7 @@ class S4:
         x_mu = torch.mean(x_train, axis=0)
         x_std = torch.std(x_train, axis=0)
         x_norm = (x_train - x_mu) / x_std
+        x_norm = torch.nan_to_num(x_norm, 0)
 
         # move the data to the GPU
         x_std = x_std.to(self.device)
@@ -342,6 +343,7 @@ class S4:
 
                 # 2.) normalize and reshape the planet signal
                 planet_signal = planet_signal / x_std
+                torch.nan_to_num(planet_signal, 0)
                 planet_signal_norm = planet_signal.view(
                     planet_signal.shape[0], -1)
 
@@ -437,7 +439,9 @@ class S4:
 
         # 5.) get the current normalized data
         x_norm = (x_train - x_mu) / x_std
+        x_norm = torch.nan_to_num(x_norm, 0)
         x_no_planet = (data_no_planet - x_mu) / x_std
+        x_no_planet = torch.nan_to_num(x_no_planet, 0)
         del data_no_planet
 
         # 6.) reshape everything
