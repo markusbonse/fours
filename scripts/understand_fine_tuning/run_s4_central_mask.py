@@ -37,7 +37,7 @@ if __name__ == '__main__':
     angles_train = raw_angles[0::2]
 
     # apply the central mask
-    mask = construct_central_mask(science_data.shape[-1], 3.8 / 2)
+    mask = construct_central_mask(science_data.shape[-1], 6 / 2)
     science_data_train = science_data_train * mask
 
     # Background subtraction of the PSF template
