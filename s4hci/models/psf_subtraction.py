@@ -15,7 +15,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 from s4hci.models.noise import S4Noise
 from s4hci.models.planet import S4Planet
-from s4hci.models.normalization import FrameNormalization
+from s4hci.models.normalization import S4FrameNormalization
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.data_handling import save_as_fits
 
@@ -70,7 +70,7 @@ class S4:
             use_up_sample=planet_use_up_sample).float()
 
         # 4.) Create normalization model
-        self.normalization_model = FrameNormalization(
+        self.normalization_model = S4FrameNormalization(
             image_size=self.data_image_size,
             normalization_type=noise_normalization)
         self.normalization_model.prepare_normalization(
@@ -124,7 +124,7 @@ class S4:
             x_test = self.science_data[1::2]
 
         # 2.) Normalize the training and test data
-        tmp_normalization = FrameNormalization(
+        tmp_normalization = S4FrameNormalization(
             image_size=self.data_image_size,
             normalization_type=self.normalization_model.normalization_type)
         tmp_normalization.prepare_normalization(x_train)
@@ -160,15 +160,15 @@ class S4:
             fp_precision=fp_precision)
 
     @staticmethod
-    def _check_work_dir(function):
+    def _check_model_dir(function):
         def check_workdir(self, *args, **kwargs):
-            if self.work_dir is None:
+            if self.models_dir is None:
                 raise FileNotFoundError(
                     "Saving the model requires a work directory.")
             function(self, *args, **kwargs)
         return check_workdir
 
-    @_check_work_dir
+    @_check_model_dir
     def save_noise_model(
             self,
             file_name_noise_model):
@@ -176,20 +176,49 @@ class S4:
         self.noise_model.save(
             self.models_dir / file_name_noise_model)
 
-    @_check_work_dir
+    @_check_model_dir
     def save_planet_model(
             self,
             file_name_planet_model):
         self.planet_model.save(
             self.models_dir / file_name_planet_model)
 
-    @_check_work_dir
+    @_check_model_dir
+    def save_normalization_model(
+            self,
+            file_name_normalization_model):
+        self.normalization_model.save(
+            self.models_dir / file_name_normalization_model)
+
+    @_check_model_dir
     def save_models(
             self,
             file_name_noise_model,
-            file_name_planet_model):
+            file_name_planet_model,
+            file_name_normalization_model):
         self.save_planet_model(file_name_planet_model)
         self.save_noise_model(file_name_noise_model)
+        self.save_normalization_model(file_name_normalization_model)
+
+    def restore_models(
+            self,
+            file_noise_model=None,
+            file_planet_model=None,
+            file_normalization_model=None,
+            verbose=False):
+
+        if file_noise_model is not None:
+            self.noise_model = S4Noise.load(
+                file_noise_model,
+                verbose)
+
+        if file_planet_model is not None:
+            self.planet_model = S4Planet.load(
+                file_planet_model)
+
+        if file_normalization_model is not None:
+            self.normalization_model = S4FrameNormalization.load(
+                file_normalization_model)
 
     def _logg_fine_tune_status(
             self,

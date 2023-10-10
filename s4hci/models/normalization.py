@@ -4,14 +4,14 @@ import torch
 import torch.nn as nn
 
 
-class FrameNormalization(nn.Module):
+class S4FrameNormalization(nn.Module):
 
     def __init__(
             self,
             image_size,
             normalization_type="normal"):
 
-        super(FrameNormalization, self).__init__()
+        super(S4FrameNormalization, self).__init__()
 
         self.normalization_type = normalization_type
         if self.normalization_type not in ["normal", "robust"]:
