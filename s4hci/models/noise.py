@@ -1,6 +1,5 @@
 from tqdm import tqdm
 import numpy as np
-from scipy.stats import iqr
 
 import torch
 import torch.nn as nn
@@ -20,7 +19,6 @@ class S4Noise(nn.Module):
             lambda_reg,
             cut_radius_psf,
             mask_template_setup,
-            normalization="normal",
             convolve=True,
             verbose=True):
 
@@ -35,7 +33,6 @@ class S4Noise(nn.Module):
         self.convolve = convolve
         self.cut_radius_psf = cut_radius_psf
         self.mask_template_setup = mask_template_setup
-        self.normalization = normalization
 
         # 3.) prepare the psf_template
         template_cut, _ = construct_round_rfrr_template(
@@ -71,21 +68,6 @@ class S4Noise(nn.Module):
         if self.verbose:
             print("[DONE]")
 
-        # 6.) Set up the buffers for the normalization
-        self.register_buffer(
-            "mean_frame",
-            torch.zeros(
-                self.image_size,
-                self.image_size,
-                dtype=torch.float32))
-
-        self.register_buffer(
-            "std_frame",
-            torch.zeros(
-                self.image_size,
-                self.image_size,
-                dtype=torch.float32))
-
     def _apply(self, fn):
         super(S4Noise, self)._apply(fn)
         self.prev_betas = None
@@ -100,7 +82,6 @@ class S4Noise(nn.Module):
         state_dict["convolve"] = self.convolve
         state_dict["cut_radius_psf"] = self.cut_radius_psf
         state_dict["mask_template_setup"] = self.mask_template_setup
-        state_dict["normalization"] = self.normalization
         torch.save(state_dict, file_path)
 
     @classmethod
@@ -121,47 +102,17 @@ class S4Noise(nn.Module):
             lambda_reg=state_dict.pop('lambda_reg'),
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
             mask_template_setup=state_dict.pop('mask_template_setup'),
-            normalization=state_dict.pop('normalization'),
             convolve=state_dict.pop('convolve'),
             verbose=verbose)
 
         obj.load_state_dict(state_dict)
         return obj
 
-    def _prepare_normalization(
-            self,
-            science_data):
-
-        if self.verbose:
-            print("Build normalization frames ... ", end='')
-
-        if self.normalization == "normal":
-            self.mean_frame = torch.mean(science_data, axis=0)
-            self.std_frame = torch.std(science_data, axis=0)
-        elif self.normalization == "robust":
-            self.mean_frame = torch.median(science_data, dim=0).values
-            iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
-            self.std_frame = torch.from_numpy(iqr_frame).float()
-        else:
-            raise ValueError("normalization type unknown.")
-
-        if self.verbose:
-            print("[DONE]")
-
-    def normalize_data(self, science_data):
-        science_data_mean_shift = science_data - self.mean_frame
-        normalized_data = science_data_mean_shift / self.std_frame
-
-        return torch.nan_to_num(normalized_data, 0)
-
     def fit(
             self,
             science_data,
             device="cpu",
             fp_precision="float32"):
-
-        self._prepare_normalization(science_data)
-        science_data_norm = self.normalize_data(science_data)
 
         positions = [(x, y)
                      for x in range(self.image_size)
@@ -177,7 +128,7 @@ class S4Noise(nn.Module):
             p_torch = None
 
         self.betas_raw.data = compute_betas(
-            X_torch=science_data_norm,
+            X_torch=science_data,
             p_torch=p_torch,
             M_torch=self.right_reason_mask,
             lambda_reg=self.lambda_reg,
@@ -209,15 +160,7 @@ class S4Noise(nn.Module):
             separation=separation,
             test_image=science_data_train[0].cpu().numpy())
 
-        # 2.) Set up the training data
-        if self.verbose:
-            print("Setup training data for "
-                  "separation " + str(separation) + " ...")
-
-        self._prepare_normalization(science_data_train)
-        science_data_norm = self.normalize_data(science_data_train)
-
-        # 3.) Compute the betas
+        # 2.) Compute the betas
         # collect all parameters for the SVD
         if self.verbose:
             print("Compute betas for "
@@ -229,7 +172,7 @@ class S4Noise(nn.Module):
             p_torch = None
 
         betas_final = compute_betas_svd(
-            X_torch=science_data_norm,
+            X_torch=science_data_train,
             M_torch=self.right_reason_mask,
             lambda_regs=lambdas,
             positions=positions,
@@ -238,7 +181,7 @@ class S4Noise(nn.Module):
             verbose=self.verbose,
             device=device)
 
-        # 4.) Re-mask with second_mask.
+        # 3.) Re-mask with second_mask.
         # This step is needed to cut off overflow towards the identity in case
         # of small mask sizes
 
@@ -263,21 +206,19 @@ class S4Noise(nn.Module):
 
             re_masked[i] = betas_final[i] * second_mask[tmp_idx]
 
-        # 5.) Predict
+        # 4.) Predict
         if self.verbose:
             print("Compute validation errors for "
                   "separation " + str(separation) + " ...")
 
-        science_test = science_data_test
-        science_test = self.normalize_data(science_test)
-
-        science_test = science_test.view(science_test.shape[0], -1)
-        gt_values = science_test[:, all_idx]
+        science_data_test = science_data_test.view(
+            science_data_test.shape[0], -1)
+        gt_values = science_data_test[:, all_idx]
 
         # move to GPU
         gt_values = gt_values.to(device)
         re_masked = re_masked.to(device)
-        science_test = science_test.to(device)
+        science_data_test = science_data_test.to(device)
 
         median_errors = []
 
@@ -285,14 +226,14 @@ class S4Noise(nn.Module):
             tmp_beta = re_masked[:, tmp_lambda_idx]
             tmp_beta = tmp_beta.view(tmp_beta.shape[0], -1)
 
-            tmp_prediction = science_test @ tmp_beta.T
+            tmp_prediction = science_data_test @ tmp_beta.T
             tmp_residual = torch.abs(gt_values - tmp_prediction).cpu()
 
             tmp_median_error = torch.median(tmp_residual)
             median_errors.append(tmp_median_error)
 
         # clean up memory
-        del gt_values, re_masked, science_test
+        del gt_values, re_masked, science_data_test
 
         # normalize
         median_errors = np.array(median_errors)
@@ -379,39 +320,29 @@ class S4Noise(nn.Module):
 
         self.prev_betas = tmp_weights
 
-    def predict(
+    def predict_noise(
             self,
-            science_data
+            science_data_norm
     ):
         """
-        science_data: shape: (time, x, y), not normalized raw data
+        science_data: shape: (time, x, y), normalized raw data
         """
 
-        # 1.) normalize the science_data
-        science_norm = self.normalize_data(science_data)
-
-        # 2.) predict the noise
+        # 1.) predict the noise
         with torch.no_grad():
-            science_norm_flatten = science_norm.view(
-                science_norm.shape[0], -1)
+            science_norm_flatten = science_data_norm.view(
+                science_data_norm.shape[0], -1)
 
             self.compute_betas()
             noise_estimate = self.forward(science_norm_flatten)
 
-        # 3.) compute the residual
-        residual = science_norm_flatten - noise_estimate
-
-        residual = residual.view(
-            science_norm.shape[0],
-            self.image_size,
-            self.image_size)
-
+        # 2.) reshape the result
         noise_estimate = noise_estimate.view(
-            science_norm.shape[0],
+            science_data_norm.shape[0],
             self.image_size,
             self.image_size)
 
-        return residual, noise_estimate
+        return noise_estimate
 
     def forward(
             self,

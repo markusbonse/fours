@@ -15,6 +15,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 from s4hci.models.noise import S4Noise
 from s4hci.models.planet import S4Planet
+from s4hci.models.normalization import FrameNormalization
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.data_handling import save_as_fits
 
@@ -23,7 +24,7 @@ class S4:
 
     def __init__(
             self,
-            data_cube,
+            science_data,
             parang,
             psf_template,
             noise_noise_cut_radius_psf,
@@ -40,9 +41,9 @@ class S4:
         # 1.) Save all member data
         self.device = device
         self.parang = parang
-        self.data_cube = data_cube
+        self.science_data = torch.from_numpy(science_data).float()
         self.psf_template = psf_template
-        self.data_image_size = data_cube.shape[-1]
+        self.data_image_size = self.science_data.shape[-1]
         if work_dir is not None:
             self.work_dir = Path(work_dir)
         else:
@@ -57,7 +58,6 @@ class S4:
             lambda_reg=noise_lambda_init,
             cut_radius_psf=noise_noise_cut_radius_psf,
             mask_template_setup=("radius", noise_mask_radius),
-            normalization=noise_normalization,
             convolve=convolve,
             verbose=verbose).float()
 
@@ -69,7 +69,14 @@ class S4:
             inner_mask_radius=0,
             use_up_sample=planet_use_up_sample).float()
 
-        # 4.) Create the tensorboard logger for the fine_tuning
+        # 4.) Create normalization model
+        self.normalization_model = FrameNormalization(
+            image_size=self.data_image_size,
+            normalization_type=noise_normalization)
+        self.normalization_model.prepare_normalization(
+            science_data=self.science_data)
+
+        # 5.) Create the tensorboard logger for the fine_tuning
         self.tensorboard_logger = None
         self.fine_tune_start_time = None
 
@@ -103,20 +110,28 @@ class S4:
 
         # 1.) split the data into training and test data
         if isinstance(test_size, float):
-            x_train, x_test, = train_test_split(
-                self.data_cube,
+            train_idx, test_idx, = train_test_split(
+                np.arange(len(self.science_data)),
                 test_size=test_size,
                 random_state=42,
                 shuffle=True)
+
+            x_train = self.science_data[train_idx]
+            x_test = self.science_data[test_idx]
         else:
             # Use an even/odd split
-            x_train = self.data_cube[0::2]
-            x_test = self.data_cube[1::2]
+            x_train = self.science_data[0::2]
+            x_test = self.science_data[1::2]
 
-        # 2.) validate the lambda values of the noise model
-        x_train = torch.from_numpy(x_train).float()
-        x_test = torch.from_numpy(x_test).float()
+        # 2.) Normalize the training and test data
+        tmp_normalization = FrameNormalization(
+            image_size=self.data_image_size,
+            normalization_type=self.normalization_model.normalization_type)
+        tmp_normalization.prepare_normalization(x_train)
+        x_test = tmp_normalization(x_test)
+        x_train = tmp_normalization(x_train)
 
+        # 3.) validate the lambda values of the noise model
         all_results, best_lambda = self.noise_model.validate_lambdas(
             num_separations=num_separations,
             lambdas=lambdas,
@@ -135,8 +150,10 @@ class S4:
         Second processing step
         """
 
-        # 1.) Train the noise model
-        x_train = torch.from_numpy(self.data_cube).float()
+        # 1.) normalize the data
+        x_train = self.normalization_model(self.science_data)
+
+        # 2.) Train the noise model
         self.noise_model.fit(
             x_train,
             device=self.device,
@@ -245,6 +262,14 @@ class S4:
                 epoch,
                 dataformats="HW")
 
+    def _create_tensorboard_logger(self):
+        time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
+        self.fine_tune_start_time = time_str
+        current_logdir = self.tensorboard_dir / \
+            Path(self.fine_tune_start_time)
+        current_logdir.mkdir()
+        self.tensorboard_logger = SummaryWriter(current_logdir)
+
     def fine_tune_model(
             self,
             num_epochs,
@@ -261,35 +286,23 @@ class S4:
         This is the last step of optimization
         """
 
+        if self.work_dir is not None:
+            self._create_tensorboard_logger()
+
         # 1.) setup planet model for training
         self.planet_model.setup_for_training(
             all_angles=self.parang,
             rotation_grid_down_sample=rotation_grid_down_sample,
             upload_rotation_grid=upload_rotation_grid)
 
-        if self.work_dir is not None:
-            time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
-            self.fine_tune_start_time = time_str
-            current_logdir = self.tensorboard_dir /\
-                Path(self.fine_tune_start_time)
-            current_logdir.mkdir()
-            self.tensorboard_logger = SummaryWriter(current_logdir)
+        # 2.) normalize the science data
+        x_norm = self.normalization_model(self.science_data)
+        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
-        # 2.) move models to the GPU
+        # 3.) move models to the GPU
         self.planet_model = self.planet_model.to(self.device)
         self.noise_model = self.noise_model.to(self.device)
-
-        # 3.) set up the normalization
-        x_train = torch.from_numpy(self.data_cube).float()
-        x_mu = torch.mean(x_train, axis=0)
-        x_std = torch.std(x_train, axis=0)
-        x_norm = (x_train - x_mu) / x_std
-        x_norm = torch.nan_to_num(x_norm, 0)
-
-        # move the data to the GPU
-        x_std = x_std.to(self.device)
-        x_norm = x_norm.to(self.device)
-        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+        self.normalization_model = self.normalization_model.to(self.device)
 
         # 4.) Create the optimizer and add the parameters we want to optimize
         parameters = []
@@ -365,8 +378,10 @@ class S4:
                 planet_signal = self.planet_model.forward(tmp_planet_idx)
 
                 # 2.) normalize and reshape the planet signal
-                planet_signal = planet_signal / x_std
-                planet_signal = torch.nan_to_num(planet_signal, 0)
+                planet_signal = self.normalization_model.normalize_data(
+                    planet_signal,
+                    re_center=False)
+
                 planet_signal_norm = planet_signal.view(
                     planet_signal.shape[0], -1)
 
@@ -411,9 +426,9 @@ class S4:
                 planet_signal=planet_signal)
 
         # 8.) Clean up GPU
-        del x_norm, x_std
         self.noise_model = self.noise_model.cpu()
         self.planet_model = self.planet_model.cpu()
+        self.normalization_model = self.normalization_model.cpu()
         torch.cuda.empty_cache()
 
     @staticmethod
@@ -428,8 +443,10 @@ class S4:
             account_for_planet,
             combine="median"
     ):
+
+        # TODO check normalization
         # 1.) move everything to the GPU
-        x_train = torch.from_numpy(self.data_cube).float()
+        x_train = torch.from_numpy(self.science_data).float()
 
         # 2.) Get the current planet signal and subtract it if requested
         if account_for_planet:
