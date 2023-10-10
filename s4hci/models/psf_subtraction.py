@@ -353,8 +353,7 @@ class S4:
                 noise_estimate = self.noise_model(tmp_frames)
 
                 # 2.) Compute the loss
-                loss_recon = ((noise_estimate - tmp_frames) ** 2).sum() \
-                    / num_steps_per_epoch
+                loss_recon = ((noise_estimate - tmp_frames) ** 2).sum()
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
                     * self.noise_model.lambda_reg \
                     / num_steps_per_epoch
@@ -497,7 +496,7 @@ class S4:
 
                 # 4.) Compute the loss
                 loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
-                               - tmp_frames) ** 2).sum() / num_steps_per_epoch
+                               - tmp_frames) ** 2).sum()
 
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
                     * self.noise_model.lambda_reg / num_steps_per_epoch
