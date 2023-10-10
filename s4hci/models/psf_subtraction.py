@@ -220,76 +220,75 @@ class S4:
             self.normalization_model = S4FrameNormalization.load(
                 file_normalization_model)
 
-    def _logg_fine_tune_status(
+    def _logg_loss_values(
             self,
             epoch,
-            loss_reg,
-            start_reg_loss,
             loss_recon,
-            start_recon_loss,
-            logging_interval,
-            planet_signal):
+            loss_reg):
 
         if self.work_dir is None:
             return
 
         self.tensorboard_logger.add_scalar(
-            "Loss/Reconstruction_delta",
-            loss_recon - start_recon_loss,
+            "Loss/Reconstruction_loss",
+            loss_recon,
             epoch)
 
         self.tensorboard_logger.add_scalar(
-            "Loss/Regularization_delta",
-            loss_reg - start_reg_loss,
+            "Loss/Regularization_loss",
+            loss_reg,
             epoch)
 
-        if not epoch % logging_interval == logging_interval - 1:
+    @staticmethod
+    def _normalize_for_tensorboard(frame_in):
+        image_for_tb = deepcopy(frame_in)
+        image_for_tb -= np.min(image_for_tb)
+        image_for_tb /= np.max(image_for_tb)
+        return image_for_tb
+
+    def _logg_planet_model(
+            self,
+            epoch,
+            planet_signal):
+
+        if self.work_dir is None:
             return
 
         with torch.no_grad():
             tmp_frame = planet_signal.detach()[-1, 0].cpu().numpy()
-            self.tensorboard_logger.add_image(
-                "Images/Planet_signal_estimate",
-                self.normalize_for_tensorboard(tmp_frame),
-                epoch,
-                dataformats="HW")
 
-            tmp_residual_dir = self.residuals_dir / \
-                Path(self.fine_tune_start_time)
-            tmp_residual_dir.mkdir(exist_ok=True)
+        self.tensorboard_logger.add_image(
+            "Images/Planet_signal_estimate",
+            self._normalize_for_tensorboard(tmp_frame),
+            epoch,
+            dataformats="HW")
 
-            save_as_fits(
-                tmp_frame,
-                tmp_residual_dir /
-                Path("Planet_signal_estimate_epoch_" + str(epoch).zfill(4)
-                     + ".fits"),
-                overwrite=True)
+        tmp_residual_dir = self.residuals_dir / \
+            Path(self.fine_tune_start_time)
+        tmp_residual_dir.mkdir(exist_ok=True)
 
+        save_as_fits(
+            tmp_frame,
+            tmp_residual_dir /
+            Path("Planet_signal_estimate_epoch_" + str(epoch).zfill(4)
+                 + ".fits"),
+            overwrite=True)
+
+        with torch.no_grad():
             tmp_frame = self.planet_model.get_planet_signal()
             tmp_frame = tmp_frame.detach()[0].cpu().numpy()
-            self.tensorboard_logger.add_image(
-                "Images/Planet_raw_parameters",
-                self.normalize_for_tensorboard(tmp_frame),
-                epoch,
-                dataformats="HW")
+        self.tensorboard_logger.add_image(
+            "Images/Planet_raw_parameters",
+            self._normalize_for_tensorboard(tmp_frame),
+            epoch,
+            dataformats="HW")
 
-            save_as_fits(
-                tmp_frame,
-                tmp_residual_dir /
-                Path("Planet_raw_parameters_" + str(epoch).zfill(4)
-                     + ".fits"),
-                overwrite=True)
-
-            self.noise_model.compute_betas()
-            betas = self.noise_model.prev_betas.detach().cpu().numpy()
-            beta_frame = np.abs(betas[6500].reshape(
-                self.data_image_size, self.data_image_size))
-
-            self.tensorboard_logger.add_image(
-                "Images/Noise_model_reasons",
-                self.normalize_for_tensorboard(beta_frame),
-                epoch,
-                dataformats="HW")
+        save_as_fits(
+            tmp_frame,
+            tmp_residual_dir /
+            Path("Planet_raw_parameters_" + str(epoch).zfill(4)
+                 + ".fits"),
+            overwrite=True)
 
     def _create_tensorboard_logger(self):
         time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
@@ -299,21 +298,102 @@ class S4:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
-    def fine_tune_model(
+    def fine_tune_noise_model(
+            self,
+            num_epochs,
+            learning_rate=1e-6,
+            batch_size=-1):
+
+        if self.work_dir is not None:
+            self._create_tensorboard_logger()
+
+        # 1.) normalize the science data
+        x_norm = self.normalization_model(self.science_data)
+        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+
+        # 2.) move models to the GPU
+        self.noise_model = self.noise_model.to(self.device)
+
+        # 3.) Create the optimizer and add the parameters we want to optimize
+        optimizer = optim.Adam(
+            [self.noise_model.betas_raw,],
+            lr=learning_rate)
+
+        # 4.) Create the DataLoader
+        if batch_size == -1:
+            batch_size = x_norm.shape[0]
+            # upload the data to the device
+            science_norm_flatten = science_norm_flatten.to(self.device)
+
+        merged_dataset = TensorDataset(
+            science_norm_flatten)
+
+        data_loader = DataLoader(
+            merged_dataset,
+            batch_size=batch_size,
+            shuffle=True)
+
+        # 5.) Run the fine-tuning
+        # needed for gradient accumulation in order to normalize the loss
+        num_steps_per_epoch = len(data_loader)
+
+        epoch_range = tqdm(range(num_epochs)) if \
+            self.noise_model.verbose else range(num_epochs)
+
+        for epoch in epoch_range:
+            optimizer.zero_grad()
+
+            # we have to keep track of the loss sum within gradient accumulation
+            running_reg_loss = 0
+            running_recon_loss = 0
+
+            for tmp_frames in data_loader:
+                # 0.) upload tmp_frames if needed
+                if tmp_frames.device != torch.device(self.device):
+                    tmp_frames = tmp_frames.to(self.device)
+
+                # 1.) run the forward path of the noise model
+                self.noise_model.compute_betas()
+                noise_estimate = self.noise_model(tmp_frames)
+
+                # 2.) Compute the loss
+                loss_recon = ((noise_estimate - tmp_frames) ** 2).sum() \
+                    / num_steps_per_epoch
+                loss_reg = (self.noise_model.betas_raw ** 2).sum() \
+                    * self.noise_model.lambda_reg \
+                    / num_steps_per_epoch
+
+                # 3.) Backward
+                loss = loss_recon + loss_reg
+                loss.backward()
+
+                # 4.) Track the current loss
+                running_reg_loss += loss_reg.detach().item()
+                running_recon_loss += loss_recon.detach().item()
+
+            # Make one accumulated gradient step
+            optimizer.step()
+
+            # 5.) Logg the information
+            self._logg_loss_values(
+                epoch=epoch,
+                loss_recon=running_recon_loss,
+                loss_reg=running_reg_loss)
+
+        # 7.) Clean up GPU
+        self.noise_model = self.noise_model.cpu()
+        torch.cuda.empty_cache()
+
+    def learn_planet_model(
             self,
             num_epochs,
             learning_rate_planet=1e-3,
             learning_rate_noise=1e-6,
             fine_tune_noise_model=False,
-            lean_planet_model=True,
             rotation_grid_down_sample=10,
             upload_rotation_grid=True,
             logging_interval=10,
-            batch_size=-1
-    ):
-        """
-        This is the last step of optimization
-        """
+            batch_size=-1):
 
         if self.work_dir is not None:
             self._create_tensorboard_logger()
@@ -334,7 +414,10 @@ class S4:
         self.normalization_model = self.normalization_model.to(self.device)
 
         # 4.) Create the optimizer and add the parameters we want to optimize
-        parameters = []
+        parameters = [
+            {"params": self.planet_model.planet_model,
+             'lr': learning_rate_planet}, ]
+
         if fine_tune_noise_model:
             parameters.append(
                 {"params": self.noise_model.betas_raw,
@@ -342,58 +425,47 @@ class S4:
         else:
             self.noise_model.betas_raw.requires_grad = False
 
-        if lean_planet_model:
-            parameters.append(
-                {"params": self.planet_model.planet_model,
-                 'lr': learning_rate_planet}
-            )
-        else:
-            self.planet_model.planet_model.requires_grad = False
-
         # The default learning rate is not needed
         optimizer = optim.Adam(
             parameters,
             lr=learning_rate_planet)
 
+        # 5.) Create the data loader
         # if the noise model is not fine-tuned we can compute the noise estimate
         # once at the start of the training loop
         if not fine_tune_noise_model:
-            pre_build_noise_noise_estimate = self.noise_model(
-                science_norm_flatten.to(self.device))
+            pre_build_noise_estimate = self.noise_model(
+                science_norm_flatten)
         else:
-            pre_build_noise_noise_estimate = torch.ones(
+            pre_build_noise_estimate = torch.ones(
                 science_norm_flatten.shape[0])
+
+        if batch_size == -1:
+            batch_size = x_norm.shape[0]
+            # upload the data to the device
+            science_norm_flatten = science_norm_flatten.to(self.device)
+            pre_build_noise_estimate = pre_build_noise_estimate.to(self.device)
 
         # The index list is needed to get all planet frames during fine-tuning.
         planet_model_idx = torch.from_numpy(np.arange(x_norm.shape[0]))
 
-        # 5.) Run the fine-tuning
-        if self.noise_model.verbose:
-            epoch_range = tqdm(range(num_epochs))
-        else:
-            epoch_range = range(num_epochs)
-
-        # create the DataLoader
+        # create the TensorDataset
         merged_dataset = TensorDataset(
             science_norm_flatten,
-            pre_build_noise_noise_estimate,
+            pre_build_noise_estimate,
             planet_model_idx)
 
-        if batch_size == -1:
-            bs = x_norm.shape[0]
-        else:
-            bs = batch_size
         data_loader = DataLoader(
             merged_dataset,
-            batch_size=bs,
+            batch_size=batch_size,
             shuffle=True)
 
+        # 6.) Run the fine-tuning
         # needed for gradient accumulation in order to normalize the loss
         num_steps_per_epoch = len(data_loader)
 
-        # values needed to plot the difference in loss
-        start_reg_loss = 0.
-        start_recon_loss = 0.
+        epoch_range = tqdm(range(num_epochs)) if \
+            self.noise_model.verbose else range(num_epochs)
 
         for epoch in epoch_range:
             optimizer.zero_grad()
@@ -403,6 +475,11 @@ class S4:
             running_recon_loss = 0
 
             for tmp_frames, noise_estimate, tmp_planet_idx in data_loader:
+                # 0.) upload tmp_frames if needed
+                if tmp_frames.device != torch.device(self.device):
+                    tmp_frames = tmp_frames.to(self.device)
+                    noise_estimate = noise_estimate.to(self.device)
+
                 # 1.) Get the current planet signal estimate
                 planet_signal = self.planet_model.forward(tmp_planet_idx)
 
@@ -424,13 +501,13 @@ class S4:
 
                 # 4.) Compute the loss
                 loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
-                               - tmp_frames) ** 2).sum()
+                               - tmp_frames) ** 2).sum() / num_steps_per_epoch
 
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
-                    * self.noise_model.lambda_reg
+                    * self.noise_model.lambda_reg / num_steps_per_epoch
 
                 # 5.) Backward
-                loss = (loss_recon + loss_reg) / num_steps_per_epoch
+                loss = loss_recon + loss_reg
                 loss.backward()
 
                 # 6.) Track the current loss
@@ -441,31 +518,20 @@ class S4:
             optimizer.step()
 
             # 6.) Logg the information
-            if epoch == 0:
-                start_reg_loss = running_reg_loss
-                start_recon_loss = running_recon_loss
-
-            self._logg_fine_tune_status(
+            self._logg_loss_values(
                 epoch=epoch,
                 loss_reg=running_reg_loss,
-                start_reg_loss=start_reg_loss,
-                loss_recon=running_recon_loss,
-                start_recon_loss=start_recon_loss,
-                logging_interval=logging_interval,
-                planet_signal=planet_signal)
+                loss_recon=running_recon_loss)
+            if epoch % logging_interval == logging_interval - 1:
+                self._logg_planet_model(
+                    epoch=epoch,
+                    planet_signal=planet_signal)
 
         # 8.) Clean up GPU
         self.noise_model = self.noise_model.cpu()
         self.planet_model = self.planet_model.cpu()
         self.normalization_model = self.normalization_model.cpu()
         torch.cuda.empty_cache()
-
-    @staticmethod
-    def normalize_for_tensorboard(frame_in):
-        image_for_tb = deepcopy(frame_in)
-        image_for_tb -= np.min(image_for_tb)
-        image_for_tb /= np.max(image_for_tb)
-        return image_for_tb
 
     def compute_residual(
             self,
