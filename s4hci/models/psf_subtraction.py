@@ -3,7 +3,6 @@ from copy import deepcopy
 from datetime import datetime
 
 import numpy as np
-from scipy.stats import iqr
 from tqdm.auto import tqdm
 
 from sklearn.model_selection import train_test_split
@@ -316,7 +315,7 @@ class S4:
 
         # 3.) Create the optimizer and add the parameters we want to optimize
         optimizer = optim.Adam(
-            [self.noise_model.betas_raw,],
+            [self.noise_model.betas_raw, ],
             lr=learning_rate)
 
         # 4.) Create the DataLoader
@@ -535,24 +534,25 @@ class S4:
 
     def compute_residual(
             self,
-            account_for_planet,
+            account_for_planet_model,
             combine="median",
             num_cpus=8
     ):
         # 1.) Get the current planet signal and subtract it if requested
-        if account_for_planet:
+        if account_for_planet_model:
             planet_model_idx = torch.from_numpy(
                 np.arange(self.science_data.shape[0]))
             planet_signal = self.planet_model.forward(planet_model_idx)
 
             # 3.) Get the current data without the planet
-            data_no_planet = self.science_data - planet_signal.squeeze().detach()
+            data_no_planet = self.science_data - \
+                planet_signal.squeeze().detach()
             del planet_signal
         else:
             data_no_planet = self.science_data
 
         # 2.) create a new normalization model which is not biased by the planet
-        if account_for_planet:
+        if account_for_planet_model:
             local_normalization_model = S4FrameNormalization(
                 self.data_image_size,
                 self.normalization_model.normalization_type)
