@@ -403,12 +403,7 @@ class S4:
         x_norm = self.normalization_model(self.science_data)
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
-        # 3.) move models to the GPU
-        self.planet_model = self.planet_model.to(self.device)
-        self.noise_model = self.noise_model.to(self.device)
-        self.normalization_model = self.normalization_model.to(self.device)
-
-        # 4.) Create the optimizer and add the parameters we want to optimize
+        # 3.) Create the optimizer and add the parameters we want to optimize
         parameters = [
             {"params": self.planet_model.planet_model,
              'lr': learning_rate_planet}, ]
@@ -425,11 +420,11 @@ class S4:
             parameters,
             lr=learning_rate_planet)
 
-        # 5.) Create the data loader
+        # 4.) Create the data loader
         # if the noise model is not fine-tuned we can compute the noise estimate
         # once at the start of the training loop
         if not fine_tune_noise_model:
-            pre_build_noise_estimate = self.noise_model.cpu()(
+            pre_build_noise_estimate = self.noise_model(
                 science_norm_flatten)
         else:
             pre_build_noise_estimate = torch.ones(
@@ -454,6 +449,11 @@ class S4:
             merged_dataset,
             batch_size=batch_size,
             shuffle=True)
+
+        # 5.) move models to the GPU
+        self.planet_model = self.planet_model.to(self.device)
+        self.noise_model = self.noise_model.to(self.device)
+        self.normalization_model = self.normalization_model.to(self.device)
 
         # 6.) Run the fine-tuning
         # needed for gradient accumulation in order to normalize the loss
