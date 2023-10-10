@@ -247,14 +247,18 @@ class S4:
 
     def _logg_planet_model(
             self,
-            epoch,
-            planet_signal):
+            epoch):
 
         if self.work_dir is None:
             return
 
         with torch.no_grad():
-            tmp_frame = planet_signal.detach()[-1, 0].cpu().numpy()
+            planet_signal = self.planet_model(torch.tensor([0]))
+            planet_signal = self.normalization_model.normalize_data(
+                planet_signal,
+                re_center=False)
+
+            tmp_frame = planet_signal[0, 0].cpu().detach().numpy()
 
         self.tensorboard_logger.add_image(
             "Images/Planet_signal_estimate",
@@ -519,8 +523,7 @@ class S4:
                 loss_recon=running_recon_loss)
             if epoch % logging_interval == logging_interval - 1:
                 self._logg_planet_model(
-                    epoch=epoch,
-                    planet_signal=planet_signal)
+                    epoch=epoch)
 
         # 8.) Clean up GPU
         self.noise_model = self.noise_model.cpu()
