@@ -42,7 +42,7 @@ class S4Noise(nn.Module):
 
         self.register_buffer(
             "psf_model",
-            torch.from_numpy(template_norm).unsqueeze(0).unsqueeze(0))
+            torch.from_numpy(template_norm).unsqueeze(0).unsqueeze(0).float())
 
         # 4.) Initialize the raw beta values
         self.betas_raw = nn.Parameter(torch.zeros(
