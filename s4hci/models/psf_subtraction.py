@@ -130,7 +130,6 @@ class S4:
 
     def find_closed_form_noise_model(
             self,
-            save_model=False,
             fp_precision="float32"):
         """
         Second processing step
@@ -143,10 +142,25 @@ class S4:
             device=self.device,
             fp_precision=fp_precision)
 
-        # 2.) Save the noise model
-        if save_model:
-            self.noise_model.save(
-                self.models_dir / "noise_model_closed_form.pkl")
+    def save_noise_model(
+            self,
+            file_name_noise_model):
+
+        self.noise_model.save(
+            self.models_dir / file_name_noise_model)
+
+    def save_planet_model(
+            self,
+            file_name_planet_model):
+        self.planet_model.save(
+            self.models_dir / file_name_planet_model)
+
+    def save_models(
+            self,
+            file_name_noise_model,
+            file_name_planet_model):
+        self.save_planet_model(file_name_planet_model)
+        self.save_noise_model(file_name_noise_model)
 
     def _logg_fine_tune_status(
             self,
@@ -229,7 +243,6 @@ class S4:
             rotation_grid_down_sample=10,
             upload_rotation_grid=True,
             logging_interval=10,
-            save_model=False,
             batch_size=-1
     ):
         """
@@ -390,13 +403,6 @@ class S4:
         self.noise_model = self.noise_model.cpu()
         self.planet_model = self.planet_model.cpu()
         torch.cuda.empty_cache()
-
-        # 9.) Save the models
-        if save_model:
-            self.noise_model.save(
-                self.models_dir / "noise_model_fine_tuned.pkl")
-            self.planet_model.save(
-                self.models_dir / "planet_model_fine_tuned.pkl")
 
     @staticmethod
     def normalize_for_tensorboard(frame_in):
