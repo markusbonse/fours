@@ -222,7 +222,7 @@ class S4Noise(nn.Module):
 
         median_errors = []
 
-        for tmp_lambda_idx in tqdm(range(re_masked.shape[1])):
+        for tmp_lambda_idx in range(re_masked.shape[1]):
             tmp_beta = re_masked[:, tmp_lambda_idx]
             tmp_beta = tmp_beta.view(tmp_beta.shape[0], -1)
 
