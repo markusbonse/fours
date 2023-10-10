@@ -324,11 +324,8 @@ class S4:
             # upload the data to the device
             science_norm_flatten = science_norm_flatten.to(self.device)
 
-        merged_dataset = TensorDataset(
-            science_norm_flatten)
-
         data_loader = DataLoader(
-            merged_dataset,
+            science_norm_flatten,
             batch_size=batch_size,
             shuffle=True)
 
@@ -433,7 +430,7 @@ class S4:
         # if the noise model is not fine-tuned we can compute the noise estimate
         # once at the start of the training loop
         if not fine_tune_noise_model:
-            pre_build_noise_estimate = self.noise_model(
+            pre_build_noise_estimate = self.noise_model.cpu()(
                 science_norm_flatten)
         else:
             pre_build_noise_estimate = torch.ones(
