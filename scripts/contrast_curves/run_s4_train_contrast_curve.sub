@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_curves/run_s4_train_contrast_curves.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/06_contrast_curves/01_train_each_model_once/$(dataset_name)/
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_curves/run_s4_train_contrast_curve.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/06_contrast_curves/01_train_each_model_once/$(dataset_name)/
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 86400
