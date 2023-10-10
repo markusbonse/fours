@@ -158,8 +158,7 @@ class S4Noise(nn.Module):
             self,
             science_data,
             device="cpu",
-            fp_precision="float32",
-            mode="LSTSQ"):
+            fp_precision="float32"):
 
         self._prepare_normalization(science_data)
         science_data_norm = self.normalize_data(science_data)
@@ -185,7 +184,6 @@ class S4Noise(nn.Module):
             positions=positions,
             verbose=self.verbose,
             device=device,
-            mode=mode,
             fp_precision=fp_precision)
 
         if self.verbose:
