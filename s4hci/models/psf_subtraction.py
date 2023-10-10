@@ -536,69 +536,59 @@ class S4:
     def compute_residual(
             self,
             account_for_planet,
-            combine="median"
+            combine="median",
+            num_cpus=8
     ):
-
-        # TODO check normalization
-        # 1.) move everything to the GPU
-        x_train = torch.from_numpy(self.science_data).float()
-
-        # 2.) Get the current planet signal and subtract it if requested
+        # 1.) Get the current planet signal and subtract it if requested
         if account_for_planet:
-            planet_model_idx = torch.from_numpy(np.arange(x_train.shape[0]))
+            planet_model_idx = torch.from_numpy(
+                np.arange(self.science_data.shape[0]))
             planet_signal = self.planet_model.forward(planet_model_idx)
 
             # 3.) Get the current data without the planet
-            data_no_planet = x_train - planet_signal.squeeze().detach()
+            data_no_planet = self.science_data - planet_signal.squeeze().detach()
             del planet_signal
         else:
-            data_no_planet = x_train
+            data_no_planet = self.science_data
 
-        # 4.) Set up the normalization
-        if self.noise_model.normalization == "normal":
-            x_mu = torch.mean(data_no_planet, axis=0)
-            x_std = torch.std(data_no_planet, axis=0)
-        elif self.noise_model.normalization == "robust":
-            x_mu = torch.median(data_no_planet, dim=0).values
-            iqr_frame = iqr(data_no_planet.numpy(), axis=0, scale=1.349)
-            x_std = torch.from_numpy(iqr_frame).float()
+        # 2.) create a new normalization model which is not biased by the planet
+        if account_for_planet:
+            local_normalization_model = S4FrameNormalization(
+                self.data_image_size,
+                self.normalization_model.normalization_type)
+            local_normalization_model.prepare_normalization(data_no_planet)
         else:
-            raise ValueError("normalization type unknown.")
+            local_normalization_model = self.normalization_model
 
-        # 5.) get the current normalized data
-        x_norm = (x_train - x_mu) / x_std
-        x_norm = torch.nan_to_num(x_norm, 0)
-        x_no_planet = (data_no_planet - x_mu) / x_std
-        x_no_planet = torch.nan_to_num(x_no_planet, 0)
-        del data_no_planet
+        # 3.) normalize the data
+        x_norm = local_normalization_model(self.science_data)
+        x_no_planet = local_normalization_model(data_no_planet)
 
-        # 6.) reshape everything
+        # 4.) reshape everything
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
         science_norm_flatten_no_planet = x_no_planet.view(x_norm.shape[0], -1)
 
-        # 7.) compute the noise estimate
+        # 6.) compute the noise estimate
         noise_estimate = self.noise_model(science_norm_flatten_no_planet)
 
-        # 8.) compute the residual sequence
+        # 7.) compute the residual sequence
         residual_sequence = science_norm_flatten - noise_estimate
         residual_stack = residual_sequence.view(
-            x_train.shape[0],
+            self.science_data.shape[0],
             self.noise_model.image_size,
             self.noise_model.image_size).detach().cpu().numpy()
 
-        # 9.) Compute the unbiased median / mean frame
+        # 8.) Compute the unbiased median / mean frame
         residuals_unbiased = science_norm_flatten_no_planet - noise_estimate
         residuals_unbiased = residuals_unbiased.view(
-            x_train.shape[0],
+            self.science_data.shape[0],
             self.noise_model.image_size,
             self.noise_model.image_size).detach().cpu().numpy()
 
         if combine == "mean":
             unbiased_me_frame = np.mean(residuals_unbiased, axis=0)
-            combine_tag = "Mean_Residuals"
         else:
             unbiased_me_frame = np.median(residuals_unbiased, axis=0)
-            combine_tag = "Median_Residuals"
 
         del residuals_unbiased
 
@@ -608,8 +598,8 @@ class S4:
         residual_after_fine_tuning = combine_residual_stack(
             residual_stack=residual_stack,
             angles=self.parang,
-            combine=[combine_tag, ],
-            suffix="",
-            num_cpus=8)[combine_tag]
+            combine=combine,
+            subtract_temporal_average=False,
+            num_cpus=num_cpus)
 
         return residual_after_fine_tuning

@@ -7,7 +7,7 @@ from tqdm import tqdm
 def combine_residual_stack(residual_stack,
                            angles,
                            combine="mean",
-                           subtract_temporal_average=True,
+                           subtract_temporal_average=False,
                            num_cpus=4):
 
     if combine == "mean":
