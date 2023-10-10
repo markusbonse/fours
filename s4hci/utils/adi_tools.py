@@ -6,9 +6,17 @@ from tqdm import tqdm
 
 def combine_residual_stack(residual_stack,
                            angles,
-                           combine,
-                           suffix="",
+                           combine="mean",
+                           subtract_temporal_average=True,
                            num_cpus=4):
+
+    if combine == "mean":
+        temporal_average = np.mean(residual_stack, axis=0)
+    else:
+        temporal_average = np.median(residual_stack, axis=0)
+
+    if subtract_temporal_average:
+        residual_stack = residual_stack - temporal_average
 
     if num_cpus == 1:
         de_rotated = []
@@ -31,18 +39,7 @@ def combine_residual_stack(residual_stack,
         de_rotated = np.array(pool.starmap(rotate, arguments))
         pool.close()
 
-    results = dict()
-    if "Mean_Residuals" in combine:
-        results["Mean_Residuals" + suffix] = np.mean(de_rotated, axis=0)
-
-    if "Median_Residuals" in combine:
-        results["Median_Residuals" + suffix] = np.median(de_rotated, axis=0)
-
-    if "Mean_Residuals_NoiseNorm" in combine:
-        results["Mean_Residuals_NoiseNorm" + suffix] = np.divide(
-            np.mean(de_rotated, axis=0),
-            np.std(de_rotated, axis=0),
-            out=np.zeros_like(np.mean(de_rotated, axis=0)),
-            where=np.std(de_rotated, axis=0) != 0)
-
-    return results
+    if combine == "mean":
+        return np.mean(de_rotated, axis=0)
+    else:
+        return np.median(de_rotated, axis=0)
