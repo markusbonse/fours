@@ -142,6 +142,16 @@ class S4:
             device=self.device,
             fp_precision=fp_precision)
 
+    @staticmethod
+    def _check_work_dir(function):
+        def check_workdir(self, *args, **kwargs):
+            if self.work_dir is None:
+                raise FileNotFoundError(
+                    "Saving the model requires a work directory.")
+            function(self, *args, **kwargs)
+        return check_workdir
+
+    @_check_work_dir
     def save_noise_model(
             self,
             file_name_noise_model):
@@ -149,12 +159,14 @@ class S4:
         self.noise_model.save(
             self.models_dir / file_name_noise_model)
 
+    @_check_work_dir
     def save_planet_model(
             self,
             file_name_planet_model):
         self.planet_model.save(
             self.models_dir / file_name_planet_model)
 
+    @_check_work_dir
     def save_models(
             self,
             file_name_noise_model,
@@ -354,7 +366,7 @@ class S4:
 
                 # 2.) normalize and reshape the planet signal
                 planet_signal = planet_signal / x_std
-                torch.nan_to_num(planet_signal, 0)
+                planet_signal = torch.nan_to_num(planet_signal, 0)
                 planet_signal_norm = planet_signal.view(
                     planet_signal.shape[0], -1)
 
