@@ -123,10 +123,11 @@ class S4:
             def wrapper(self, *args, **kwargs):
                 if self.noise_model.verbose:
                     print(msg + " ... ", end='')
-                    function(self, *args, **kwargs)
+                    result = function(self, *args, **kwargs)
                     print("[DONE]")
                 else:
-                    function(self, *args, **kwargs)
+                    result = function(self, *args, **kwargs)
+                return result
             return wrapper
         return decorator
 
