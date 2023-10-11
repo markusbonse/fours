@@ -129,7 +129,6 @@ class S4:
             return wrapper
         return decorator
 
-    @_print_progress("S4 model: setting up working directory")
     def _setup_working_dir(self):
         if self.work_dir is None:
             return None, None, None
