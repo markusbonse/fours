@@ -27,7 +27,7 @@ class S4:
             science_data,
             parang,
             psf_template,
-            noise_noise_cut_radius_psf,
+            noise_cut_radius_psf,
             noise_mask_radius,
             device=0,
             noise_normalization="normal",
@@ -56,7 +56,7 @@ class S4:
             data_image_size=self.data_image_size,
             psf_template=self.psf_template,
             lambda_reg=noise_lambda_init,
-            cut_radius_psf=noise_noise_cut_radius_psf,
+            cut_radius_psf=noise_cut_radius_psf,
             mask_template_setup=("radius", noise_mask_radius),
             convolve=convolve,
             verbose=verbose).float()
@@ -87,8 +87,8 @@ class S4:
             normalization_model_file: str,
             s4_work_dir: Union[str, Path, None],
             science_data: np.ndarray,
-            raw_angles: np.ndarray,
-            psf_template_data: np.ndarray,
+            parang: np.ndarray,
+            psf_template: np.ndarray,
             device: Union[int, str],
             verbose: bool = True,
             planet_convolve_second: bool = True,
@@ -97,9 +97,9 @@ class S4:
         # create the s4 model
         s4_model = cls(
             science_data=science_data,
-            parang=raw_angles,
-            psf_template=psf_template_data,
-            noise_noise_cut_radius_psf=1,  # will be restored
+            parang=parang,
+            psf_template=psf_template,
+            noise_cut_radius_psf=1,  # will be restored
             noise_mask_radius=1,  # will be restored
             device=device,
             convolve=True,  # will be restored

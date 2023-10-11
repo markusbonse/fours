@@ -38,7 +38,7 @@ if __name__ == '__main__':
         science_data=science_data,
         parang=raw_angles,
         psf_template=psf_template_data,
-        noise_noise_cut_radius_psf=4.0,
+        noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         device=0,
         convolve=True,
