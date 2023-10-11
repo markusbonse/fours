@@ -1,3 +1,4 @@
+from typing import Union
 from pathlib import Path
 from copy import deepcopy
 from datetime import datetime
@@ -78,6 +79,42 @@ class S4:
         # 5.) Create the tensorboard logger for the fine_tuning
         self.tensorboard_logger = None
         self.fine_tune_start_time = None
+
+    @classmethod
+    def create_from_checkpoint(
+            cls,
+            noise_model_file: str,
+            normalization_model_file: str,
+            s4_work_dir: Union[str, Path, None],
+            science_data: np.ndarray,
+            raw_angles: np.ndarray,
+            psf_template_data: np.ndarray,
+            device: Union[int, str],
+            verbose: bool = True,
+            planet_convolve_second: bool = True,
+            planet_use_up_sample: int = 1):
+
+        # create the s4 model
+        s4_model = cls(
+            science_data=science_data,
+            parang=raw_angles,
+            psf_template=psf_template_data,
+            noise_noise_cut_radius_psf=1,  # will be restored
+            noise_mask_radius=1,  # will be restored
+            device=device,
+            convolve=True,  # will be restored
+            noise_normalization="normal",  # will be restored
+            planet_convolve_second=planet_convolve_second,
+            planet_use_up_sample=planet_use_up_sample,
+            work_dir=s4_work_dir,
+            verbose=verbose)
+
+        # restore the noise and normalization model
+        s4_model.restore_models(
+            noise_model_file=noise_model_file,
+            normalization_model_file=normalization_model_file)
+
+        return s4_model
 
     def _setup_working_dir(self):
         if self.work_dir is None:
