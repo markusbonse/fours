@@ -1,4 +1,5 @@
 import sys
+from copy import deepcopy
 from pathlib import Path
 import numpy as np
 from astropy.modeling.functional_models import Moffat2D
@@ -79,11 +80,21 @@ if __name__ == "__main__":
     separations = np.arange(0, center[0], fwhm / 2.)[2:]
     num_fake_planets = 6
 
-    contrast_instance.design_fake_planet_experiments(
-        flux_ratios=flux_ratio,
-        num_planets=num_fake_planets,
-        separations=separations,
-        overwrite=True)
+    if exp_id == "0000":
+        contrast_instance.design_fake_planet_experiments(
+            flux_ratios=flux_ratio,
+            num_planets=num_fake_planets,
+            separations=separations,
+            overwrite=True)
+    else:
+        tmp_config_dir = deepcopy(contrast_instance.config_dir)
+        contrast_instance.config_dir = None
+        contrast_instance.design_fake_planet_experiments(
+            flux_ratios=flux_ratio,
+            num_planets=num_fake_planets,
+            separations=separations,
+            overwrite=True)
+        contrast_instance.config_dir = tmp_config_dir
 
     # 4.) Create S4 model
     print_message("Create S4 model")
