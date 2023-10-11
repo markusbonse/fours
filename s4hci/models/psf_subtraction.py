@@ -112,7 +112,8 @@ class S4:
         # restore the noise and normalization model
         s4_model.restore_models(
             file_noise_model=noise_model_file,
-            file_normalization_model=normalization_model_file)
+            file_normalization_model=normalization_model_file,
+            verbose=verbose)
 
         return s4_model
 
