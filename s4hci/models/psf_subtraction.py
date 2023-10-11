@@ -116,6 +116,18 @@ class S4:
 
         return s4_model
 
+    @staticmethod
+    def _print_progress(function, msg):
+        def wrapper(self, *args, **kwargs):
+            if self.noise_model.verbose:
+                print(msg + " ... ", end='')
+                function(*args, **kwargs)
+                print("[DONE]")
+            else:
+                function(*args, **kwargs)
+        return wrapper
+
+    @_print_progress("S4 model: setting up working directory")
     def _setup_working_dir(self):
         if self.work_dir is None:
             return None, None, None
@@ -133,6 +145,7 @@ class S4:
 
         return residuals_dir, tensorboard_dir, models_dir
 
+    @_print_progress("S4 model: validating noise model")
     def validate_lambdas_noise(
             self,
             num_separations,
@@ -179,6 +192,7 @@ class S4:
 
         return all_results, best_lambda
 
+    @_print_progress("S4 model: finding closed form noise model")
     def find_closed_form_noise_model(
             self,
             fp_precision="float32"):
@@ -205,6 +219,7 @@ class S4:
         return check_workdir
 
     @_check_model_dir
+    @_print_progress("S4 model: saving noise model")
     def save_noise_model(
             self,
             file_name_noise_model):
@@ -213,6 +228,7 @@ class S4:
             self.models_dir / file_name_noise_model)
 
     @_check_model_dir
+    @_print_progress("S4 model: saving planet model")
     def save_planet_model(
             self,
             file_name_planet_model):
@@ -220,6 +236,7 @@ class S4:
             self.models_dir / file_name_planet_model)
 
     @_check_model_dir
+    @_print_progress("S4 model: saving normalization model")
     def save_normalization_model(
             self,
             file_name_normalization_model):
@@ -236,6 +253,7 @@ class S4:
         self.save_noise_model(file_name_noise_model)
         self.save_normalization_model(file_name_normalization_model)
 
+    @_print_progress("S4 model: restoring models")
     def restore_models(
             self,
             file_noise_model=None,
@@ -338,6 +356,7 @@ class S4:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
+    @_print_progress("S4 model: fine tuning noise model")
     def fine_tune_noise_model(
             self,
             num_epochs,
@@ -420,6 +439,7 @@ class S4:
         self.noise_model = self.noise_model.cpu()
         torch.cuda.empty_cache()
 
+    @_print_progress("S4 model: learning planet model")
     def learn_planet_model(
             self,
             num_epochs,
@@ -568,6 +588,7 @@ class S4:
         self.normalization_model = self.normalization_model.cpu()
         torch.cuda.empty_cache()
 
+    @_print_progress("S4 model: computing residual")
     def compute_residual(
             self,
             account_for_planet_model,

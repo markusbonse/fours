@@ -52,9 +52,6 @@ class S4Noise(nn.Module):
         self.prev_betas = None
 
         # 5.) Set up the buffers for the two masks
-        if self.verbose:
-            print("Creating right reason mask ... ", end='')
-
         right_reason_mask = construct_rfrr_mask(
             template_setup=self.mask_template_setup,
             psf_template_in=template_norm,
@@ -64,14 +61,23 @@ class S4Noise(nn.Module):
             "right_reason_mask",
             torch.from_numpy(right_reason_mask))
 
-        if self.verbose:
-            print("[DONE]")
-
     def _apply(self, fn):
         super(S4Noise, self)._apply(fn)
         self.prev_betas = None
         return self
 
+    @staticmethod
+    def _print_progress(function, msg):
+        def wrapper(self, *args, **kwargs):
+            if self.verbose:
+                print(msg + " ... ", end='')
+                function(*args, **kwargs)
+                print("[DONE]")
+            else:
+                function(*args, **kwargs)
+        return wrapper
+
+    @_print_progress("S4 Noise: saving noise model")
     def save(self, file_path):
         state_dict = self.state_dict()
 
@@ -107,6 +113,7 @@ class S4Noise(nn.Module):
         obj.load_state_dict(state_dict)
         return obj
 
+    @_print_progress("S4 Noise: fitting noise model")
     def fit(
             self,
             science_data,
@@ -241,6 +248,7 @@ class S4Noise(nn.Module):
 
         return median_errors
 
+    @_print_progress("S4 Noise: validating noise model")
     def validate_lambdas(
             self,
             num_separations,
