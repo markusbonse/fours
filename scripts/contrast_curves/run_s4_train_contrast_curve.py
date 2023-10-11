@@ -49,35 +49,44 @@ if __name__ == '__main__':
         verbose=True)
 
     # 4.) Run the validation to find the best lambda value
-    print_message("Find best lambda value")
-    lambdas = np.logspace(1, 8, 200)
-    validation_results, _ = s4_model.validate_lambdas_noise(
-        num_separations=20,
-        lambdas=lambdas,
-        num_test_positions=10,
-        test_size=0.3,
-        approx_svd=-1)
+    if not (s4_model.models_dir / Path("validation_results.pkl")).is_file():
+        print_message("Find best lambda value")
+        lambdas = np.logspace(1, 8, 200)
+        validation_results, _ = s4_model.validate_lambdas_noise(
+            num_separations=20,
+            lambdas=lambdas,
+            num_test_positions=10,
+            test_size=0.3,
+            approx_svd=-1)
 
-    validation_save_file = s4_model.models_dir / Path("validation_results.pkl")
+        validation_save_file = s4_model.models_dir / Path("validation_results.pkl")
 
-    with open(validation_save_file, 'wb') as handle:
-        pickle.dump(validation_results,
-                    handle,
-                    protocol=pickle.HIGHEST_PROTOCOL)
+        with open(validation_save_file, 'wb') as handle:
+            pickle.dump(validation_results,
+                        handle,
+                        protocol=pickle.HIGHEST_PROTOCOL)
 
     # 5.) Find the closed form solution
-    print_message("Find closed form solution")
-    s4_model.find_closed_form_noise_model(
-        fp_precision="float32")
+    if (s4_model.models_dir / Path("noise_model_raw.pkl")).is_file():
+        print_message("Restore closed form solution")
+        s4_model.restore_models(
+            file_noise_model=
+                s4_model.models_dir / Path("noise_model_raw.pkl"),
+            file_normalization_model=
+                s4_model.models_dir / Path("normalization_model.pkl"))
+    else:
+        print_message("Find closed form solution")
+        s4_model.find_closed_form_noise_model(
+            fp_precision="float32")
 
-    # save the model
-    s4_model.save_noise_model("noise_model_raw.pkl")
-    s4_model.save_normalization_model("normalization_model.pkl")
+        # save the model
+        s4_model.save_noise_model("noise_model_raw.pkl")
+        s4_model.save_normalization_model("normalization_model.pkl")
 
     # 6.) Compute residuals
     print_message("Compute residuals median")
     residual_median_raw = s4_model.compute_residual(
-        account_for_planet=False,
+        account_for_planet_model=False,
         combine="median")
 
     save_as_fits(
@@ -88,7 +97,7 @@ if __name__ == '__main__':
 
     print_message("Compute residuals mean")
     residual_mean_raw = s4_model.compute_residual(
-        account_for_planet=False,
+        account_for_planet_model=False,
         combine="mean")
 
     save_as_fits(
@@ -109,7 +118,7 @@ if __name__ == '__main__':
     # 8.) Compute residuals
     print_message("Compute residuals median")
     residual_median_fine_tuned = s4_model.compute_residual(
-        account_for_planet=False,
+        account_for_planet_model=False,
         combine="median")
 
     save_as_fits(
@@ -121,7 +130,7 @@ if __name__ == '__main__':
     # 8.) Compute residuals - mean
     print_message("Compute residuals mean")
     residual_mean_fine_tuned = s4_model.compute_residual(
-        account_for_planet=False,
+        account_for_planet_model=False,
         combine="mean")
 
     save_as_fits(
