@@ -67,15 +67,17 @@ class S4Noise(nn.Module):
         return self
 
     @staticmethod
-    def _print_progress(function, msg):
-        def wrapper(self, *args, **kwargs):
-            if self.verbose:
-                print(msg + " ... ", end='')
-                function(*args, **kwargs)
-                print("[DONE]")
-            else:
-                function(*args, **kwargs)
-        return wrapper
+    def _print_progress(msg):
+        def decorator(function):
+            def wrapper(self, *args, **kwargs):
+                if self.verbose:
+                    print(msg + " ... ", end='')
+                    function(*args, **kwargs)
+                    print("[DONE]")
+                else:
+                    function(*args, **kwargs)
+            return wrapper
+        return decorator
 
     @_print_progress("S4 Noise: saving noise model")
     def save(self, file_path):

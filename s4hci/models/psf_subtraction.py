@@ -117,15 +117,17 @@ class S4:
         return s4_model
 
     @staticmethod
-    def _print_progress(function, msg):
-        def wrapper(self, *args, **kwargs):
-            if self.noise_model.verbose:
-                print(msg + " ... ", end='')
-                function(*args, **kwargs)
-                print("[DONE]")
-            else:
-                function(*args, **kwargs)
-        return wrapper
+    def _print_progress(msg):
+        def decorator(function):
+            def wrapper(self, *args, **kwargs):
+                if self.noise_model.verbose:
+                    print(msg + " ... ", end='')
+                    function(*args, **kwargs)
+                    print("[DONE]")
+                else:
+                    function(*args, **kwargs)
+            return wrapper
+        return decorator
 
     @_print_progress("S4 model: setting up working directory")
     def _setup_working_dir(self):
