@@ -72,10 +72,10 @@ class S4Noise(nn.Module):
             def wrapper(self, *args, **kwargs):
                 if self.verbose:
                     print(msg + " ... ", end='')
-                    function(*args, **kwargs)
+                    function(self, *args, **kwargs)
                     print("[DONE]")
                 else:
-                    function(*args, **kwargs)
+                    function(self, *args, **kwargs)
             return wrapper
         return decorator
 
