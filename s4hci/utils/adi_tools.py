@@ -4,6 +4,21 @@ from scipy.ndimage import rotate
 from tqdm import tqdm
 
 
+def cadi_psf_subtraction(
+        images: np.ndarray,
+        angles: np.ndarray):
+
+    median_frame = np.median(images, axis=0)
+    residual_sequence = images - median_frame
+
+    residual_image = combine_residual_stack(
+        residual_stack=residual_sequence,
+        angles=angles,
+        combine="mean")
+
+    return residual_image
+
+
 def combine_residual_stack(residual_stack,
                            angles,
                            combine="mean",

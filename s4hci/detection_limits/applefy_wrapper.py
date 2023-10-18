@@ -4,6 +4,29 @@ from applefy.detections.contrast import DataReductionInterface
 
 from s4hci.models.psf_subtraction import S4
 from s4hci.utils.pca import pca_psf_subtraction_gpu
+from s4hci.utils.adi_tools import cadi_psf_subtraction
+
+
+class cADIDataReduction(DataReductionInterface):
+
+    def get_method_keys(self) -> List[str]:
+        return ["cADI", ]
+
+    def __call__(
+            self,
+            stack_with_fake_planet: np.ndarray,
+            parang_rad: np.ndarray,
+            psf_template: np.ndarray,
+            exp_id: str):
+
+        residual = cadi_psf_subtraction(
+            images=stack_with_fake_planet,
+            angles=parang_rad)
+
+        result_dict = dict()
+        result_dict["cADI"] = residual
+
+        return result_dict
 
 
 class PCADataReductionGPU(DataReductionInterface):
