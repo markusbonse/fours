@@ -3,6 +3,50 @@ import numpy as np
 from applefy.detections.contrast import DataReductionInterface
 
 from s4hci.models.psf_subtraction import S4
+from s4hci.utils.pca import pca_psf_subtraction_gpu
+
+
+class PCADataReductionGPU(DataReductionInterface):
+
+    def __init__(
+            self,
+            pca_numbers: np.ndarray,
+            approx_svd: int,
+            device: Union[int, str] = "cpu",
+            verbose: bool = False):
+        self.pca_numbers = pca_numbers
+        self.approx_svd = approx_svd
+        self.device = device
+        self.verbose = verbose
+
+    def get_method_keys(self) -> List[str]:
+
+        keys = ["PCA_" + str(num_pcas).zfill(3) + "_components)"
+                for num_pcas in self.pca_numbers]
+
+        return keys
+
+    def __call__(
+            self,
+            stack_with_fake_planet: np.ndarray,
+            parang_rad: np.ndarray,
+            psf_template: np.ndarray,
+            exp_id: str
+    ) -> Dict[str, np.ndarray]:
+
+        pca_residuals = pca_psf_subtraction_gpu(
+            images=stack_with_fake_planet,
+            angles=parang_rad,
+            pca_numbers=self.pca_numbers,
+            device=self.device,
+            approx_svd=self.approx_svd,
+            verbose=self.verbose)
+
+        result_dict = dict()
+        for idx, tmp_algo_name in enumerate(self.get_method_keys()):
+            result_dict[tmp_algo_name] = pca_residuals[idx]
+
+        return result_dict
 
 
 class S4DataReduction(DataReductionInterface):
