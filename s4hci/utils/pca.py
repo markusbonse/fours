@@ -25,7 +25,11 @@ def pca_psf_subtraction_gpu(
     images_torch = images_torch.view(im_shape[0], im_shape[1] * im_shape[2])
 
     # 4.) compute PCA basis
+    if verbose:
+        print("Compute PCA basis ...", end="")
     _, _, V = torch.svd_lowrank(images_torch, niter=1, q=approx_svd)
+    if verbose:
+        print("[DONE]")
 
     # 5.) build rotation model
     rotation_model = FieldRotationModel(
