@@ -43,6 +43,7 @@ def pca_psf_subtraction_gpu(
     # 6.) compute PCA residuals for all given PCA numbers
     pca_residuals = []
     if verbose:
+        print("Compute PCA residuals ...", end="")
         iter_pca_numbers = tqdm(pca_numbers)
     else:
         iter_pca_numbers = pca_numbers
@@ -58,5 +59,8 @@ def pca_psf_subtraction_gpu(
 
         residual_torch_rot = torch.mean(rotated_frames, axis=0).cpu().numpy()
         pca_residuals.append(residual_torch_rot)
+
+    if verbose:
+        print("[DONE]")
 
     return np.array(pca_residuals)
