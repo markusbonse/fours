@@ -21,7 +21,7 @@ class PCADataReductionGPU(DataReductionInterface):
 
     def get_method_keys(self) -> List[str]:
 
-        keys = ["PCA_" + str(num_pcas).zfill(3) + "_components)"
+        keys = ["PCA_" + str(num_pcas).zfill(3) + "_components"
                 for num_pcas in self.pca_numbers]
 
         return keys
