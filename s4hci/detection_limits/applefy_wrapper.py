@@ -75,11 +75,14 @@ class PCADataReductionGPU(DataReductionInterface):
 class S4DataReduction(DataReductionInterface):
     def __init__(
             self,
+            special_name: str = None,
             noise_model_file: str = None,
             normalization_model_file: str = None,
             device: Union[int, str] = "cpu",
             work_dir: str = None,
             verbose: bool = False):
+
+        self.special_name = special_name
         self.normalization_model_file = normalization_model_file
         self.noise_model_file = noise_model_file
         self.device = device
@@ -175,7 +178,11 @@ class S4DataReduction(DataReductionInterface):
         self.fine_tune_planet = True
 
     def get_method_keys(self) -> List[str]:
-        return ["s4_mean", "s4_median"]
+        if self.special_name is None:
+            return ["s4_mean", "s4_median"]
+        else:
+            return ["s4_mean_" + self.special_name,
+                    "s4_median_" + self.special_name]
 
     def _build_s4_noise_model(
             self,
@@ -284,7 +291,11 @@ class S4DataReduction(DataReductionInterface):
 
         # 4.) Store everything in the result dict and return it
         result_dict = dict()
-        result_dict["s4_mean"] = mean_residual
-        result_dict["s4_median"] = median_residual
+        if self.special_name is None:
+            result_dict["s4_mean"] = mean_residual
+            result_dict["s4_median"] = median_residual
+        else:
+            result_dict["s4_mean_" + self.special_name] = mean_residual
+            result_dict["s4_median_" + self.special_name] = median_residual
 
         return result_dict
