@@ -281,12 +281,17 @@ class S4DataReduction(DataReductionInterface):
             self._learn_planet_model()
 
         # 3.) compute the residual
+        if self.fine_tune_planet:
+            account_for_planet_model = True
+        else:
+            account_for_planet_model = False
+
         mean_residual = self.s4_model.compute_residual(
-            account_for_planet_model=False,
+            account_for_planet_model=account_for_planet_model,
             combine="mean")
 
         median_residual = self.s4_model.compute_residual(
-            account_for_planet_model=False,
+            account_for_planet_model=account_for_planet_model,
             combine="median")
 
         # 4.) Store everything in the result dict and return it
