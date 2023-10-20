@@ -57,11 +57,11 @@ if __name__ == "__main__":
         checkpoint_dir=tmp_exp_root)
 
     # fake planet brightness
-    flux_ratios_mag = np.linspace(6., 13, 15)
+    flux_ratios_mag = np.linspace(4., 13, 19)
     flux_ratios = mag2flux_ratio(flux_ratios_mag)
 
     center = center_subpixel(science_data[0])
-    separations = np.arange(fwhm, fwhm * 5.5, fwhm / 2)[1:]
+    separations = np.arange(fwhm, fwhm * 6.5, fwhm / 2)[1:]
     num_fake_planets = 3
 
     # the config files exist already. We only need to create the setups in
