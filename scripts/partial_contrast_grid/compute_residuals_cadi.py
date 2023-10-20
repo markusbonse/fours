@@ -5,7 +5,7 @@ import numpy as np
 from applefy.detections.contrast import Contrast
 
 from s4hci.utils.data_handling import load_adi_data
-from s4hci.detection_limits.applefy_wrapper import PCADataReductionGPU
+from s4hci.detection_limits.applefy_wrapper import cADIDataReduction
 from applefy.utils import mag2flux_ratio
 
 from applefy.utils.positions import center_subpixel
@@ -75,25 +75,14 @@ if __name__ == "__main__":
         overwrite=True)
     contrast_instance.config_dir = tmp_config_dir
 
-    # 4.) Create S4 model
-    print_message("Create PCA model")
-    pca_numbers = np.concatenate(
-            [np.arange(0, 20, 2)[1:],
-             np.arange(20, 50, 5),
-             np.arange(50, 100, 10),
-             np.arange(100, 200, 20),
-             np.arange(200, 550, 50)])
-
-    pca_model = PCADataReductionGPU(
-        approx_svd=10000,
-        pca_numbers=pca_numbers,
-        device=0,
-        verbose=True)
+    # 4.) Create cADI model
+    print_message("Create cADI model")
+    cadi_model = cADIDataReduction()
 
     # 5.) Run the fake planet experiments
     print_message("Run fake planet experiments")
     _ = contrast_instance._run_fake_planet_experiment(
-        algorithm_function=pca_model,
+        algorithm_function=cadi_model,
         exp_id=exp_id)
 
     print_message("Finished Main")
