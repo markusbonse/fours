@@ -12,7 +12,7 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 8
 request_gpus = 1
 request_memory = 125536
-requirements = TARGET.CUDAGlobalMemoryMb > 90000
+requirements = TARGET.CUDAGlobalMemoryMb > 80000
 
 output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_$(dataset_name)_$(exp_id)_$(setup).out
 error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_$(dataset_name)_$(exp_id)_$(setup).err
