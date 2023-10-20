@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # fake planet brightness
     # fake planet brightness
-    flux_ratios_mag = np.linspace(4., 13, 19)
+    flux_ratios_mag = np.linspace(5., 13, 17)
     flux_ratios = mag2flux_ratio(flux_ratios_mag)
 
     center = center_subpixel(science_data[0])
