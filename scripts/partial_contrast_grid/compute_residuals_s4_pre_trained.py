@@ -81,7 +81,15 @@ if __name__ == "__main__":
 
     # 4.) Create S4 model
     print_message("Create S4 model")
+    if setup == 0:
+        special_name = "raw_model"
+    elif setup == 1:
+        special_name = "planet_learned"
+    else:
+        special_name = "planet_learned_fine_tune"
+
     s4_model = S4DataReduction(
+        special_name=special_name,
         noise_model_file=pre_trained_noise_model,
         normalization_model_file=pre_trained_normalization,
         device=0,
@@ -95,7 +103,7 @@ if __name__ == "__main__":
     if setup == 1:
         # Learn the planet model
         s4_model.setup_leaning_planet_model(
-            num_epochs=500,
+            num_epochs=200,
             fine_tune_noise_model=False,
             save_models=False,
             learning_rate_planet=1e-3,
@@ -109,7 +117,7 @@ if __name__ == "__main__":
     elif setup == 2:
         # Learn the planet model and fine-tune the noise model
         s4_model.setup_leaning_planet_model(
-            num_epochs=500,
+            num_epochs=200,
             fine_tune_noise_model=True,  # This is the difference to setup 1
             save_models=False,
             learning_rate_planet=1e-3,
