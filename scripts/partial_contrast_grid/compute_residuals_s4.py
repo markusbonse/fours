@@ -20,7 +20,7 @@ if __name__ == "__main__":
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
     exp_id = str(sys.argv[3])
-    lambda_reg = 1289.89  # float(sys.argv[5])
+    lambda_reg = 1289.89 * 50  # float(sys.argv[5])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     contrast_instance.config_dir = tmp_config_dir
 
     # 4.) Create S4 model
-    extra_name = "train_test_split"
+    extra_name = "train_test_split_50plus"
     print_message("Create S4 model")
     s4_model = S4DataReduction(
         special_name="debug" + extra_name,
