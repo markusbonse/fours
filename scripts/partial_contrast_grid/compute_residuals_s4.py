@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # 4.) Create S4 model
     print_message("Create S4 model")
     s4_model = S4DataReduction(
-        special_name="final_robust",
+        special_name="final_fine_tuned",
         noise_model_file=None,
         normalization_model_file=None,
         device=0,
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         convolve=True,
-        noise_normalization="robust",
+        noise_normalization="normal",
         lambda_reg=lambda_reg,
         save_models=True,
         num_epochs_fine_tune_noise=200,
@@ -102,9 +102,9 @@ if __name__ == "__main__":
 
     # 4.2) Make sure we build the planet model
     s4_model.setup_leaning_planet_model(
-        num_epochs=200,
+        num_epochs=500,
         create_raw_residuals=True,
-        fine_tune_noise_model=False,
+        fine_tune_noise_model=True,
         save_models=False,
         learning_rate_planet=1e-3,
         learning_rate_noise=1e-6,
