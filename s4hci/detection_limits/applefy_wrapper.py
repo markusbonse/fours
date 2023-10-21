@@ -112,6 +112,7 @@ class S4DataReduction(DataReductionInterface):
         self.save_model_after_lean_noise_model = None
 
         # 2.) will be set in setup_leaning_planet_model
+        self.create_raw_residuals = False
         self.num_epochs_learn_planet = None
         self.learning_rate_planet = None
         self.learning_rate_noise_learn_planet = None
@@ -154,6 +155,7 @@ class S4DataReduction(DataReductionInterface):
             self,
             num_epochs: int,
             fine_tune_noise_model: bool,
+            create_raw_residuals: bool = False,
             save_models: bool = True,
             learning_rate_planet: float = 1e-3,
             learning_rate_noise: float = 1e-6,
@@ -164,6 +166,7 @@ class S4DataReduction(DataReductionInterface):
             planet_convolve_second: bool = True,
             planet_use_up_sample: int = 1):
 
+        self.create_raw_residuals = create_raw_residuals
         self.planet_convolve_second = planet_convolve_second
         self.planet_use_up_sample = planet_use_up_sample
         self.num_epochs_learn_planet = num_epochs
@@ -238,6 +241,32 @@ class S4DataReduction(DataReductionInterface):
             self.s4_model.save_normalization_model("normalization_model.pkl")
             self.s4_model.save_planet_model("planet_model.pkl")
 
+    def _create_s4_residuals(
+            self,
+            additional_name: str = "",
+            account_for_planet_model: bool = False):
+
+        mean_residual = self.s4_model.compute_residual(
+            account_for_planet_model=account_for_planet_model,
+            combine="mean")
+
+        median_residual = self.s4_model.compute_residual(
+            account_for_planet_model=account_for_planet_model,
+            combine="median")
+
+        # 4.) Store everything in the result dict and return it
+        result_dict = dict()
+        if self.special_name is None:
+            result_dict["s4_mean" + additional_name] = mean_residual
+            result_dict["s4_median" + additional_name] = median_residual
+        else:
+            result_dict["s4_mean_" + self.special_name + additional_name] \
+                = mean_residual
+            result_dict["s4_median_" + self.special_name + additional_name] \
+                = median_residual
+
+        return result_dict
+
     def __call__(
             self,
             stack_with_fake_planet: np.ndarray,
@@ -277,7 +306,15 @@ class S4DataReduction(DataReductionInterface):
                 psf_template=psf_template)
 
         # 2.) if fine-tuning with a planet model is desired, do it
+        result_dict = dict()
         if self.fine_tune_planet:
+            # create the raw residuals if desired
+            if self.create_raw_residuals:
+                residuals_dict = self._create_s4_residuals(
+                    additional_name="_raw",
+                    account_for_planet_model=False)
+                result_dict.update(residuals_dict)
+
             self._learn_planet_model()
 
         # 3.) compute the residual
@@ -286,21 +323,9 @@ class S4DataReduction(DataReductionInterface):
         else:
             account_for_planet_model = False
 
-        mean_residual = self.s4_model.compute_residual(
-            account_for_planet_model=account_for_planet_model,
-            combine="mean")
-
-        median_residual = self.s4_model.compute_residual(
-            account_for_planet_model=account_for_planet_model,
-            combine="median")
-
-        # 4.) Store everything in the result dict and return it
-        result_dict = dict()
-        if self.special_name is None:
-            result_dict["s4_mean"] = mean_residual
-            result_dict["s4_median"] = median_residual
-        else:
-            result_dict["s4_mean_" + self.special_name] = mean_residual
-            result_dict["s4_median_" + self.special_name] = median_residual
+        residuals_dict = self._create_s4_residuals(
+            additional_name="",
+            account_for_planet_model=account_for_planet_model)
+        result_dict.update(residuals_dict)
 
         return result_dict
