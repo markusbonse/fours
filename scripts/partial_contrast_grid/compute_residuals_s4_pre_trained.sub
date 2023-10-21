@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_$(dat
 error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_$(dataset_name)_$(exp_id)_$(setup).err
 log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_$(dataset_name)_$(exp_id)_$(setup).log
 
-queue dataset_name,exp_id,setup from /fast/mbonse/s4/70_results/07_partial_contrast_grid/01_s4_HD22049_303_199_C-0065_C.txt
+queue dataset_name,exp_id,setup from /fast/mbonse/s4/70_results/07_partial_contrast_grid/02_s4_HD22049_303_199_C-0065_C.txt

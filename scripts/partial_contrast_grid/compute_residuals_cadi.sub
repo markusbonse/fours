@@ -16,4 +16,4 @@ output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_cadi_
 error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_cadi_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_cadi_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id from /fast/mbonse/s4/70_results/07_partial_contrast_grid/01_selection_HD22049_303_199_C-0065_C.txt
+queue dataset_name,exp_id from /fast/mbonse/s4/70_results/07_partial_contrast_grid/02_selection_HD22049_303_199_C-0065_C.txt
