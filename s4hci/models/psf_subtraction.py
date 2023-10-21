@@ -592,6 +592,7 @@ class S4:
         torch.cuda.empty_cache()
 
     @_print_progress("S4 model: computing residual")
+    @torch.no_grad()
     def compute_residual(
             self,
             account_for_planet_model,
