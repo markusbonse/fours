@@ -32,6 +32,7 @@ if __name__ == "__main__":
             para_tag="header_object/PARANG")
 
     science_data = science_data[:, 12:-12, 12:-12]
+    science_data = science_data[0::2]
 
     # Background subtraction of the PSF template
     psf_template = np.median(raw_psf_template_data, axis=0)
@@ -79,10 +80,10 @@ if __name__ == "__main__":
     contrast_instance.config_dir = tmp_config_dir
 
     # 4.) Create S4 model
-    extra_name = "fine_tune_robust"
+    extra_name = "train_test_split"
     print_message("Create S4 model")
     s4_model = S4DataReduction(
-        special_name="final_" + extra_name,
+        special_name="debug" + extra_name,
         noise_model_file=None,
         normalization_model_file=None,
         device=0,
@@ -94,7 +95,7 @@ if __name__ == "__main__":
         noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         convolve=True,
-        noise_normalization="robust",
+        noise_normalization="normal",
         lambda_reg=lambda_reg,
         save_models=True,
         num_epochs_fine_tune_noise=200,
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     s4_model.setup_leaning_planet_model(
         num_epochs=500,
         create_raw_residuals=True,
-        fine_tune_noise_model=True,
+        fine_tune_noise_model=False,
         save_models=False,
         learning_rate_planet=1e-3,
         learning_rate_noise=1e-6,
