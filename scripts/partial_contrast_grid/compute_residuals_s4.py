@@ -79,7 +79,7 @@ if __name__ == "__main__":
     contrast_instance.config_dir = tmp_config_dir
 
     # 4.) Create S4 model
-    extra_name = "fine_tune"
+    extra_name = "fine_tune_robust"
     print_message("Create S4 model")
     s4_model = S4DataReduction(
         special_name="final_" + extra_name,
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         convolve=True,
-        noise_normalization="normal",
+        noise_normalization="robust",
         lambda_reg=lambda_reg,
         save_models=True,
         num_epochs_fine_tune_noise=200,
