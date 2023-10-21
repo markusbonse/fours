@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     science_data = science_data[:, 12:-12, 12:-12]
     science_data = science_data[0::2]
+    raw_angles = raw_angles[0::2]
 
     # Background subtraction of the PSF template
     psf_template = np.median(raw_psf_template_data, axis=0)
