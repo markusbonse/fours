@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # 4.) Create S4 model
     print_message("Create S4 model")
     s4_model = S4DataReduction(
-        special_name="final",
+        special_name="final_robust",
         noise_model_file=None,
         normalization_model_file=None,
         device=0,
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         convolve=True,
-        noise_normalization="normal",
+        noise_normalization="robust",
         lambda_reg=lambda_reg,
         save_models=True,
         num_epochs_fine_tune_noise=200,
