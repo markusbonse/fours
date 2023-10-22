@@ -556,7 +556,7 @@ class S4:
                     noise_estimate = self.noise_model(tmp_frames)
 
                 p_hat_n = self.noise_model(planet_signal_norm)
-                p_hat_n[p_hat_n > 0] = 0
+                #p_hat_n[p_hat_n > 0] = 0
 
                 # 4.) Compute the loss
                 loss_recon = ((noise_estimate - p_hat_n + planet_signal_norm
