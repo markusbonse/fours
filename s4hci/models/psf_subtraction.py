@@ -14,7 +14,6 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import TensorDataset, DataLoader
 
 from s4hci.models.noise import S4Noise
-from s4hci.models.planet import S4Planet
 from s4hci.models.normalization import S4FrameNormalization
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.data_handling import save_as_fits

@@ -111,39 +111,3 @@ def construct_rfrr_mask(template_setup,
     regularization_mask = np.abs(regularization_mask - 1)
 
     return regularization_mask
-
-
-def construct_planet_mask(frame_size,
-                          fwhm):
-
-    mask = np.ones((frame_size, frame_size))
-    outer_size = frame_size//2
-    inner_size = np.ceil(fwhm)
-
-    if frame_size % 2 == 0:
-        x_grid = y_grid = np.linspace(-frame_size / 2 + 0.5,
-                                      frame_size / 2 - 0.5, frame_size)
-    else:
-        x_grid = y_grid = np.linspace(-(frame_size - 1) / 2,
-                                      (frame_size - 1) / 2, frame_size)
-
-    xx_grid, yy_grid = np.meshgrid(x_grid, y_grid)
-    rr_grid = np.sqrt(xx_grid ** 2 + yy_grid ** 2)
-
-    mask[rr_grid < inner_size] = 0.
-    mask[rr_grid > outer_size] = 0.
-
-    return mask
-
-
-def construct_central_mask(
-        frame_size,
-        central_mask_size_radius):
-    image_center = (frame_size - 1) / 2.
-
-    aperture = CircularAperture(
-        positions=(image_center, image_center),
-        r=central_mask_size_radius)
-
-    template_mask = aperture.to_mask().to_image((frame_size, frame_size))
-    return 1 - template_mask
