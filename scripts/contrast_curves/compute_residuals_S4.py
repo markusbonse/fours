@@ -22,7 +22,8 @@ if __name__ == "__main__":
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
     lambda_reg = float(sys.argv[3])
-    exp_id = str(sys.argv[4])
+    use_rotation_loss = bool(int(sys.argv[4]))
+    exp_id = str(sys.argv[5])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -108,6 +109,7 @@ if __name__ == "__main__":
 
     s4_model.setup_create_noise_model(
         lambda_reg=lambda_reg,
+        use_rotation_loss=use_rotation_loss,
         rotation_grid_down_sample=1,
         noise_cut_radius_psf=None,
         noise_mask_radius=None,

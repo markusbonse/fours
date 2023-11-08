@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_curves/compute_residuals_S4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/ $(lambda_reg) $(exp_id)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_curves/compute_residuals_S4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/ $(lambda_reg) $(use_rotation_loss) $(exp_id)
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 86400
@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_s
 error  = /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/logs/htcondor_$(dataset_name)_$(exp_id).err
 log    =/fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/logs/htcondor_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id,lambda_reg from /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/01_config_fake_planet_experiments.txt
+queue dataset_name,exp_id,lambda_reg,use_rotation_loss from /fast/mbonse/s4/70_results/06_contrast_curves/03_contrast_curves_from_scratch/01_config_fake_planet_experiments.txt
