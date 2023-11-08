@@ -14,7 +14,7 @@ def load_adi_data(hdf5_dataset: str,
     :param data_tag: Tag of the science data
     :param psf_template_tag: Tag of the PSF template
     :param para_tag: Tag of the parallactic angles
-    :return: Tuple (Science, parang, template)
+    :return: Tuple (Science, adi_angles, template)
     """
     hdf5_file = h5py.File(hdf5_dataset, 'r')
     data = hdf5_file[data_tag][...]

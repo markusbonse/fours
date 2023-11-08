@@ -35,13 +35,13 @@ if __name__ == '__main__':
     # 3.) Build the Raw model
     print_message("Build S4 model")
     s4_model = S4(
-        science_data=science_data,
-        parang=raw_angles,
+        science_cube=science_data,
+        adi_angles=raw_angles,
         psf_template=psf_template_data,
         noise_cut_radius_psf=4.0,
         noise_mask_radius=5.5,
         device=0,
-        convolve=True,
+        noise_model_convolve=True,
         noise_normalization="normal",
         planet_convolve_second=True,
         planet_use_up_sample=1,

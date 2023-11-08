@@ -195,18 +195,18 @@ class S4DataReduction(DataReductionInterface):
 
         # 1.) Create the S4 model
         self.s4_model = S4(
-            science_data=stack_with_fake_planet,
-            parang=parang_rad,
+            science_cube=stack_with_fake_planet,
+            adi_angles=parang_rad,
             psf_template=psf_template,
             noise_cut_radius_psf=self.noise_cut_radius_psf,
             noise_mask_radius=self.noise_mask_radius,
             device=self.device,
             noise_normalization=self.noise_normalization,
-            noise_lambda_init=self.lambda_reg,
+            noise_model_lambda_init=self.lambda_reg,
             planet_convolve_second=True,
             planet_use_up_sample=1,
             work_dir=self.work_dir,
-            convolve=self.convolve,
+            noise_model_convolve=self.convolve,
             verbose=self.verbose)
 
         # 2.) Find the closed form solution
@@ -291,8 +291,8 @@ class S4DataReduction(DataReductionInterface):
                 noise_model_file=self.noise_model_file,
                 normalization_model_file=self.normalization_model_file,
                 s4_work_dir=self.work_dir,
-                science_data=stack_with_fake_planet,
-                parang=parang_rad,
+                science_cube=stack_with_fake_planet,
+                adi_angles=parang_rad,
                 psf_template=psf_template,
                 device=self.device,
                 verbose=self.verbose,

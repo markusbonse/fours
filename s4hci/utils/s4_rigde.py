@@ -25,7 +25,7 @@ def compute_betas(
     image_size = X_torch.shape[-1]
     num_frames = X_torch.shape[0]
 
-    # convolve the data on the GPU
+    # noise_model_convolve the data on the GPU
     X_torch = X_torch.to(device)
 
     if p_torch is not None:
@@ -97,7 +97,7 @@ def compute_betas_svd(
     image_size = X_torch.shape[-1]
     X_torch = X_torch.unsqueeze(1)
 
-    # convolve the data on the GPU
+    # noise_model_convolve the data on the GPU
     X_torch = X_torch.to(device)
 
     if p_torch is not None:
@@ -170,7 +170,7 @@ def compute_betas_svd(
 
             local_betas.append(beta_cut)
 
-        # stack and convolve the current betas
+        # stack and noise_model_convolve the current betas
         tmp_betas = torch.stack(local_betas).reshape(
             len(local_betas), 1, image_size, image_size)
 

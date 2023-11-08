@@ -87,7 +87,7 @@ class S4Noise(nn.Module):
         # add the other information we want to keep
         state_dict["image_size"] = self.image_size
         state_dict["lambda_reg"] = self.lambda_reg
-        state_dict["convolve"] = self.convolve
+        state_dict["noise_model_convolve"] = self.convolve
         state_dict["cut_radius_psf"] = self.cut_radius_psf
         state_dict["mask_template_setup"] = self.mask_template_setup
         torch.save(state_dict, file_path)
@@ -110,7 +110,7 @@ class S4Noise(nn.Module):
             lambda_reg=state_dict.pop('lambda_reg'),
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
             mask_template_setup=state_dict.pop('mask_template_setup'),
-            convolve=state_dict.pop('convolve'),
+            convolve=state_dict.pop('noise_model_convolve'),
             verbose=verbose)
 
         obj.load_state_dict(state_dict)
@@ -314,7 +314,7 @@ class S4Noise(nn.Module):
         # set regularization_mask values to zero
         tmp_weights = raw_betas * self.right_reason_mask
 
-        # convolve the weights
+        # noise_model_convolve the weights
         if self.convolve:
             tmp_weights = F.conv2d(
                 tmp_weights.unsqueeze(1),
@@ -335,7 +335,7 @@ class S4Noise(nn.Module):
             science_data_norm
     ):
         """
-        science_data: shape: (time, x, y), normalized raw data
+        science_cube: shape: (time, x, y), normalized raw data
         """
 
         # 1.) predict the noise
