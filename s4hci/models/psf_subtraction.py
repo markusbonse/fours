@@ -92,7 +92,7 @@ class S4:
     def create_from_checkpoint(
             cls,
             noise_model_file: str,
-            normalization_model_file: str,
+            normalization_model_file: Union[str, Path, None],
             s4_work_dir: Union[str, Path, None],
             science_cube: np.ndarray,
             adi_angles: np.ndarray,
