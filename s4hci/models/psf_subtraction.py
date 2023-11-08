@@ -311,6 +311,7 @@ class S4:
     def fit_noise_model_closed_form(
             self,
             num_epochs,
+            training_name="",
             logging_interval=1,
             learning_rate=1e-6):
 
@@ -324,6 +325,7 @@ class S4:
             num_epochs=num_epochs,
             use_rotation_loss=False,
             logging_interval=logging_interval,
+            training_name=training_name,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs)
 
