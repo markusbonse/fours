@@ -75,9 +75,9 @@ class PCADataReductionGPU(DataReductionInterface):
 class S4DataReduction(DataReductionInterface):
     def __init__(
             self,
+            device,
             special_name: str = None,
             noise_model_file: str = None,
-            device: Union[int, str] = "cpu",
             work_dir: str = None,
             verbose: bool = False):
 
@@ -106,6 +106,7 @@ class S4DataReduction(DataReductionInterface):
         self.train_num_epochs = None
         self.training_learning_rate = None
         self.lean_noise_model = "No"
+        self.logging_interval = 50
 
         # will be created once the data is available
         self.s4_model = None
@@ -141,6 +142,7 @@ class S4DataReduction(DataReductionInterface):
             noise_cut_radius_psf=None,
             noise_mask_radius=None,
             convolve=True,
+            logging_interval: int = 1,
             noise_normalization="normal",
             save_models: bool = True,
             train_num_epochs: int = 0):
@@ -155,6 +157,7 @@ class S4DataReduction(DataReductionInterface):
         self.rotation_grid_down_sample = rotation_grid_down_sample
         self.lean_noise_model = "LBFGS"
         self.use_rotation_loss = use_rotation_loss
+        self.logging_interval = logging_interval
 
     def get_method_keys(self) -> List[str]:
         if self.special_name is None:
@@ -190,13 +193,13 @@ class S4DataReduction(DataReductionInterface):
                 num_epochs=self.train_num_epochs,
                 use_rotation_loss=self.use_rotation_loss,
                 training_name=exp_id,
-                logging_interval=5)
+                logging_interval=self.logging_interval)
 
         elif self.lean_noise_model == "Closed form":
             self.s4_model.fit_noise_model_closed_form(
                 num_epochs=self.train_num_epochs,
                 training_name=exp_id,
-                logging_interval=5,
+                logging_interval=self.logging_interval,
                 learning_rate=self.training_learning_rate)
 
     def _create_s4_residuals(self):
