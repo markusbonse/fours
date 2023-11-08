@@ -228,7 +228,7 @@ class S4:
         return all_results, best_lambda
 
     @_print_progress("S4 model: finding closed form noise model")
-    def find_closed_form_noise_model(
+    def _find_closed_form_noise_model(
             self,
             fp_precision="float32"):
         """
@@ -299,11 +299,11 @@ class S4:
                  + ".fits"),
             overwrite=True)
 
-    def _create_tensorboard_logger(self):
+    def _create_tensorboard_logger(self, training_name):
         time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
         self.fine_tune_start_time = time_str
         current_logdir = self.tensorboard_dir / \
-            Path(self.fine_tune_start_time)
+            Path(self.fine_tune_start_time + "_" + training_name)
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
@@ -315,7 +315,7 @@ class S4:
             learning_rate=1e-6):
 
         # 1.) find the closed form solution
-        self.find_closed_form_noise_model()
+        self._find_closed_form_noise_model()
 
         # 2.) fix numerical issues with Gradient Descent
         optimizer = optim.Adam
@@ -332,13 +332,14 @@ class S4:
             self,
             num_epochs,
             use_rotation_loss,
+            training_name="",
             logging_interval=1,
             optimizer=None,
             optimizer_kwargs=None):
 
         # Create the tensorboard logger
         if self.work_dir is not None:
-            self._create_tensorboard_logger()
+            self._create_tensorboard_logger(training_name)
 
         # 1.) normalize the science data
         x_norm = self.normalization_model(self.science_cube)
