@@ -1,40 +1,12 @@
 import numpy as np
-from skimage.morphology import dilation, disk
 from scipy.ndimage import shift
 from photutils.aperture import CircularAperture
 
 
-# The new function using percentage of flux
-def construct_rfrr_template(flux_coverage,
-                            psf_template_in):
-    min_flux = np.min(psf_template_in)
-    max_flux = np.max(psf_template_in)
+def construct_round_rfrr_template(
+        radius,
+        psf_template_in):
 
-    for tmp_threshold in np.linspace(min_flux, max_flux, 1000):
-        tmp_template_mask = np.array(psf_template_in >= tmp_threshold,
-                                     dtype=int)
-        tmp_template = psf_template_in * tmp_template_mask
-
-        tmp_flux_coverage = np.sum(tmp_template) / np.sum(psf_template_in)
-
-        if tmp_flux_coverage < flux_coverage:
-            return tmp_template, tmp_template_mask
-
-
-# The old mask
-def construct_circular_rfrr_template(dilatation,
-                                     psf_template_in):
-    threshold = np.max(psf_template_in)
-    template_mask = np.array(psf_template_in >= threshold, dtype=int)
-
-    template_mask = dilation(template_mask, disk(dilatation))
-    template = psf_template_in * template_mask
-
-    return template, template_mask
-
-
-def construct_round_rfrr_template(radius,
-                                  psf_template_in):
     if radius == 0:
         template_mask = np.zeros_like(psf_template_in)
     else:
@@ -48,27 +20,15 @@ def construct_round_rfrr_template(radius,
     return template, template_mask
 
 
-def construct_rfrr_mask(template_setup,
+def construct_rfrr_mask(cut_off_radius,
                         psf_template_in,
                         mask_size_in: int,
                         use_template=False):
-    # 1.) Create circular mask around the max PSF template value
-    if template_setup[0] == "percent":
-        template, template_mask = construct_rfrr_template(
-            template_setup[1],
-            psf_template_in)
 
-    elif template_setup[0] == "radius":
-        template, template_mask = construct_round_rfrr_template(
-            template_setup[1],
-            psf_template_in)
-
-    elif template_setup[0] == "dilatation":
-        template, template_mask = construct_circular_rfrr_template(
-            template_setup[1],
-            psf_template_in)
-    else:
-        raise ValueError("mask type not supported")
+    # 1.) Create the template
+    template, template_mask = construct_round_rfrr_template(
+        cut_off_radius,
+        psf_template_in)
 
     if use_template:
         template_mask = template

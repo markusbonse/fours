@@ -65,7 +65,7 @@ class S4:
             lambda_reg=noise_model_lambda_init,
             cut_radius_psf=noise_cut_radius_psf,
             # TODO the noise mask radius options should be removed
-            mask_template_setup=("radius", noise_mask_radius),
+            noise_mask_radius=noise_mask_radius,
             convolve=noise_model_convolve,
             verbose=verbose).float()
 

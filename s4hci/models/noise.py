@@ -17,7 +17,7 @@ class S4Noise(nn.Module):
             psf_template,
             lambda_reg,
             cut_radius_psf,
-            mask_template_setup,
+            noise_mask_radius,
             convolve=True,
             verbose=True):
 
@@ -31,7 +31,7 @@ class S4Noise(nn.Module):
         self.lambda_reg = lambda_reg
         self.convolve = convolve
         self.cut_radius_psf = cut_radius_psf
-        self.mask_template_setup = mask_template_setup
+        self.noise_mask_radius = noise_mask_radius
 
         # 3.) prepare the psf_template
         template_cut, _ = construct_round_rfrr_template(
@@ -53,7 +53,7 @@ class S4Noise(nn.Module):
 
         # 5.) Set up the buffers for the two masks
         right_reason_mask = construct_rfrr_mask(
-            template_setup=self.mask_template_setup,
+            cut_off_radius=self.noise_mask_radius,
             psf_template_in=template_norm,
             mask_size_in=self.image_size)
 
@@ -89,7 +89,7 @@ class S4Noise(nn.Module):
         state_dict["lambda_reg"] = self.lambda_reg
         state_dict["noise_model_convolve"] = self.convolve
         state_dict["cut_radius_psf"] = self.cut_radius_psf
-        state_dict["mask_template_setup"] = self.mask_template_setup
+        state_dict["noise_mask_radius"] = self.noise_mask_radius
         torch.save(state_dict, file_path)
 
     @classmethod
@@ -109,7 +109,7 @@ class S4Noise(nn.Module):
             psf_template=dummy_template,
             lambda_reg=state_dict.pop('lambda_reg'),
             cut_radius_psf=state_dict.pop('cut_radius_psf'),
-            mask_template_setup=state_dict.pop('mask_template_setup'),
+            noise_mask_radius=state_dict.pop('noise_mask_radius'),
             convolve=state_dict.pop('noise_model_convolve'),
             verbose=verbose)
 
@@ -195,7 +195,7 @@ class S4Noise(nn.Module):
         # of small mask sizes
 
         second_mask = construct_rfrr_mask(
-            template_setup=self.mask_template_setup,
+            cut_off_radius=self.noise_mask_radius,
             psf_template_in=self.psf_model.cpu().numpy()[0, 0],
             mask_size_in=self.image_size,
             use_template=True)
