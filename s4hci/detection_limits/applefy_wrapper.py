@@ -99,14 +99,13 @@ class S4DataReduction(DataReductionInterface):
         self.noise_normalization = None
         self.lambda_reg = None
 
-        # parameters for fine-tuning the noise model
+        # 2.) will be set in setup_create_noise_model
+        self.rotation_grid_down_sample = None
+        self.save_model_after_fit = None
+        self.use_rotation_loss = None
         self.train_num_epochs = None
         self.training_learning_rate = None
         self.lean_noise_model = "No"
-
-        # 2.) will be set in setup_leaning_planet_model
-        self.rotation_grid_down_sample = None
-        self.save_model_after_fit = None
 
         # will be created once the data is available
         self.s4_model = None
@@ -134,9 +133,10 @@ class S4DataReduction(DataReductionInterface):
         self.rotation_grid_down_sample = rotation_grid_down_sample
         self.lean_noise_model = "Closed form"
 
-    def setup_create_noise_model_lbfgs(
+    def setup_create_noise_model(
             self,
             lambda_reg: float,
+            use_rotation_loss: bool = True,
             rotation_grid_down_sample=1,
             noise_cut_radius_psf=None,
             noise_mask_radius=None,
@@ -154,6 +154,7 @@ class S4DataReduction(DataReductionInterface):
         self.save_model_after_fit = save_models
         self.rotation_grid_down_sample = rotation_grid_down_sample
         self.lean_noise_model = "LBFGS"
+        self.use_rotation_loss = use_rotation_loss
 
     def get_method_keys(self) -> List[str]:
         if self.special_name is None:
@@ -187,7 +188,7 @@ class S4DataReduction(DataReductionInterface):
         if self.lean_noise_model == "LBFGS":
             self.s4_model.fit_noise_model(
                 num_epochs=self.train_num_epochs,
-                use_rotation_loss=True,
+                use_rotation_loss=self.use_rotation_loss,
                 training_name=exp_id,
                 logging_interval=5)
 

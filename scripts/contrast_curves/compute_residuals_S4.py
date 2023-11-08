@@ -106,7 +106,7 @@ if __name__ == "__main__":
         work_dir=str(tmp_work_dir),
         verbose=True)
 
-    s4_model.setup_create_noise_model_lbfgs(
+    s4_model.setup_create_noise_model(
         lambda_reg=lambda_reg,
         rotation_grid_down_sample=1,
         noise_cut_radius_psf=None,
