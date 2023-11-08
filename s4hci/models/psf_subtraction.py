@@ -1,6 +1,5 @@
 from typing import Union
 from pathlib import Path
-from copy import deepcopy
 from datetime import datetime
 
 import numpy as np
@@ -11,12 +10,13 @@ from sklearn.model_selection import train_test_split
 import torch
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
-from torch.utils.data import TensorDataset, DataLoader
 
 from s4hci.models.noise import S4Noise
 from s4hci.models.normalization import S4FrameNormalization
+from s4hci.models.rotation import FieldRotationModel
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.data_handling import save_as_fits
+from s4hci.utils.logging import normalize_for_tensorboard
 
 
 class S4:
@@ -33,6 +33,7 @@ class S4:
             noise_normalization="normal",
             noise_model_lambda_init=1e3,
             noise_model_convolve=True,
+            rotation_grid_subsample=1,
             verbose=True
     ):
         # 1.) Save all member data
@@ -59,6 +60,14 @@ class S4:
             mask_template_setup=("radius", noise_mask_radius),
             convolve=noise_model_convolve,
             verbose=verbose).float()
+
+        # 2.1) Create the rotation model
+        self.rotation_model = FieldRotationModel(
+            all_angles=self.adi_angles,
+            input_size=self.data_image_size,
+            subsample=rotation_grid_subsample,
+            inverse=False,
+            register_grid=True)
 
         # 3.) Create normalization model
         self.normalization_model = S4FrameNormalization(
@@ -135,6 +144,42 @@ class S4:
 
         return residuals_dir, tensorboard_dir, models_dir
 
+    @staticmethod
+    def _check_model_dir(function):
+        def check_workdir(self, *args, **kwargs):
+            if self.models_dir is None:
+                raise FileNotFoundError(
+                    "Saving the model requires a work directory.")
+            function(self, *args, **kwargs)
+        return check_workdir
+
+    @_check_model_dir
+    @_print_progress("S4 model: saving model")
+    def save_models(
+            self,
+            file_name_noise_model,
+            file_name_normalization_model):
+        self.normalization_model.save(
+            self.models_dir / file_name_normalization_model)
+        self.noise_model.save(
+            self.models_dir / file_name_noise_model)
+
+    @_print_progress("S4 model: restoring models")
+    def restore_models(
+            self,
+            file_noise_model=None,
+            file_normalization_model=None,
+            verbose=False):
+
+        if file_noise_model is not None:
+            self.noise_model = S4Noise.load(
+                file_noise_model,
+                verbose)
+
+        if file_normalization_model is not None:
+            self.normalization_model = S4FrameNormalization.load(
+                file_normalization_model)
+
     @_print_progress("S4 model: validating noise model")
     def validate_lambdas_noise(
             self,
@@ -199,42 +244,6 @@ class S4:
             device=self.device,
             fp_precision=fp_precision)
 
-    @staticmethod
-    def _check_model_dir(function):
-        def check_workdir(self, *args, **kwargs):
-            if self.models_dir is None:
-                raise FileNotFoundError(
-                    "Saving the model requires a work directory.")
-            function(self, *args, **kwargs)
-        return check_workdir
-
-    @_check_model_dir
-    @_print_progress("S4 model: saving model")
-    def save_models(
-            self,
-            file_name_noise_model,
-            file_name_normalization_model):
-        self.normalization_model.save(
-            self.models_dir / file_name_normalization_model)
-        self.noise_model.save(
-            self.models_dir / file_name_noise_model)
-
-    @_print_progress("S4 model: restoring models")
-    def restore_models(
-            self,
-            file_noise_model=None,
-            file_normalization_model=None,
-            verbose=False):
-
-        if file_noise_model is not None:
-            self.noise_model = S4Noise.load(
-                file_noise_model,
-                verbose)
-
-        if file_normalization_model is not None:
-            self.normalization_model = S4FrameNormalization.load(
-                file_normalization_model)
-
     def _logg_loss_values(
             self,
             epoch,
@@ -254,12 +263,41 @@ class S4:
             loss_reg,
             epoch)
 
-    @staticmethod
-    def _normalize_for_tensorboard(frame_in):
-        image_for_tb = deepcopy(frame_in)
-        image_for_tb -= np.min(image_for_tb)
-        image_for_tb /= np.max(image_for_tb)
-        return image_for_tb
+    def _logg_residuals(
+            self,
+            epoch,
+            residual_mean,
+            residual_median):
+
+        self.tensorboard_logger.add_image(
+            "Images/Residual",
+            normalize_for_tensorboard(residual_mean),
+            epoch,
+            dataformats="HW")
+
+        self.tensorboard_logger.add_image(
+            "Images/Residual_Median",
+            normalize_for_tensorboard(residual_median),
+            epoch,
+            dataformats="HW")
+
+        tmp_residual_dir = self.residuals_dir / \
+            Path(self.fine_tune_start_time)
+        tmp_residual_dir.mkdir(exist_ok=True)
+
+        save_as_fits(
+            residual_mean,
+            tmp_residual_dir /
+            Path("Residual_Mean_epoch_" + str(epoch).zfill(4)
+                 + ".fits"),
+            overwrite=True)
+
+        save_as_fits(
+            residual_median,
+            tmp_residual_dir /
+            Path("Residual_Median_epoch_" + str(epoch).zfill(4)
+                 + ".fits"),
+            overwrite=True)
 
     def _create_tensorboard_logger(self):
         time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
@@ -269,13 +307,36 @@ class S4:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
-    @_print_progress("S4 model: fine tuning noise model")
-    def fine_tune_noise_model(
+    @_print_progress("S4 model: Find noise model closed form and fine tune.")
+    def fit_noise_model_closed_form(
             self,
             num_epochs,
-            learning_rate=1e-6,
-            batch_size=-1):
+            logging_interval=1,
+            learning_rate=1e-6):
 
+        # 1.) find the closed form solution
+        self.find_closed_form_noise_model()
+
+        # 2.) fix numerical issues with Gradient Descent
+        optimizer = optim.Adam
+        optimizer_kwargs = {"lr": learning_rate}
+        self.fit_noise_model(
+            num_epochs=num_epochs,
+            use_rotation_loss=False,
+            logging_interval=logging_interval,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs)
+
+    @_print_progress("S4 model: Fit noise model")
+    def fit_noise_model(
+            self,
+            num_epochs,
+            use_rotation_loss,
+            logging_interval=1,
+            optimizer=None,
+            optimizer_kwargs=None):
+
+        # Create the tensorboard logger
         if self.work_dir is not None:
             self._create_tensorboard_logger()
 
@@ -285,71 +346,102 @@ class S4:
 
         # 2.) move models to the GPU
         self.noise_model = self.noise_model.to(self.device)
+        self.rotation_model = self.rotation_model.to(self.device)
+        science_norm_flatten = science_norm_flatten.to(self.device)
 
         # 3.) Create the optimizer and add the parameters we want to optimize
-        optimizer = optim.Adam(
-            [self.noise_model.betas_raw, ],
-            lr=learning_rate)
+        if optimizer is not None:
+            optimizer = optimizer(
+                [self.noise_model.betas_raw, ],
+                **optimizer_kwargs)
+        else:
+            if optimizer_kwargs is None:
+                optimizer_kwargs = {
+                    "max_iter": 20,
+                    "history_size": 10}
 
-        # 4.) Create the DataLoader
-        if batch_size == -1:
-            batch_size = x_norm.shape[0]
-            # upload the data to the device
-            science_norm_flatten = science_norm_flatten.to(self.device)
+            optimizer = optim.LBFGS(
+                [self.noise_model.betas_raw, ],
+                **optimizer_kwargs)
 
-        data_loader = DataLoader(
-            science_norm_flatten,
-            batch_size=batch_size,
-            shuffle=True)
+        # 5.) Run the optimization
+        for epoch in tqdm(range(num_epochs)):
 
-        # 5.) Run the fine-tuning
-        # needed for gradient accumulation in order to normalize the loss
-        num_steps_per_epoch = len(data_loader)
-
-        epoch_range = tqdm(range(num_epochs)) if \
-            self.noise_model.verbose else range(num_epochs)
-
-        for epoch in epoch_range:
-            optimizer.zero_grad()
-
-            # we have to keep track of the loss sum within gradient accumulation
-            running_reg_loss = 0
-            running_recon_loss = 0
-
-            for tmp_frames in data_loader:
-                # 0.) upload tmp_frames if needed
-                if tmp_frames.device != torch.device(self.device):
-                    tmp_frames = tmp_frames.to(self.device)
+            def full_closure(compute_residuals):
+                optimizer.zero_grad()
 
                 # 1.) run the forward path of the noise model
                 self.noise_model.compute_betas()
-                noise_estimate = self.noise_model(tmp_frames)
+                noise_estimate = self.noise_model(science_norm_flatten)
+
+                # 2.) compute the residual and rotate it
+                residual_sequence = science_norm_flatten - noise_estimate
+                residual_sequence = residual_sequence.view(
+                    residual_sequence.shape[0],
+                    1,
+                    self.data_image_size,
+                    self.data_image_size)
+
+                rotated_frames = self.rotation_model(
+                    residual_sequence,
+                    parang_idx=torch.arange(len(residual_sequence)))
 
                 # 2.) Compute the loss
-                loss_recon = ((noise_estimate - tmp_frames) ** 2).sum()
+                if use_rotation_loss:
+                    loss_recon = torch.var(rotated_frames, axis=0).sum()
+                    loss_recon *= rotated_frames.shape[0]
+                else:
+                    loss_recon = ((science_norm_flatten -
+                                   noise_estimate)**2).sum()
+
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
-                    * self.noise_model.lambda_reg \
-                    / num_steps_per_epoch
+                    * self.noise_model.lambda_reg
 
                 # 3.) Backward
                 loss = loss_recon + loss_reg
                 loss.backward()
 
-                # 4.) Track the current loss
-                running_reg_loss += loss_reg.detach().item()
-                running_recon_loss += loss_recon.detach().item()
+                if compute_residuals:
+                    residual = torch.mean(rotated_frames, axis=0)[
+                        0].detach().cpu().numpy()
+                    residual_median = torch.median(rotated_frames, axis=0)[0][
+                        0].detach().cpu().numpy()
 
-            # Make one accumulated gradient step
-            optimizer.step()
+                    return loss_recon, loss_reg, residual, residual_median
+                else:
+                    return loss, loss_recon, loss_reg
+
+            def loss_closure():
+                return full_closure(False)[0]
+
+            optimizer.step(loss_closure)
 
             # 5.) Logg the information
+            if epoch % logging_interval == 0:
+                # Logg the full information with residuals
+                # x.) get current residuals
+                current_loss_recon, \
+                    current_loss_reg, \
+                    current_residual, \
+                    current_residual_median = full_closure(True)
+
+                self._logg_residuals(
+                    epoch=epoch,
+                    residual_mean=current_residual,
+                    residual_median=current_residual_median)
+
+            else:
+                # Logg the loss information
+                _, current_loss_recon, current_loss_reg = full_closure(False)
+
             self._logg_loss_values(
                 epoch=epoch,
-                loss_recon=running_recon_loss,
-                loss_reg=running_reg_loss)
+                loss_recon=current_loss_recon,
+                loss_reg=current_loss_reg)
 
         # 7.) Clean up GPU
         self.noise_model = self.noise_model.cpu()
+        self.rotation_model = self.rotation_model.cpu()
         torch.cuda.empty_cache()
 
     @_print_progress("S4 model: computing residual")

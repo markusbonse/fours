@@ -1,5 +1,7 @@
 import logging
 import sys
+import numpy as np
+from copy import deepcopy
 
 
 def setup_logger() -> logging.Logger:
@@ -33,3 +35,10 @@ def print_message(message_in):
     logger = logging.getLogger("main")
     logger.info(message_in)
     del logger
+
+
+def normalize_for_tensorboard(frame_in):
+    image_for_tb = deepcopy(frame_in)
+    image_for_tb -= np.min(image_for_tb)
+    image_for_tb /= np.max(image_for_tb)
+    return image_for_tb
