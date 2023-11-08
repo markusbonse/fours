@@ -68,7 +68,7 @@ if __name__ == "__main__":
         checkpoint_dir=tmp_exp_root)
 
     # fake planet brightness
-    flux_ratio_mag = 14
+    flux_ratio_mag = 15
     flux_ratio = mag2flux_ratio(flux_ratio_mag)
 
     print_message("Brightness of fake planets in mag: " + str(flux_ratio_mag))
@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     center = center_subpixel(science_data[0])
     separations = np.arange(0, center[0], fwhm / 2.)[2:]
-    num_fake_planets = 6
+    num_fake_planets = 3
 
     if exp_id == "0000":
         contrast_instance.design_fake_planet_experiments(

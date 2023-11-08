@@ -21,9 +21,8 @@ if __name__ == "__main__":
     # 1.) Load the arguments
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
-    pre_trained_noise_model = str(sys.argv[3])
-    pre_trained_normalization = str(sys.argv[4])
-    exp_id = str(sys.argv[5])
+    lambda_reg = float(sys.argv[3])
+    exp_id = str(sys.argv[4])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -70,7 +69,7 @@ if __name__ == "__main__":
         checkpoint_dir=tmp_exp_root)
 
     # fake planet brightness
-    flux_ratio_mag = 14
+    flux_ratio_mag = 15
     flux_ratio = mag2flux_ratio(flux_ratio_mag)
 
     print_message("Brightness of fake planets in mag: " + str(flux_ratio_mag))
@@ -78,7 +77,7 @@ if __name__ == "__main__":
 
     center = center_subpixel(science_data[0])
     separations = np.arange(0, center[0], fwhm / 2.)[2:]
-    num_fake_planets = 6
+    num_fake_planets = 3
 
     if exp_id == "0000":
         contrast_instance.design_fake_planet_experiments(
@@ -98,12 +97,22 @@ if __name__ == "__main__":
 
     # 4.) Create S4 model
     print_message("Create S4 model")
+    tmp_work_dir = tmp_exp_root / "scratch/s4_rotation_loss"
+    tmp_work_dir.mkdir(parents=True, exist_ok=True)
+
     s4_model = S4DataReduction(
-        noise_model_file=pre_trained_noise_model,
-        normalization_model_file=pre_trained_normalization,
-        device="cpu",
-        work_dir=None,
+        device=0,
+        special_name="S4_rotation_loss",
+        work_dir=str(tmp_work_dir),
         verbose=True)
+
+    s4_model.setup_create_noise_model_lbfgs(
+        lambda_reg=lambda_reg,
+        rotation_grid_down_sample=1,
+        noise_cut_radius_psf=None,
+        noise_mask_radius=None,
+        convolve=True,
+        train_num_epochs=500)
 
     # 5.) Run the fake planet experiments
     print_message("Run fake planet experiments")

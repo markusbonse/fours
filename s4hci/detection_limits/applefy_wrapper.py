@@ -120,7 +120,7 @@ class S4DataReduction(DataReductionInterface):
             convolve=True,
             noise_normalization="normal",
             save_models: bool = True,
-            num_epochs_fine_tune_noise: int = 0,
+            train_num_epochs: int = 0,
             learning_rate_fine_tune_noise: float = 1e-6):
 
         self.noise_cut_radius_psf = noise_cut_radius_psf
@@ -128,7 +128,7 @@ class S4DataReduction(DataReductionInterface):
         self.convolve = convolve
         self.noise_normalization = noise_normalization
         self.lambda_reg = lambda_reg
-        self.train_num_epochs = num_epochs_fine_tune_noise
+        self.train_num_epochs = train_num_epochs
         self.training_learning_rate = learning_rate_fine_tune_noise
         self.save_model_after_fit = save_models
         self.rotation_grid_down_sample = rotation_grid_down_sample
@@ -143,14 +143,14 @@ class S4DataReduction(DataReductionInterface):
             convolve=True,
             noise_normalization="normal",
             save_models: bool = True,
-            num_epochs_fine_tune_noise: int = 0):
+            train_num_epochs: int = 0):
 
         self.noise_cut_radius_psf = noise_cut_radius_psf
         self.noise_mask_radius = noise_mask_radius
         self.convolve = convolve
         self.noise_normalization = noise_normalization
         self.lambda_reg = lambda_reg
-        self.train_num_epochs = num_epochs_fine_tune_noise
+        self.train_num_epochs = train_num_epochs
         self.save_model_after_fit = save_models
         self.rotation_grid_down_sample = rotation_grid_down_sample
         self.lean_noise_model = "LBFGS"
