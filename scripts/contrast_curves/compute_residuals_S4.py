@@ -113,6 +113,7 @@ if __name__ == "__main__":
         rotation_grid_down_sample=1,
         noise_cut_radius_psf=None,
         noise_mask_radius=None,
+        logging_interval=5,
         convolve=True,
         train_num_epochs=500)
 
