@@ -303,7 +303,7 @@ class S4:
         time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
         self.fine_tune_start_time = time_str
         current_logdir = self.tensorboard_dir / \
-            Path(self.fine_tune_start_time + "_" + training_name)
+            Path(training_name + "_" + self.fine_tune_start_time)
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
