@@ -72,9 +72,9 @@ class S4:
         # 3.) Create normalization model
         self.normalization_model = S4FrameNormalization(
             image_size=self.data_image_size,
-            normalization_type=noise_normalization)
+            normalization_type=noise_normalization).float()
         self.normalization_model.prepare_normalization(
-            science_data=self.science_cube).float()
+            science_data=self.science_cube)
 
         # 5.) Create the tensorboard logger for the fine_tuning
         self.tensorboard_logger = None
@@ -469,11 +469,11 @@ class S4:
             self.noise_model.image_size).detach().cpu().numpy()
 
         # 4.) Compute the residual image
-        residual_after_fine_tuning = combine_residual_stack(
+        residual_image = combine_residual_stack(
             residual_stack=residual_stack,
             angles=self.adi_angles,
             combine=combine,
             subtract_temporal_average=False,
             num_cpus=num_cpus)
 
-        return residual_after_fine_tuning
+        return residual_image
