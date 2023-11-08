@@ -67,14 +67,14 @@ class S4:
             input_size=self.data_image_size,
             subsample=rotation_grid_subsample,
             inverse=False,
-            register_grid=True)
+            register_grid=True).float()
 
         # 3.) Create normalization model
         self.normalization_model = S4FrameNormalization(
             image_size=self.data_image_size,
             normalization_type=noise_normalization)
         self.normalization_model.prepare_normalization(
-            science_data=self.science_cube)
+            science_data=self.science_cube).float()
 
         # 5.) Create the tensorboard logger for the fine_tuning
         self.tensorboard_logger = None
