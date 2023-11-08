@@ -17,6 +17,7 @@ from s4hci.models.rotation import FieldRotationModel
 from s4hci.utils.adi_tools import combine_residual_stack
 from s4hci.utils.data_handling import save_as_fits
 from s4hci.utils.logging import normalize_for_tensorboard
+from s4hci.utils.fwhm import get_fwhm
 
 
 class S4:
@@ -26,16 +27,23 @@ class S4:
             science_cube,
             adi_angles,
             psf_template,
-            noise_cut_radius_psf,
-            noise_mask_radius,
             device=0,
             work_dir=None,
-            noise_normalization="normal",
-            noise_model_lambda_init=1e3,
-            noise_model_convolve=True,
+            verbose=True,
             rotation_grid_subsample=1,
-            verbose=True
+            noise_model_lambda_init=1e3,
+            noise_cut_radius_psf=None,
+            noise_mask_radius=None,
+            noise_normalization="normal",
+            noise_model_convolve=True
     ):
+        # 0.) If some parameters are not given, set them to default values
+        fwhm = get_fwhm(psf_template)
+        if noise_cut_radius_psf is None:
+            noise_cut_radius_psf = fwhm
+        if noise_mask_radius is None:
+            noise_mask_radius = fwhm * 1.5
+
         # 1.) Save all member data
         self.device = device
         self.adi_angles = adi_angles
