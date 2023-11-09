@@ -282,11 +282,14 @@ class S4Noise(nn.Module):
             all_results[tmp_separation] = tmp_errors
 
         # find the best lambda
-        merged_results = np.array([i for i in all_results.values()])
-        median_result = np.median(merged_results, axis=0)
+        best_lambdas = np.array([
+            lambdas[list(all_results.values())[i].argmin()]
+            for i in range(len(separations))])
 
-        best_lambda_idx = np.argmin(median_result)
-        best_lambda = lambdas[best_lambda_idx]
+        # fit a polynomial to the best lambdas (at the moment only order 0)
+        z = np.polyfit(separations, np.log(best_lambdas), 0)
+        p = np.poly1d(z)
+        best_lambda = np.exp(p(separations))[0]
 
         if self.verbose:
             print("Recommended Lambda = {:.2f}".format(best_lambda))
