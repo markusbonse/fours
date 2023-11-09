@@ -115,7 +115,7 @@ if __name__ == "__main__":
         noise_mask_radius=None,
         logging_interval=5,
         convolve=True,
-        train_num_epochs=500)
+        train_num_epochs=200)
 
     # 5.) Run the fake planet experiments
     print_message("Run fake planet experiments")
