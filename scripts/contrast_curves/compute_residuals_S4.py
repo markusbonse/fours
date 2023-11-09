@@ -101,9 +101,14 @@ if __name__ == "__main__":
     tmp_work_dir = tmp_exp_root / "scratch/s4_rotation_loss"
     tmp_work_dir.mkdir(parents=True, exist_ok=True)
 
+    if use_rotation_loss:
+        special_name = "S4_rotation_loss"
+    else:
+        special_name = "S4_old_loss"
+
     s4_model = S4DataReduction(
         device=0,
-        special_name="S4_rotation_loss",
+        special_name=special_name,
         work_dir=str(tmp_work_dir),
         verbose=True)
 
