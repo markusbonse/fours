@@ -275,7 +275,8 @@ class S4:
             self,
             epoch,
             residual_mean,
-            residual_median):
+            residual_median,
+            training_name):
 
         self.tensorboard_logger.add_image(
             "Images/Residual",
@@ -290,7 +291,7 @@ class S4:
             dataformats="HW")
 
         tmp_residual_dir = self.residuals_dir / \
-            Path(self.fine_tune_start_time)
+            Path(training_name + "_" + self.fine_tune_start_time)
         tmp_residual_dir.mkdir(exist_ok=True)
 
         save_as_fits(
@@ -439,7 +440,8 @@ class S4:
                 self._logg_residuals(
                     epoch=epoch,
                     residual_mean=current_residual,
-                    residual_median=current_residual_median)
+                    residual_median=current_residual_median,
+                    training_name=training_name)
 
             else:
                 # Logg the loss information
