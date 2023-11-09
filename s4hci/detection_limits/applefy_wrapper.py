@@ -192,13 +192,13 @@ class S4DataReduction(DataReductionInterface):
             self.s4_model.fit_noise_model(
                 num_epochs=self.train_num_epochs,
                 use_rotation_loss=self.use_rotation_loss,
-                training_name=exp_id,
+                training_name=exp_id + "_" + self.special_name,
                 logging_interval=self.logging_interval)
 
         elif self.lean_noise_model == "Closed form":
             self.s4_model.fit_noise_model_closed_form(
                 num_epochs=self.train_num_epochs,
-                training_name=exp_id,
+                training_name=exp_id + "_" + self.special_name,
                 logging_interval=self.logging_interval,
                 learning_rate=self.training_learning_rate)
 
