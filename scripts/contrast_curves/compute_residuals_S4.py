@@ -30,9 +30,9 @@ if __name__ == "__main__":
     science_data, raw_angles, raw_psf_template_data = \
         load_adi_data(
             hdf5_dataset=str(dataset_file),
-            data_tag="object",
+            data_tag="object_stacked_05",
             psf_template_tag="psf_template",
-            para_tag="header_object/PARANG")
+            para_tag="header_object_stacked_05/PARANG")
 
     science_data = science_data[:, 12:-12, 12:-12]
 
