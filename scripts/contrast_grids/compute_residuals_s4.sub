@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset
 error  = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id,use_rotation_loss,num_epochs,lambda_reg from /fast/mbonse/s4/70_results/10_contrast_grids/01_s4.txt
+queue dataset_name,exp_id,use_rotation_loss,num_epochs,lambda_reg from /fast/mbonse/s4/70_results/10_contrast_grids/02_S4_HD22049_303_199_C-0065_C_.txt
