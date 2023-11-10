@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/partial_contrast_grid/compute_residuals_pca.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/07_partial_contrast_grid/ $(exp_id)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/compute_residuals_pca.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/10_contrast_grids/$(dataset_name) $(exp_id) $(use_stacking)
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 86400
@@ -12,10 +12,10 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 8
 request_gpus = 1
 request_memory = 65536
-requirements = TARGET.CUDAGlobalMemoryMb > 60000
+requirements = TARGET.CUDAGlobalMemoryMb > 20000
 
-output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(dataset_name)_$(exp_id).out
-error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(dataset_name)_$(exp_id).err
-log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(dataset_name)_$(exp_id).log
+output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).out
+error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
+log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id from /fast/mbonse/s4/70_results/07_partial_contrast_grid/02_selection_HD22049_303_199_C-0065_C.txt
+queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/01_selection_HD22049_303_199_C-0065_C.txt
