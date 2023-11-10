@@ -1,5 +1,6 @@
 from typing import List, Dict, Union
 import numpy as np
+from pathlib import Path
 from applefy.detections.contrast import DataReductionInterface
 
 from s4hci.models.psf_subtraction import S4
@@ -35,7 +36,7 @@ class PCADataReductionGPU(DataReductionInterface):
             self,
             pca_numbers: np.ndarray,
             approx_svd: int,
-            work_dir: str = None,
+            work_dir: Union[str, Path] = None,
             special_name: str = None,
             device: Union[int, str] = "cpu",
             verbose: bool = False):
