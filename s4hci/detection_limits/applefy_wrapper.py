@@ -77,7 +77,7 @@ class PCADataReductionGPU(DataReductionInterface):
             tensorboard_logging(
                 log_dir=self.work_dir,
                 extra_name=exp_id + "_" + self.special_name,
-                images=pca_residuals,
+                pca_residuals=pca_residuals,
                 pca_numbers=self.pca_numbers)
 
         result_dict = dict()
