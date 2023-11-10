@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
     if use_stacking:
-        data_tag = "stacked_05"
+        data_tag = "object_stacked_05"
         pca_special_name = "tensorboard_pca_stacked_05"
     else:
         data_tag = "object"
