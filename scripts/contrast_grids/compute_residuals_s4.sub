@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/partial_contrast_grid/compute_residuals_s4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/07_partial_contrast_grid/ $(exp_id)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/partial_contrast_grid/compute_residuals_s4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/10_contrast_grids/$(dataset_name) $(exp_id) $(use_rotation_loss) $(num_epochs) $(lambda_reg)
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 7200
@@ -14,8 +14,8 @@ request_gpus = 1
 request_memory = 125536
 requirements = TARGET.CUDAGlobalMemoryMb > 90000
 
-output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_s4_train_test_split_50plus_$(dataset_name)_$(exp_id).out
-error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_s4_train_test_split_50plus_$(dataset_name)_$(exp_id).err
-log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_s4_train_test_split_50plus_$(dataset_name)_$(exp_id).log
+output = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset_name)_$(exp_id).out
+error  = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset_name)_$(exp_id).err
+log    = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_s4_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id from /fast/mbonse/s4/70_results/07_partial_contrast_grid/02_first_test_s4_HD22049_303_199_C-0065_C.txt
+queue dataset_name,exp_id,use_rotation_loss,num_epochs,lambda_reg from /fast/mbonse/s4/70_results/10_contrast_grids/01_s4.txt
