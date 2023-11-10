@@ -8,7 +8,7 @@ def contrast_grid_setup_1(fwhm):
     flux_ratios = mag2flux_ratio(flux_ratios_mag)
     separations = np.concatenate([
         np.arange(fwhm, fwhm * 5.5, fwhm / 2)[1:],
-        np.arange(fwhm * 6, fwhm * 13, fwhm)])
+        np.arange(fwhm * 6, fwhm * 12.5, fwhm)])
 
     num_fake_planets = 3
 
