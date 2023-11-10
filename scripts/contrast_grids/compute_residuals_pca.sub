@@ -14,8 +14,8 @@ request_gpus = 1
 request_memory = 65536
 requirements = TARGET.CUDAGlobalMemoryMb > 20000
 
-output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).out
-error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
-log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).log
+output = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).out
+error  = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
+log    = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).log
 
 queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/01_pca.txt
