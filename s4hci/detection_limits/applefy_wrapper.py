@@ -3,7 +3,7 @@ import numpy as np
 from applefy.detections.contrast import DataReductionInterface
 
 from s4hci.models.psf_subtraction import S4
-from s4hci.utils.pca import pca_psf_subtraction_gpu
+from s4hci.utils.pca import pca_psf_subtraction_gpu, tensorboard_logging
 from s4hci.utils.adi_tools import cadi_psf_subtraction
 
 
@@ -35,17 +35,24 @@ class PCADataReductionGPU(DataReductionInterface):
             self,
             pca_numbers: np.ndarray,
             approx_svd: int,
+            work_dir: str = None,
+            special_name: str = None,
             device: Union[int, str] = "cpu",
             verbose: bool = False):
         self.pca_numbers = pca_numbers
         self.approx_svd = approx_svd
         self.device = device
         self.verbose = verbose
+        self.work_dir = work_dir
+        if special_name is None:
+            self.special_name = ""
+        else:
+            self.special_name = special_name
 
     def get_method_keys(self) -> List[str]:
 
-        keys = ["PCA_" + str(num_pcas).zfill(3) + "_components"
-                for num_pcas in self.pca_numbers]
+        keys = [self.special_name + "_PCA_" + str(num_pcas).zfill(3) +
+                "_components" for num_pcas in self.pca_numbers]
 
         return keys
 
@@ -64,6 +71,13 @@ class PCADataReductionGPU(DataReductionInterface):
             device=self.device,
             approx_svd=self.approx_svd,
             verbose=self.verbose)
+
+        if self.work_dir is not None:
+            tensorboard_logging(
+                log_dir=self.work_dir,
+                extra_name=exp_id + "_" + self.special_name,
+                images=pca_residuals,
+                pca_numbers=self.pca_numbers)
 
         result_dict = dict()
         for idx, tmp_algo_name in enumerate(self.get_method_keys()):

@@ -1,6 +1,8 @@
 from tqdm import tqdm
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
+from s4hci.utils.logging import normalize_for_tensorboard
 
 from s4hci.models.rotation import FieldRotationModel
 
@@ -64,3 +66,19 @@ def pca_psf_subtraction_gpu(
         print("[DONE]")
 
     return np.array(pca_residuals)
+
+
+def tensorboard_logging(
+        log_dir,
+        extra_name,
+        pca_residuals,
+        pca_numbers):
+
+    summary_writer = SummaryWriter(log_dir=log_dir)
+
+    for idx, pca_number in enumerate(pca_numbers):
+        summary_writer.add_image(
+            tag=extra_name + "_PCA",
+            img_tensor=normalize_for_tensorboard(pca_residuals[idx]),
+            global_step=pca_number,
+            dataformats="HW")
