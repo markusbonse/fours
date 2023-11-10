@@ -12,7 +12,7 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 8
 request_gpus = 1
 request_memory = 65536
-requirements = TARGET.CUDAGlobalMemoryMb > 20000
+requirements = TARGET.CUDAGlobalMemoryMb > 30000
 
 output = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).out
 error  = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
