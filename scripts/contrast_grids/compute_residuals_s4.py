@@ -94,6 +94,7 @@ if __name__ == "__main__":
         noise_cut_radius_psf=None,
         noise_mask_radius=None,
         logging_interval=5,
+        noise_normalization="robust",
         convolve=True,
         train_num_epochs=num_epochs)
 
