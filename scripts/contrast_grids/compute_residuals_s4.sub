@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/partial_contrast_grid/compute_residuals_s4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/10_contrast_grids/$(dataset_name) $(exp_id) $(use_rotation_loss) $(num_epochs) $(lambda_reg)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/compute_residuals_s4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/10_contrast_grids/$(dataset_name) $(exp_id) $(use_rotation_loss) $(num_epochs) $(lambda_reg)
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 7200
