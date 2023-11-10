@@ -6,10 +6,9 @@ from applefy.detections.contrast import Contrast
 
 from s4hci.utils.data_handling import load_adi_data
 from s4hci.detection_limits.applefy_wrapper import S4DataReduction
-from applefy.utils import mag2flux_ratio
 
-from applefy.utils.positions import center_subpixel
 from s4hci.utils.logging import print_message, setup_logger
+from s4hci.utils.setups import contrast_grid_setup_1
 
 
 if __name__ == "__main__":
@@ -20,57 +19,49 @@ if __name__ == "__main__":
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
     exp_id = str(sys.argv[3])
-    lambda_reg = 1289.89 * 50  # float(sys.argv[5])
+    use_rotation_loss = bool(int(sys.argv[4]))
+    num_epochs = int(sys.argv[5])
+    lambda_reg = float(sys.argv[6])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
-    science_data, raw_angles, raw_psf_template_data = \
+    science_data, angles, raw_psf_template_data = \
         load_adi_data(
             hdf5_dataset=str(dataset_file),
-            data_tag="object",
+            data_tag="object_stacked_05",
             psf_template_tag="psf_template",
-            para_tag="header_object/PARANG")
+            para_tag="header_object_stacked_05/PARANG")
 
-    science_data = science_data[:, 12:-12, 12:-12]
-    science_data = science_data[0::2]
-    raw_angles = raw_angles[0::2]
-
-    # Background subtraction of the PSF template
     psf_template = np.median(raw_psf_template_data, axis=0)
-    psf_template = psf_template - np.min(psf_template)
 
     # other parameters
     dit_psf_template = 0.0042560
     dit_science = 0.08
     fwhm = 3.6
+    pixel_scale = 0.02718
+
+    # we cut the image to 91 x 91 pixel to be slightly larger than 1.2 arcsec
+    cut_off = int((science_data.shape[1] - 91) / 2)
+    science_data = science_data[:, cut_off:-cut_off, cut_off:-cut_off]
 
     # Create fake planet experiments
     print_message("Restore fake planet experiments")
-    tmp_exp_root = experiment_root_dir / dataset_file.name[:-5]
-    tmp_exp_root.mkdir(exist_ok=True)
-    model_save_dir = tmp_exp_root / Path("models/" + exp_id + "/")
-    model_save_dir.mkdir(exist_ok=True)
-
     contrast_instance = Contrast(
         science_sequence=science_data,
         psf_template=psf_template,
-        parang_rad=raw_angles,
+        parang_rad=angles,
         psf_fwhm_radius=fwhm / 2,
         dit_psf_template=dit_psf_template,
         dit_science=dit_science,
         scaling_factor=1.,
-        checkpoint_dir=tmp_exp_root)
+        checkpoint_dir=experiment_root_dir)
 
-    # fake planet brightness
-    flux_ratios_mag = np.linspace(5., 13, 17)
-    flux_ratios = mag2flux_ratio(flux_ratios_mag)
-
-    center = center_subpixel(science_data[0])
-    separations = np.arange(fwhm, fwhm * 6.5, fwhm / 2)[1:]
-    num_fake_planets = 3
+    # get fake planet setup
+    flux_ratios, separations, num_fake_planets = contrast_grid_setup_1(fwhm)
 
     # the config files exist already. We only need to create the setups in
-    # the contrast instance
+    # the contrast instance. This can be done by setting the config_dir to
+    # None and restoring it afterwards.
     tmp_config_dir = deepcopy(contrast_instance.config_dir)
     contrast_instance.config_dir = None
     contrast_instance.design_fake_planet_experiments(
@@ -80,43 +71,31 @@ if __name__ == "__main__":
         overwrite=True)
     contrast_instance.config_dir = tmp_config_dir
 
-    # 4.) Create S4 model
-    extra_name = "train_test_split_50plus"
-    print_message("Create S4 model")
+    # 3.) Create S4 model
+    if use_rotation_loss:
+        special_name = "S4_rotation_loss"
+    else:
+        special_name = "S4_old_loss"
+
+    work_dir = contrast_instance.scratch_dir / \
+        Path("tensorboard_" + special_name)
+    work_dir.mkdir(exist_ok=True)
+
     s4_model = S4DataReduction(
-        special_name="debug" + extra_name,
-        noise_model_file=None,
-        normalization_model_file=None,
         device=0,
-        work_dir=str(model_save_dir) + "/" + extra_name + "/",
+        special_name=special_name,
+        work_dir=str(work_dir),
         verbose=True)
 
-    # 4.1) Make sure we create the model from scratch
-    s4_model.setup_learning_noise_model(
-        noise_cut_radius_psf=4.0,
-        noise_mask_radius=5.5,
-        convolve=True,
-        noise_normalization="normal",
+    s4_model.setup_create_noise_model(
         lambda_reg=lambda_reg,
-        save_models=True,
-        num_epochs_fine_tune_noise=200,
-        learning_rate_fine_tune_noise=1e-6,
-        batch_size_fine_tune_noise=-1)
-
-    # 4.2) Make sure we build the planet model
-    s4_model.setup_leaning_planet_model(
-        num_epochs=500,
-        create_raw_residuals=True,
-        fine_tune_noise_model=False,
-        save_models=False,
-        learning_rate_planet=1e-3,
-        learning_rate_noise=1e-6,
-        batch_size=-1,
+        use_rotation_loss=use_rotation_loss,
         rotation_grid_down_sample=1,
-        upload_rotation_grid=True,
-        logging_interval=50,
-        planet_convolve_second=True,
-        planet_use_up_sample=1)
+        noise_cut_radius_psf=None,
+        noise_mask_radius=None,
+        logging_interval=5,
+        convolve=True,
+        train_num_epochs=num_epochs)
 
     # 5.) Run the fake planet experiments
     print_message("Run fake planet experiments")

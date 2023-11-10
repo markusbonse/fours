@@ -76,7 +76,7 @@ if __name__ == "__main__":
         overwrite=True)
     contrast_instance.config_dir = tmp_config_dir
 
-    # 4.) Create S4 model
+    # 4.) Create PCA model
     print_message("Create PCA model")
     pca_numbers = np.concatenate(
             [np.arange(0, 20, 2)[1:],
