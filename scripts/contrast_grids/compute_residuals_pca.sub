@@ -9,13 +9,13 @@ MaxTime = 86400
 # Commenting the two previous line and uncommenting this one would just kill the jobs without warning
 periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
 
-request_cpus = 8
+request_cpus = 4
 request_gpus = 1
-request_memory = 65536
-requirements = TARGET.CUDAGlobalMemoryMb > 30000
+request_memory = 30000
+requirements = TARGET.CUDAGlobalMemoryMb > 20000
 
 output = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).out
 error  = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/10_contrast_grids/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/02_pca_HD22049_303_199_C-0065_C_.txt
+queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/02_pca_HD22049_310_0100_C-0656_A_.txt
