@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$
 error  = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/07_partial_contrast_grid/logs/htcondor_pca_$(use_stacking)_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/01_pca_HD22049_303_199_C-0065_C.txt
+queue dataset_name,exp_id,use_stacking from /fast/mbonse/s4/70_results/10_contrast_grids/01_pca.txt
