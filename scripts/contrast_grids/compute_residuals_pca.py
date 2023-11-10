@@ -90,7 +90,7 @@ if __name__ == "__main__":
         Path("tensorboard_" + pca_special_name)
 
     pca_model = PCADataReductionGPU(
-        approx_svd=science_data.shape[0] - 1,
+        approx_svd=8000,
         pca_numbers=pca_numbers,
         device=0,
         work_dir=work_dir,
