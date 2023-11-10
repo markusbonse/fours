@@ -25,10 +25,10 @@ if __name__ == "__main__":
     print_message("Loading dataset " + str(dataset_file))
     if use_stacking:
         data_tag = "object_stacked_05"
-        pca_special_name = "tensorboard_pca_stacked_05"
+        pca_special_name = "pca_stacked_05"
     else:
         data_tag = "object"
-        pca_special_name = "non_stacked"
+        pca_special_name = "pca_non_stacked"
 
     science_data, angles, raw_psf_template_data = \
         load_adi_data(
