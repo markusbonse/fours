@@ -68,9 +68,8 @@ def pca_psf_subtraction_gpu(
     return np.array(pca_residuals)
 
 
-def tensorboard_logging(
+def pca_tensorboard_logging(
         log_dir,
-        extra_name,
         pca_residuals,
         pca_numbers):
 
@@ -78,7 +77,7 @@ def tensorboard_logging(
 
     for idx, pca_number in enumerate(pca_numbers):
         summary_writer.add_image(
-            tag=extra_name + "_PCA",
+            tag="Images/Residual_Mean",
             img_tensor=normalize_for_tensorboard(pca_residuals[idx]),
             global_step=pca_number,
             dataformats="HW")

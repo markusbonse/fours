@@ -1,10 +1,11 @@
 from typing import List, Dict, Union
 import numpy as np
 from pathlib import Path
+from datetime import datetime
 from applefy.detections.contrast import DataReductionInterface
 
 from s4hci.models.psf_subtraction import S4
-from s4hci.utils.pca import pca_psf_subtraction_gpu, tensorboard_logging
+from s4hci.utils.pca import pca_psf_subtraction_gpu, pca_tensorboard_logging
 from s4hci.utils.adi_tools import cadi_psf_subtraction
 
 
@@ -74,9 +75,13 @@ class PCADataReductionGPU(DataReductionInterface):
             verbose=self.verbose)
 
         if self.work_dir is not None:
-            tensorboard_logging(
-                log_dir=self.work_dir,
-                extra_name=exp_id + "_" + self.special_name,
+            time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
+            current_logdir = self.work_dir / \
+                Path(exp_id + "_" + self.special_name + "_PCA_" + time_str)
+            current_logdir.mkdir(exist_ok=True)
+
+            pca_tensorboard_logging(
+                log_dir=current_logdir,
                 pca_residuals=pca_residuals,
                 pca_numbers=self.pca_numbers)
 
