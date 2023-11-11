@@ -95,6 +95,7 @@ if __name__ == "__main__":
         noise_mask_radius=None,
         logging_interval=5,
         convolve=True,
+        save_models=True,
         train_num_epochs=num_epochs)
 
     # 5.) Run the fake planet experiments

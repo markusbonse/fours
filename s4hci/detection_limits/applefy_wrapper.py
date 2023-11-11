@@ -278,5 +278,12 @@ class S4DataReduction(DataReductionInterface):
                 psf_template=psf_template,
                 exp_id=exp_id)
 
+        if self.save_model_after_fit:
+            self.s4_model.save_model(
+                noise_model_name=
+                "noise_model_" + exp_id + "_" + self.special_name,
+                normalization_model_name=
+                "normalization_model_" + exp_id + "_" + self.special_name)
+
         # 2.) compute the residual
         return self._create_s4_residuals()
