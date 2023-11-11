@@ -45,7 +45,8 @@ class PCADataReductionGPU(DataReductionInterface):
         self.approx_svd = approx_svd
         self.device = device
         self.verbose = verbose
-        self.work_dir = work_dir
+        self.work_dir = Path(work_dir)
+
         if special_name is None:
             self.special_name = ""
         else:
@@ -78,7 +79,7 @@ class PCADataReductionGPU(DataReductionInterface):
             time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
             current_logdir = self.work_dir / \
                 Path(exp_id + "_" + self.special_name + "_PCA_" + time_str)
-            current_logdir.mkdir(exist_ok=True)
+            current_logdir.mkdir(exist_ok=True, parents=True)
 
             pca_tensorboard_logging(
                 log_dir=current_logdir,
