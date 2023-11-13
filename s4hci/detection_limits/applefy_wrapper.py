@@ -45,7 +45,10 @@ class PCADataReductionGPU(DataReductionInterface):
         self.approx_svd = approx_svd
         self.device = device
         self.verbose = verbose
-        self.work_dir = Path(work_dir)
+        if work_dir is not None:
+            self.work_dir = Path(work_dir)
+        else:
+            self.work_dir = None
 
         if special_name is None:
             self.special_name = ""
