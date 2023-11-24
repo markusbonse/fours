@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import h5py
 
@@ -43,3 +44,14 @@ def save_as_fits(
     hdul = fits.HDUList([hdu])
 
     hdul.writeto(file_name, overwrite=overwrite)
+
+
+def read_s4hci_root_dir() -> str:
+    root_dir = os.getenv('S4HCI_ROOT_DIR')
+
+    if not os.path.isdir(root_dir):
+        raise IOError("The path in S4HCI_ROOT_DIR does not exist. Make sure "
+                      "to download the data and specify its location.")
+
+    print("Data in the S4HCI_ROOT_DIR found. Location: " + str(root_dir))
+    return root_dir
