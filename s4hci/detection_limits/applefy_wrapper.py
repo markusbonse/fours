@@ -210,10 +210,10 @@ class S4DataReduction(DataReductionInterface):
             if self.special_name is not None:
                 name = self.special_name
             self.s4_model.save_models(
-                noise_model_name=
-                "noise_model_" + exp_id + "_" + name,
-                normalization_model_name=
-                "normalization_model_" + exp_id + "_" + name)
+                file_name_noise_model=
+                "noise_model_" + exp_id + "_" + name + ".pkl",
+                file_name_normalization_model=
+                "normalization_model_" + exp_id + "_" + name + ".pkl")
 
         # 2.) compute the residual
         return self._create_s4_residuals()
