@@ -19,9 +19,12 @@ if __name__ == "__main__":
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
     exp_id = str(sys.argv[3])
-    use_rotation_loss = bool(int(sys.argv[4]))
-    num_epochs = int(sys.argv[5])
-    lambda_reg = float(sys.argv[6])
+    num_epochs = int(sys.argv[4])
+    lambda_reg = float(sys.argv[5])
+    dit_psf_template = float(sys.argv[6])
+    dit_science = float(sys.argv[7])
+    fwhm = float(sys.argv[8])
+    scaling_factor = float(sys.argv[9])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -33,12 +36,6 @@ if __name__ == "__main__":
             para_tag="header_object_stacked_05/PARANG")
 
     psf_template = np.median(raw_psf_template_data, axis=0)
-
-    # other parameters
-    dit_psf_template = 0.0042560
-    dit_science = 0.08
-    fwhm = 3.6
-    pixel_scale = 0.02718
 
     # we cut the image to 91 x 91 pixel to be slightly larger than 1.2 arcsec
     cut_off = int((science_data.shape[1] - 91) / 2)
@@ -53,7 +50,7 @@ if __name__ == "__main__":
         psf_fwhm_radius=fwhm / 2,
         dit_psf_template=dit_psf_template,
         dit_science=dit_science,
-        scaling_factor=1.,
+        scaling_factor=scaling_factor,
         checkpoint_dir=experiment_root_dir)
 
     # get fake planet setup
@@ -72,31 +69,20 @@ if __name__ == "__main__":
     contrast_instance.config_dir = tmp_config_dir
 
     # 3.) Create S4 model
-    if use_rotation_loss:
-        special_name = "S4_rotation_loss"
-    else:
-        special_name = "S4_old_loss"
-
+    print_message("Create S4 model")
     work_dir = contrast_instance.scratch_dir / \
-        Path("tensorboard_" + special_name)
+        Path("tensorboard_S4")
     work_dir.mkdir(exist_ok=True)
 
     s4_model = S4DataReduction(
         device=0,
-        special_name=special_name,
+        lambda_reg=lambda_reg,
+        rotation_grid_down_sample = 1,
+        logging_interval=50,
+        save_models=True,
+        train_num_epochs=num_epochs,
         work_dir=str(work_dir),
         verbose=True)
-
-    s4_model.setup_create_noise_model(
-        lambda_reg=lambda_reg,
-        use_rotation_loss=use_rotation_loss,
-        rotation_grid_down_sample=1,
-        noise_cut_radius_psf=None,
-        noise_mask_radius=None,
-        logging_interval=5,
-        convolve=True,
-        save_models=True,
-        train_num_epochs=num_epochs)
 
     # 5.) Run the fake planet experiments
     print_message("Run fake planet experiments")
