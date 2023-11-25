@@ -206,7 +206,7 @@ class S4DataReduction(DataReductionInterface):
             exp_id=exp_id)
 
         if self.save_model_after_fit:
-            self.s4_model.save_model(
+            self.s4_model.save_models(
                 noise_model_name=
                 "noise_model_" + exp_id + "_" + self.special_name,
                 normalization_model_name=
