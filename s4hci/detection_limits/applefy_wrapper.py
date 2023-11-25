@@ -162,10 +162,13 @@ class S4DataReduction(DataReductionInterface):
             noise_model_lambda_init=self.lambda_reg,
             noise_model_convolve=self.convolve)
 
+        name = exp_id
+        if self.special_name is not None:
+            name += "_" + self.special_name
         self.s4_model.fit_noise_model(
             num_epochs=self.train_num_epochs,
             use_rotation_loss=True,  # to be removed in the future!
-            training_name=exp_id + "_" + self.special_name,
+            training_name=name,
             logging_interval=self.logging_interval)
 
     def _create_s4_residuals(self):
