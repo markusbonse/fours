@@ -81,6 +81,8 @@ if __name__ == "__main__":
         logging_interval=50,
         save_models=True,
         train_num_epochs=num_epochs,
+        noise_cut_radius_psf=1.5*fwhm,
+        noise_mask_radius=fwhm,
         work_dir=str(work_dir),
         verbose=True)
 
