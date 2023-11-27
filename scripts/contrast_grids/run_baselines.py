@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import json
 from copy import deepcopy
 import numpy as np
 
@@ -8,7 +9,7 @@ from applefy.utils.file_handling import load_adi_data
 
 from s4hci.utils.setups import contrast_grid_setup_1
 from s4hci.utils.logging import print_message, setup_logger
-from s4hci.detection_limits.applefy_wrapper import cADIDataReduction, \
+from s4hci.detection_limits.applefy_wrapper import cADIDataReductionGPU, \
     PCADataReductionGPU
 
 if __name__ == "__main__":
@@ -18,10 +19,16 @@ if __name__ == "__main__":
     # 1.) Load the arguments
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
-    dit_psf_template = float(sys.argv[3])
-    dit_science = float(sys.argv[4])
-    fwhm = float(sys.argv[5])
-    scaling_factor = float(sys.argv[6])
+    json_file = Path(str(sys.argv[3]))
+
+    with open(json_file) as f:
+        parameter_config = json.load(f)
+
+    dit_psf_template = float(parameter_config["dit_psf"])
+    dit_science = float(parameter_config["dit_science"])
+    fwhm = float(parameter_config["fwhm"])
+    scaling_factor = float(parameter_config["nd_scaling"])
+    svd_approx = int(parameter_config["svd_approx"])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -67,10 +74,10 @@ if __name__ == "__main__":
 
     # 1. Run fake planet experiments for cADI
     print_message("Run fake planet experiments for cADI")
-    cadi_algorithm_function = cADIDataReduction()
+    cadi_algorithm_function = cADIDataReductionGPU(0)
     contrast_instance.run_fake_planet_experiments(
         algorithm_function=cadi_algorithm_function,
-        num_parallel=8)
+        num_parallel=1)
 
     # 2. Run fake planet experiments for PCA
     print_message("Run fake planet experiments for PCA")
@@ -82,7 +89,7 @@ if __name__ == "__main__":
 
     work_dir = contrast_instance.scratch_dir / Path("tensorboard_pca")
     pca_algorithm_function = PCADataReductionGPU(
-        approx_svd=8000,
+        approx_svd=svd_approx,
         pca_numbers=pca_numbers,
         device=0,
         work_dir=work_dir,

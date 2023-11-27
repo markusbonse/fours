@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/run_baselines.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/x1_fake_planet_experiments/$(dataset_name) $(dit_psf_template) $(dit_science) $(fwhm) $(scaling_factor)
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/run_baselines.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/x1_fake_planet_experiments/$(dataset_name) /fast/mbonse/s4/30_data/$(dataset_name).json
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 21600
@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_bas
 error  = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_baseline_$(dataset_name).err
 log    = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_baseline_$(dataset_name).log
 
-queue dataset_name,dit_psf_template,dit_science,fwhm,scaling_factor from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/baseline_experiments.txt
+queue dataset_name from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/baseline_experiments.txt

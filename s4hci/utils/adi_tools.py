@@ -3,6 +3,10 @@ import multiprocessing
 from scipy.ndimage import rotate
 from tqdm import tqdm
 
+import torch
+
+from s4hci.models.rotation import FieldRotationModel
+
 
 def cadi_psf_subtraction(
         images: np.ndarray,
@@ -15,6 +19,34 @@ def cadi_psf_subtraction(
         residual_stack=residual_sequence,
         angles=angles,
         combine="mean")
+
+    return residual_image
+
+
+def cadi_psf_subtraction_gpu(
+        device,
+        images: np.ndarray,
+        angles: np.ndarray):
+
+    images = torch.from_numpy(images).to(device)
+
+    median_frame = torch.median(images, axis=0)[0]
+    residual_sequence = images - median_frame
+
+    # combine residual stack on GPU
+    rotation_model = FieldRotationModel(
+        all_angles=angles,
+        input_size=images.shape[1],
+        subsample=1,
+        inverse=False,
+        register_grid=True)
+    rotation_model = rotation_model.to(device)
+
+    rotated_frames = rotation_model(
+        residual_sequence.unsqueeze(1).float(),
+        parang_idx=torch.arange(len(residual_sequence))).squeeze(1)
+
+    residual_image = torch.mean(rotated_frames, axis=0).cpu().numpy()
 
     return residual_image
 
