@@ -1,4 +1,5 @@
 import sys
+import json
 from copy import deepcopy
 from pathlib import Path
 import numpy as np
@@ -19,12 +20,17 @@ if __name__ == "__main__":
     dataset_file = Path(str(sys.argv[1]))
     experiment_root_dir = Path(str(sys.argv[2]))
     exp_id = str(sys.argv[3])
-    num_epochs = int(sys.argv[4])
-    lambda_reg = float(sys.argv[5])
-    dit_psf_template = float(sys.argv[6])
-    dit_science = float(sys.argv[7])
-    fwhm = float(sys.argv[8])
-    scaling_factor = float(sys.argv[9])
+    json_file = Path(str(sys.argv[4]))
+
+    with open(json_file) as f:
+        parameter_config = json.load(f)
+
+    num_epochs = int(parameter_config["num_epochs"])
+    lambda_reg = float(parameter_config["lambda_reg"])
+    dit_psf_template = float(parameter_config["dit_psf"])
+    dit_science = float(parameter_config["dit_science"])
+    fwhm = float(parameter_config["fwhm"])
+    scaling_factor = float(parameter_config["scaling_factor"])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
@@ -77,12 +83,12 @@ if __name__ == "__main__":
     s4_model = S4DataReduction(
         device=0,
         lambda_reg=lambda_reg,
-        rotation_grid_down_sample = 1,
+        rotation_grid_down_sample=1,
         logging_interval=50,
         save_models=True,
         train_num_epochs=num_epochs,
-        noise_cut_radius_psf=1.5*fwhm,
-        noise_mask_radius=fwhm,
+        noise_cut_radius_psf=fwhm,
+        noise_mask_radius=fwhm * 1.5,
         work_dir=str(work_dir),
         verbose=True)
 
