@@ -4,7 +4,7 @@ executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
 arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/run_baselines.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/x1_fake_planet_experiments/$(dataset_name) /fast/mbonse/s4/30_data/$(dataset_name).json
 
 # Maximum expected execution time for the job, in seconds
-MaxTime = 21600
+MaxTime = 31600
 
 # Commenting the two previous line and uncommenting this one would just kill the jobs without warning
 periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
