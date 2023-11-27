@@ -30,7 +30,7 @@ if __name__ == "__main__":
     dit_psf_template = float(parameter_config["dit_psf"])
     dit_science = float(parameter_config["dit_science"])
     fwhm = float(parameter_config["fwhm"])
-    scaling_factor = float(parameter_config["scaling_factor"])
+    scaling_factor = float(parameter_config["nd_scaling"])
 
     # 2.) Load the dataset
     print_message("Loading dataset " + str(dataset_file))
