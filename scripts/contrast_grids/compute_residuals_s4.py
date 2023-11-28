@@ -86,6 +86,7 @@ if __name__ == "__main__":
         rotation_grid_down_sample=1,
         logging_interval=50,
         save_models=True,
+        convolve=False,
         train_num_epochs=num_epochs,
         noise_cut_radius_psf=fwhm,
         noise_mask_radius=fwhm * 1.5,
