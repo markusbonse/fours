@@ -26,7 +26,6 @@ if __name__ == "__main__":
         parameter_config = json.load(f)
 
     num_epochs = int(parameter_config["num_epochs"])
-    lambda_reg = float(parameter_config["lambda_reg"])
     dit_psf_template = float(parameter_config["dit_psf"])
     dit_science = float(parameter_config["dit_science"])
     fwhm = float(parameter_config["fwhm"])
@@ -80,23 +79,32 @@ if __name__ == "__main__":
         Path("tensorboard_S4")
     work_dir.mkdir(exist_ok=True)
 
-    s4_model = S4DataReduction(
-        device=0,
-        lambda_reg=lambda_reg,
-        rotation_grid_down_sample=1,
-        logging_interval=50,
-        save_models=True,
-        convolve=False,
-        train_num_epochs=num_epochs,
-        noise_cut_radius_psf=fwhm,
-        noise_mask_radius=fwhm * 1.5,
-        work_dir=str(work_dir),
-        verbose=True)
+    for lambda_reg, special_name in [
+        (100, "lambda_000100"),
+        (1000, "lambda_001000"),
+        (10000, "lambda_010000"),
+        (100000, "lambda_100000")]:
 
-    # 5.) Run the fake planet experiments
-    print_message("Run fake planet experiments")
-    _ = contrast_instance._run_fake_planet_experiment(
-        algorithm_function=s4_model,
-        exp_id=exp_id)
+        print_message("Run fake planet experiments " + special_name)
+
+        s4_model = S4DataReduction(
+            device=0,
+            lambda_reg=lambda_reg,
+            special_name=special_name,
+            rotation_grid_down_sample=1,
+            logging_interval=50,
+            save_models=True,
+            convolve=True,
+            train_num_epochs=num_epochs,
+            noise_cut_radius_psf=fwhm,
+            noise_mask_radius=fwhm * 1.5,
+            work_dir=str(work_dir),
+            verbose=True)
+
+        # 5.) Run the fake planet experiments
+
+        _ = contrast_instance._run_fake_planet_experiment(
+            algorithm_function=s4_model,
+            exp_id=exp_id)
 
     print_message("Finished Main")
