@@ -77,7 +77,7 @@ if __name__ == "__main__":
     cadi_algorithm_function = cADIDataReductionGPU(0)
     contrast_instance.run_fake_planet_experiments(
         algorithm_function=cadi_algorithm_function,
-        num_parallel=8)
+        num_parallel=1)
 
     # 2. Run fake planet experiments for PCA
     print_message("Run fake planet experiments for PCA")

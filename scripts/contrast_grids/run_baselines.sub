@@ -12,7 +12,7 @@ periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $
 request_cpus = 32
 request_gpus = 1
 request_memory = 251072
-requirements = (TARGET.CUDADeviceName == "NVIDIA H100 80GB HBM3") && (UtsnameNodename =!= "g211") && (UtsnameNodename =!= "g203") && (UtsnameNodename =!= "g212")
+requirements = (TARGET.CUDADeviceName == "NVIDIA H100 80GB HBM3")  && (UtsnameNodename =!= "g207") && (UtsnameNodename =!= "g211") && (UtsnameNodename =!= "g203") && (UtsnameNodename =!= "g212")
 
 output = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_baseline_$(dataset_name).out
 error  = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_baseline_$(dataset_name).err
