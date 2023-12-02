@@ -18,4 +18,4 @@ output = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_s4_
 error  = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_s4_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs/htcondor_s4_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/S4_HD27290_348_198_C-0612_C_.txt
+queue dataset_name,exp_id from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/S4_HD40136_333_1101_C-0092_C_.txt
