@@ -1,12 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=Run_S4_HD169022
 #SBATCH -n 1
 #SBATCH --cpus-per-task=1
 #SBATCH --time=4:00:00
 #SBATCH --mem-per-cpu=40000
 #SBATCH --gpus=nvidia_geforce_rtx_4090:1
-#SBATCH --output="/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/logs/S4_${DATASET_NAME}_${EXP_ID}.out"
-#SBATCH --error="/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/logs/S4_${DATASET_NAME}_${EXP_ID}.err"
+#SBATCH --output="/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/logs/%x.out"
+#SBATCH --error="/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/logs/%x.err"
 
 #Load necessary modules
 module load gcc/8.2.0 python/3.10.4 hdf5
