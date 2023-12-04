@@ -15,18 +15,17 @@ module load gcc/8.2.0 python/3.10.4 hdf5
 source /cluster/home/mbonse/python_envs/venv_s4/bin/activate
 
 # define parameters
-echo $DATASET_NAME
-export Dataset_file=/cluster/project/quanz/mbonse/2022_S4/30_data/$(DATASET_NAME).hdf5
-export Dataset_config=/cluster/project/quanz/mbonse/2022_S4/30_data/$(DATASET_NAME).json
-export Output_folder=/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/$(DATASET_NAME)
-export exp_id=$(EXP_ID)
+export Dataset_file=/cluster/project/quanz/mbonse/2022_S4/30_data/$DATASET_NAME.hdf5
+export Dataset_config=/cluster/project/quanz/mbonse/2022_S4/30_data/$DATASET_NAME.json
+export Output_folder=/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/$DATASET_NAME
+export exp_id=$EXP_ID
 
 #Start the script
 echo "Start Python scrips:"
-echo "Dataset file: $(Dataset_file)"
-echo "Dataset config: $(Dataset_config)"
-echo "Output folder: $(Output_folder)"
-echo "Experiment ID: $(EXP_ID)"
+echo "Dataset file: $Dataset_file"
+echo "Dataset config: $Dataset_config"
+echo "Output folder: $Output_folder"
+echo "Experiment ID: exp_id"
 
 #python /cluster/project/quanz/mbonse/2022_S4/50_code/s4hci/scripts/contrast_grids/compute_residuals_s4.py
 
