@@ -12,7 +12,7 @@
 module load gcc/8.2.0 python/3.10.4 hdf5
 
 #source the venv
-source /cluster/home/mbonse/python_envs/venv_s4/bin/activate
+source /cluster/project/quanz/mbonse/2022_S4/50_code/venv_s4/bin/activate
 
 # define parameters
 export Dataset_file=/cluster/project/quanz/mbonse/2022_S4/30_data/$DATASET_NAME.hdf5
