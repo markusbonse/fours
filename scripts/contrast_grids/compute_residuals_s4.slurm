@@ -15,10 +15,10 @@ module load gcc/8.2.0 python/3.10.4 hdf5
 source /cluster/home/mbonse/python_envs/venv_s4/bin/activate
 
 # define parameters
-export Dataset_file=/cluster/project/quanz/mbonse/2022_S4/30_data/$(dataset_name).hdf5
-export Dataset_config=/cluster/project/quanz/mbonse/2022_S4/30_data/$(dataset_name).json
-export Output_folder=/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/$(dataset_name)
-export exp_id=$(exp_id)
+export Dataset_file=/cluster/project/quanz/mbonse/2022_S4/30_data/$(DATASET_NAME).hdf5
+export Dataset_config=/cluster/project/quanz/mbonse/2022_S4/30_data/$(DATASET_NAME).json
+export Output_folder=/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/$(DATASET_NAME)
+export exp_id=$(EXP_ID)
 
 #Start the script
 echo "Start Python scrips:"
