@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -n 1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=4:00:00
+#SBATCH --time=10:00:00
 #SBATCH --mem-per-cpu=40000
 #SBATCH --gpus=nvidia_geforce_rtx_3090:1
 #SBATCH --output="/cluster/project/quanz/mbonse/2022_S4/70_results/x1_fake_planet_experiments/logs/%x.out"
