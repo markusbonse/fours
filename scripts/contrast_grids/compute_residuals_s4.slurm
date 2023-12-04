@@ -25,8 +25,8 @@ echo "Start Python scrips:"
 echo "Dataset file: $Dataset_file"
 echo "Dataset config: $Dataset_config"
 echo "Output folder: $Output_folder"
-echo "Experiment ID: exp_id"
+echo "Experiment ID: $exp_id"
 
-#python /cluster/project/quanz/mbonse/2022_S4/50_code/s4hci/scripts/contrast_grids/compute_residuals_s4.py
+python /cluster/project/quanz/mbonse/2022_S4/50_code/s4hci/scripts/contrast_grids/compute_residuals_s4.py $Dataset_file $Output_folder $exp_id $Dataset_config
 
 echo "Finished script."
