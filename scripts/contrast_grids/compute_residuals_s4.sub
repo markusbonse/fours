@@ -4,18 +4,18 @@ executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
 arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/contrast_grids/compute_residuals_s4.py /fast/mbonse/s4/30_data/$(dataset_name).hdf5 /fast/mbonse/s4/70_results/x1_fake_planet_experiments/$(dataset_name) $(exp_id) /fast/mbonse/s4/30_data/$(dataset_name).json
 
 # Maximum expected execution time for the job, in seconds
-MaxTime = 7200
+MaxTime = 14400
 
 # Commenting the two previous line and uncommenting this one would just kill the jobs without warning
 periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
 
-request_cpus = 1
+request_cpus = 2
 request_gpus = 1
-request_memory = 40000
-requirements = (TARGET.CUDADeviceName == "Quadro RTX 6000")
+request_memory = 64000
+requirements = (TARGET.CUDAGlobalMemoryMb > 40000)
 
 output = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs_test/htcondor_s4_$(dataset_name)_$(exp_id).out
 error  = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs_test/htcondor_s4_$(dataset_name)_$(exp_id).err
 log    = /fast/mbonse/s4/70_results/x1_fake_planet_experiments/logs_test/htcondor_s4_$(dataset_name)_$(exp_id).log
 
-queue dataset_name,exp_id from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/01_test.txt
+queue dataset_name,exp_id from /fast/mbonse/s4/70_results/x1_fake_planet_experiments/S4_HD169022_140_1101_C-0092_E_.txt
