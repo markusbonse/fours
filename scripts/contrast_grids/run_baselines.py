@@ -79,6 +79,8 @@ if __name__ == "__main__":
         algorithm_function=cadi_algorithm_function,
         num_parallel=1)
 
+    print_message("Finished Main")
+    sys.exit(0)
     # 2. Run fake planet experiments for PCA
     print_message("Run fake planet experiments for PCA")
     pca_numbers = np.concatenate(
