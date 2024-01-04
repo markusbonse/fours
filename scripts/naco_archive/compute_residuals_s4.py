@@ -72,6 +72,6 @@ if __name__ == "__main__":
             num_epochs=500,
             use_rotation_loss=True,
             training_name=special_name,
-            logging_interval=1)
+            logging_interval=10)
 
     print_message("Finished Main")
