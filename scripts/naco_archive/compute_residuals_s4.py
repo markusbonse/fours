@@ -50,7 +50,7 @@ if __name__ == "__main__":
         (100, "lambda_000100"),
         (1000, "lambda_001000"),
         (10000, "lambda_010000"),
-        (100000, "lambda_100000")]:
+        (100000, "lambda_100000")][::-1]:
 
         print_message("Run fake planet experiments " + special_name)
 
