@@ -18,4 +18,4 @@ output = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).out
 error  = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).err
 log    = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).log
 
-queue dataset_name from /fast/mbonse/NACO/70_results/datasets_100.txt
+queue dataset_name from /fast/mbonse/NACO/70_results/datasets.txt
