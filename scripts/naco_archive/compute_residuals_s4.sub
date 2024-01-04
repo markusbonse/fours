@@ -1,7 +1,7 @@
 getenv = True
 
 executable = /home/mbonse/2023_s4/50_code/venv_s4/bin/python
-arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/naco/compute_residuals_s4.py /fast/mbonse/NACO/30_data/$(dataset_name).hdf5
+arguments = /home/mbonse/2023_s4/50_code/s4hci/scripts/naco_archive/compute_residuals_s4.py /fast/mbonse/NACO/30_data/$(dataset_name).hdf5
 
 # Maximum expected execution time for the job, in seconds
 MaxTime = 28800
@@ -18,4 +18,4 @@ output = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).out
 error  = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).err
 log    = /fast/mbonse/NACO/70_results/logs/htcondor_s4_$(dataset_name).log
 
-queue dataset_name from /fast/mbonse/NACO/70_results/datasets_100.txt
+queue dataset_name from /fast/mbonse/NACO/70_results/datasets_100.txtcond
