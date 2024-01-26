@@ -65,7 +65,7 @@ def pca_psf_subtraction_gpu(
                 rotated_frames, axis=0).cpu().numpy()
         else:
             residual_torch_rot = torch.median(
-                rotated_frames, axis=0).cpu().numpy()
+                rotated_frames, axis=0)[0].cpu().numpy()
         pca_residuals.append(residual_torch_rot)
 
     if verbose:
