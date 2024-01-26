@@ -1,22 +1,12 @@
 import sys
-import json
-from copy import deepcopy
-from applefy.detections.contrast import Contrast
-
-from s4hci.utils.data_handling import load_adi_data
-from s4hci.detection_limits.applefy_wrapper import S4DataReduction
 
 from s4hci.utils.logging import print_message, setup_logger
-from s4hci.utils.setups import contrast_grid_setup_1
 
 from pathlib import Path
 import numpy as np
 
 # Methods
 from s4hci.models.psf_subtraction import S4
-from s4hci.utils.pca import pca_psf_subtraction_gpu
-
-from s4hci.utils.data_handling import save_as_fits
 from applefy.utils.file_handling import load_adi_data
 
 
@@ -38,9 +28,9 @@ if __name__ == "__main__":
     # 2.) Load the dataset
     science_data, angles, raw_psf_template_data = load_adi_data(
         str(dataset_file),
-        data_tag="object_stacked_05",
+        data_tag="object_lr_stacked_05",
         psf_template_tag="psf_template",
-        para_tag="header_object_stacked_05/PARANG")
+        para_tag="header_object_lr_stacked_05/PARANG")
 
     # Background subtraction of the PSF template
     psf_template_data = np.median(raw_psf_template_data, axis=0)
