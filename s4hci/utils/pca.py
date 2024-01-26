@@ -14,7 +14,8 @@ def pca_psf_subtraction_gpu(
         device,
         approx_svd: int,
         subsample_rotation_grid: int = 1,
-        verbose: bool = False
+        verbose: bool = False,
+        combine: str = "mean"
 ) -> np.ndarray:
     # 1.) Convert images to torch tensor
     im_shape = images.shape
@@ -59,7 +60,12 @@ def pca_psf_subtraction_gpu(
             residual_sequence.unsqueeze(1).float(),
             parang_idx=torch.arange(len(residual_sequence))).squeeze(1)
 
-        residual_torch_rot = torch.mean(rotated_frames, axis=0).cpu().numpy()
+        if combine == "mean":
+            residual_torch_rot = torch.mean(
+                rotated_frames, axis=0).cpu().numpy()
+        else:
+            residual_torch_rot = torch.median(
+                rotated_frames, axis=0).cpu().numpy()
         pca_residuals.append(residual_torch_rot)
 
     if verbose:

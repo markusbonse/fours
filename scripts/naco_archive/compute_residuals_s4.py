@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # 1.) Load the argument
     dataset_file = Path(str(sys.argv[1]))
     tmp_result_dir = Path("/fast/mbonse/NACO/70_results") / \
-        dataset_file.name[:-5]
+        dataset_file.name[:-9]
     tmp_result_dir.mkdir(exist_ok=True)
     work_dir = tmp_result_dir / Path("S4")
     work_dir.mkdir(exist_ok=True)
