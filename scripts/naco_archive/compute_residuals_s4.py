@@ -47,10 +47,15 @@ if __name__ == "__main__":
 
     # 3.) Run the S4 model
     for lambda_reg, special_name in [
-        (100, "lambda_000100"),
-        (1000, "lambda_001000"),
-        (10000, "lambda_010000"),
-        (100000, "lambda_100000")][::-1]:
+        (100, "lambda_0000100"),
+        (500, "lambda_0000500"),
+        (1000, "lambda_0001000"),
+        (5000, "lambda_0005000"),
+        (10000, "lambda_0010000"),
+        (50000, "lambda_0050000"),
+        (100000, "lambda_0100000"),
+        (500000, "lambda_0500000"),
+        (1000000, "lambda_1000000")][::-1]:
 
         print_message("Run fake planet experiments " + special_name)
 
@@ -69,7 +74,7 @@ if __name__ == "__main__":
             noise_model_convolve=True)
 
         s4_model.fit_noise_model(
-            num_epochs=500,
+            num_epochs=501,
             use_rotation_loss=True,
             training_name=special_name,
             logging_interval=10)
