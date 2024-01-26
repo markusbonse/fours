@@ -56,6 +56,10 @@ def pca_psf_subtraction_gpu(
         residual = images_torch - noise_estimate
         residual_sequence = residual.view(im_shape[0], im_shape[1], im_shape[2])
 
+        if combine != "mean":
+            residual_sequence = residual_sequence - torch.median(
+                residual_sequence, axis=0)[0]
+
         rotated_frames = rotation_model(
             residual_sequence.unsqueeze(1).float(),
             parang_idx=torch.arange(len(residual_sequence))).squeeze(1)
