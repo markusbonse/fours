@@ -3,6 +3,31 @@ from scipy.stats import iqr
 import torch
 import torch.nn as nn
 
+from s4hci.models.rotation import FieldRotationModel
+
+
+def get_radial_normalization(mean_frame):
+    torch_mean_frame = torch.tensor(mean_frame).unsqueeze(0).unsqueeze(0)
+
+    tmp_rotation_model = FieldRotationModel(
+        all_angles=torch.deg2rad(torch.linspace(0, 360, 720)),
+        input_size=torch_mean_frame.shape[-1],
+        subsample=1,
+        inverse=False,
+        register_grid=False)
+
+    # repeat the mean frame 360 time
+    torch_mean_frame_sequence = torch_mean_frame.repeat(720, 1, 1, 1)
+
+    # rotate the mean frame
+    rotated_mean_frame = tmp_rotation_model(
+        torch_mean_frame_sequence.float(),
+        parang_idx=torch.arange(720))
+
+    rotated_median_frame = torch.median(rotated_mean_frame, dim=0)[0].squeeze()
+
+    return rotated_median_frame
+
 
 class S4FrameNormalization(nn.Module):
 
@@ -54,6 +79,10 @@ class S4FrameNormalization(nn.Module):
 
         if self.normalization_type == "normal":
             self.mean_frame = torch.mean(science_data, axis=0)
+            self.std_frame = torch.std(science_data, axis=0)
+        elif self.normalization_type == "ring":
+            self.mean_frame = get_radial_normalization(
+                torch.mean(science_data, axis=0).numpy())
             self.std_frame = torch.std(science_data, axis=0)
         else:
             self.mean_frame = torch.median(science_data, dim=0).values

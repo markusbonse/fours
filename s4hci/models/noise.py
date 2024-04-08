@@ -365,6 +365,8 @@ class S4Noise(nn.Module):
         science_norm_flatten: shape: (time, x*y) already normalized
         """
 
+        # we have to @beta.T because we have convolved the beta values along the
+        # second axis.
         noise_estimate = science_norm_flatten @ self.betas.T
 
         return noise_estimate
