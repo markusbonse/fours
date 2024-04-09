@@ -17,12 +17,12 @@ class S4FrameNormalization(nn.Module):
         self.normalization_type = normalization_type
         if self.normalization_type not in ["normal", "robust"]:
             raise ValueError("normalization type unknown.")
+        self.train_mean = train_mean
 
         self.register_buffer(
             "std_frame",
             torch.zeros((image_size, image_size)))
 
-        self.train_mean = train_mean
         if train_mean:
             self.mean_frame = nn.Parameter(
                 torch.zeros((image_size, image_size)))

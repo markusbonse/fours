@@ -373,7 +373,7 @@ class S4:
         # 3.) Create the optimizer and add the parameters we want to optimize
         trainable_params = [self.noise_model.betas_raw, ]
         if self.negative_wing_suppression:
-            trainable_params.append(self.normalization_model.train_mean)
+            trainable_params.append(self.normalization_model.mean_frame)
 
         if optimizer is not None:
             optimizer = optimizer(
