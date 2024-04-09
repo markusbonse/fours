@@ -79,11 +79,10 @@ class S4FrameNormalization(nn.Module):
         else:
             science_data_mean_shift = science_data
 
-        if self.train_mean:
-            science_data_mean_shift = (science_data_mean_shift -
-                                       self.mean_frame_delta)
-
         normalized_data = science_data_mean_shift / self.std_frame
+        if self.train_mean:
+            normalized_data = (science_data_mean_shift -
+                               self.mean_frame_delta)
 
         return torch.nan_to_num(normalized_data, 0)
 
