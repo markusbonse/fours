@@ -9,6 +9,7 @@ class S4FrameNormalization(nn.Module):
     def __init__(
             self,
             image_size,
+            train_mean=False,
             normalization_type="normal"):
 
         super(S4FrameNormalization, self).__init__()
@@ -20,9 +21,16 @@ class S4FrameNormalization(nn.Module):
         self.register_buffer(
             "std_frame",
             torch.zeros((image_size, image_size)))
-        self.register_buffer(
-            "mean_frame",
-            torch.zeros((image_size, image_size)))
+
+        self.train_mean = train_mean
+        if train_mean:
+            self.mean_frame = nn.Parameter(
+                torch.zeros((image_size, image_size)))
+
+        else:
+            self.register_buffer(
+                "mean_frame",
+                torch.zeros((image_size, image_size)))
 
     @property
     def image_size(self):
@@ -30,6 +38,7 @@ class S4FrameNormalization(nn.Module):
 
     def save(self, file_path):
         state_dict = self.state_dict()
+        state_dict["train_mean"] = self.train_mean
         state_dict["normalization_type"] = self.normalization_type
         state_dict["image_size"] = self.image_size
         torch.save(state_dict, file_path)
@@ -43,6 +52,7 @@ class S4FrameNormalization(nn.Module):
 
         obj = cls(
             image_size=state_dict.pop("image_size"),
+            train_mean=state_dict.pop("train_mean"),
             normalization_type=state_dict.pop("normalization_type"))
 
         obj.load_state_dict(state_dict)
