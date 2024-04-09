@@ -34,6 +34,7 @@ class S4:
             noise_model_lambda_init=1e3,
             noise_cut_radius_psf=None,
             noise_mask_radius=None,
+            negative_wing_suppression=False,
             noise_normalization="normal",
             noise_model_convolve=True
     ):
@@ -45,6 +46,7 @@ class S4:
             noise_mask_radius = fwhm * 1.5
 
         # 1.) Save all member data
+        self.negative_wing_suppression = negative_wing_suppression
         self.device = device
         self.adi_angles = adi_angles
         self.science_cube = torch.from_numpy(science_cube).float()
@@ -79,6 +81,7 @@ class S4:
 
         # 3.) Create normalization model
         self.normalization_model = S4FrameNormalization(
+            train_mean=negative_wing_suppression,
             image_size=self.data_image_size,
             normalization_type=noise_normalization).float()
         self.normalization_model.prepare_normalization(
@@ -108,6 +111,7 @@ class S4:
             noise_cut_radius_psf=1,  # will be restored
             noise_mask_radius=1,  # will be restored
             device=device,
+            negative_wing_suppression=False,  # will be restored
             noise_model_convolve=True,  # will be restored
             noise_normalization="normal",  # will be restored
             work_dir=s4_work_dir,
@@ -187,6 +191,7 @@ class S4:
         if file_normalization_model is not None:
             self.normalization_model = S4FrameNormalization.load(
                 file_normalization_model)
+            self.negative_wing_suppression = self.normalization_model.train_mean
 
     @_print_progress("S4 model: validating noise model")
     def validate_lambdas_noise(
@@ -352,19 +357,27 @@ class S4:
         if self.work_dir is not None:
             self._create_tensorboard_logger(training_name)
 
-        # 1.) normalize the science data
-        x_norm = self.normalization_model(self.science_cube)
-        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+        # 1.) normalize the science data if not trained mean
+        if not self.negative_wing_suppression:
+            x_norm = self.normalization_model(self.science_cube)
+            science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+            science_norm_flatten = science_norm_flatten.to(self.device)
+        else:
+            self.science_cube = self.science_cube.to(self.device)
+            self.normalization_model = self.normalization_model.to(self.device)
 
         # 2.) move models to the GPU
         self.noise_model = self.noise_model.to(self.device)
         self.rotation_model = self.rotation_model.to(self.device)
-        science_norm_flatten = science_norm_flatten.to(self.device)
 
         # 3.) Create the optimizer and add the parameters we want to optimize
+        trainable_params = [self.noise_model.betas_raw, ]
+        if self.negative_wing_suppression:
+            trainable_params.append(self.normalization_model.train_mean)
+
         if optimizer is not None:
             optimizer = optimizer(
-                [self.noise_model.betas_raw, ],
+                trainable_params,
                 **optimizer_kwargs)
         else:
             if optimizer_kwargs is None:
@@ -373,7 +386,7 @@ class S4:
                     "history_size": 10}
 
             optimizer = optim.LBFGS(
-                [self.noise_model.betas_raw, ],
+                trainable_params,
                 **optimizer_kwargs)
 
         # 5.) Run the optimization
@@ -381,6 +394,11 @@ class S4:
 
             def full_closure(compute_residuals):
                 optimizer.zero_grad()
+
+                # 0.) Normalize the science data
+                if self.negative_wing_suppression:
+                    x_norm = self.normalization_model(self.science_cube)
+                    science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
                 # 1.) run the forward path of the noise model
                 self.noise_model.compute_betas()
