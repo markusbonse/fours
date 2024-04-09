@@ -419,6 +419,10 @@ class S4:
                 # 2.) Compute the loss
                 if use_rotation_loss:
                     loss_recon = torch.var(rotated_frames, axis=0).sum()
+                    if self.negative_wing_suppression:
+                        mean_frames = torch.mean(rotated_frames, axis=0)
+                        loss_recon +=\
+                            ((mean_frames[mean_frames < 0]) ** 2).sum()
                     loss_recon *= rotated_frames.shape[0]
                 else:
                     loss_recon = ((science_norm_flatten -
