@@ -358,17 +358,12 @@ class S4:
             self._create_tensorboard_logger(training_name)
 
         # 1.) normalize the science data if not trained mean
-        if not self.negative_wing_suppression:
-            x_norm = self.normalization_model(self.science_cube)
-            science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
-            science_norm_flatten = science_norm_flatten.to(self.device)
-        else:
-            self.science_cube = self.science_cube.to(self.device)
-            self.normalization_model = self.normalization_model.to(self.device)
 
         # 2.) move models to the GPU
         self.noise_model = self.noise_model.to(self.device)
         self.rotation_model = self.rotation_model.to(self.device)
+        self.science_cube = self.science_cube.to(self.device)
+        self.normalization_model = self.normalization_model.to(self.device)
 
         # 3.) Create the optimizer and add the parameters we want to optimize
         trainable_params = [self.noise_model.betas_raw, ]
@@ -396,9 +391,8 @@ class S4:
                 optimizer.zero_grad()
 
                 # 0.) Normalize the science data
-                if self.negative_wing_suppression:
-                    x_norm = self.normalization_model(self.science_cube)
-                    science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+                x_norm = self.normalization_model(self.science_cube)
+                science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
                 # 1.) run the forward path of the noise model
                 self.noise_model.compute_betas()
