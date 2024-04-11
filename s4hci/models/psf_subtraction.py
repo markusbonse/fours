@@ -471,6 +471,8 @@ class S4:
         # 7.) Clean up GPU
         self.noise_model = self.noise_model.cpu()
         self.rotation_model = self.rotation_model.cpu()
+        self.normalization_model = self.normalization_model.cpu()
+        self.science_cube = self.science_cube.cpu()
         torch.cuda.empty_cache()
 
     @_print_progress("S4 model: computing residual")
