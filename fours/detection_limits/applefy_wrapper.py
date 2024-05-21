@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from applefy.detections.contrast import DataReductionInterface
 
-from fours.models.psf_subtraction import S4
+from fours.models.psf_subtraction import FourS
 from fours.utils.pca import pca_psf_subtraction_gpu, pca_tensorboard_logging
 from fours.utils.adi_tools import cadi_psf_subtraction, cadi_psf_subtraction_gpu
 
@@ -127,12 +127,10 @@ class S4DataReduction(DataReductionInterface):
             self,
             device,
             lambda_reg: float,
-            noise_cut_radius_psf=None,
-            noise_mask_radius=None,
-            convolve=True,
+            psf_fwhm=None,
+            right_reason_mask_factor: float = 1.5,
             rotation_grid_down_sample=1,
             logging_interval: int = 1,
-            noise_normalization="normal",
             save_models: bool = True,
             train_num_epochs: int = 500,
             special_name: str = None,
@@ -145,11 +143,9 @@ class S4DataReduction(DataReductionInterface):
         self.work_dir = work_dir
         self.verbose = verbose
 
-        # 1.) parameters for S4
-        self.noise_cut_radius_psf = noise_cut_radius_psf
-        self.noise_mask_radius = noise_mask_radius
-        self.convolve = convolve
-        self.noise_normalization = noise_normalization
+        # 1.) parameters for 4S
+        self.psf_fwhm = psf_fwhm
+        self.right_reason_mask_factor = right_reason_mask_factor
         self.lambda_reg = lambda_reg
         self.rotation_grid_down_sample = rotation_grid_down_sample
         self.save_model_after_fit = save_models
@@ -157,7 +153,7 @@ class S4DataReduction(DataReductionInterface):
         self.logging_interval = logging_interval
 
         # will be created once the data is available
-        self.s4_model = None
+        self.fours_model = None
 
     def get_method_keys(self) -> List[str]:
         if self.special_name is None:
@@ -174,36 +170,29 @@ class S4DataReduction(DataReductionInterface):
             exp_id):
 
         # 1.) Create the S4 model
-        self.s4_model = S4(
+        self.fours_model = FourS(
             science_cube=stack_with_fake_planet,
             adi_angles=parang_rad,
             psf_template=psf_template,
+            noise_model_lambda=self.lambda_reg,
+            psf_fwhm=self.psf_fwhm,
+            right_reason_mask_factor=self.right_reason_mask_factor,
+            rotation_grid_subsample=self.rotation_grid_down_sample,
             device=self.device,
             work_dir=self.work_dir,
-            verbose=self.verbose,
-            rotation_grid_subsample=self.rotation_grid_down_sample,
-            noise_cut_radius_psf=self.noise_cut_radius_psf,
-            noise_mask_radius=self.noise_mask_radius,
-            noise_normalization=self.noise_normalization,
-            noise_model_lambda_init=self.lambda_reg,
-            noise_model_convolve=self.convolve)
+            verbose=self.verbose)
 
         name = exp_id
         if self.special_name is not None:
             name += "_" + self.special_name
-        self.s4_model.fit_noise_model(
+        self.fours_model.fit_noise_model(
             num_epochs=self.train_num_epochs,
-            use_rotation_loss=True,  # to be removed in the future!
             training_name=name,
             logging_interval=self.logging_interval)
 
-    def _create_s4_residuals(self):
+    def _create_fours_residuals(self):
 
-        mean_residual = self.s4_model.compute_residual(
-            combine="mean")
-
-        median_residual = self.s4_model.compute_residual(
-            combine="median")
+        mean_residual, median_residual = self.fours_model.compute_residuals()
 
         # 4.) Store everything in the result dict and return it
         result_dict = dict()
@@ -235,11 +224,11 @@ class S4DataReduction(DataReductionInterface):
             name = ""
             if self.special_name is not None:
                 name = "_" + self.special_name
-            self.s4_model.save_models(
+            self.fours_model.save_models(
                 file_name_noise_model=
                 "noise_model_" + exp_id + name + ".pkl",
                 file_name_normalization_model=
                 "normalization_model_" + exp_id + name + ".pkl")
 
         # 2.) compute the residual
-        return self._create_s4_residuals()
+        return self._create_fours_residuals()

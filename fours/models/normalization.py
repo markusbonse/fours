@@ -4,20 +4,18 @@ import torch
 import torch.nn as nn
 
 
-class S4FrameNormalization(nn.Module):
+class FourSFrameNormalization(nn.Module):
 
     def __init__(
             self,
             image_size,
-            train_mean=False,
             normalization_type="normal"):
 
-        super(S4FrameNormalization, self).__init__()
+        super(FourSFrameNormalization, self).__init__()
 
         self.normalization_type = normalization_type
         if self.normalization_type not in ["normal", "robust"]:
             raise ValueError("normalization type unknown.")
-        self.train_mean = train_mean
 
         self.register_buffer(
             "std_frame",
@@ -27,31 +25,23 @@ class S4FrameNormalization(nn.Module):
             "mean_frame",
             torch.zeros((image_size, image_size)))
 
-        if train_mean:
-            self.mean_frame_delta = nn.Parameter(
-                torch.zeros((image_size, image_size)))
-
     @property
     def image_size(self):
         return self.mean_frame.shape[0]
 
     def save(self, file_path):
         state_dict = self.state_dict()
-        state_dict["train_mean"] = self.train_mean
         state_dict["normalization_type"] = self.normalization_type
         state_dict["image_size"] = self.image_size
         torch.save(state_dict, file_path)
 
     @classmethod
-    def load(
-            cls,
-            file_path):
+    def load(cls, file_path):
 
         state_dict = torch.load(file_path)
 
         obj = cls(
             image_size=state_dict.pop("image_size"),
-            train_mean=state_dict.pop("train_mean"),
             normalization_type=state_dict.pop("normalization_type"))
 
         obj.load_state_dict(state_dict)
@@ -64,10 +54,13 @@ class S4FrameNormalization(nn.Module):
         if self.normalization_type == "normal":
             self.mean_frame = torch.mean(science_data, axis=0)
             self.std_frame = torch.std(science_data, axis=0)
-        else:
+
+        elif self.normalization_type == "robust":
             self.mean_frame = torch.median(science_data, dim=0).values
             iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
             self.std_frame = torch.from_numpy(iqr_frame).float()
+        else:
+            raise ValueError("normalization type unknown.")
 
     def normalize_data(
             self,
@@ -80,8 +73,6 @@ class S4FrameNormalization(nn.Module):
             science_data_mean_shift = science_data
 
         normalized_data = science_data_mean_shift / self.std_frame
-        if self.train_mean:
-            normalized_data = (normalized_data - self.mean_frame_delta)
 
         return torch.nan_to_num(normalized_data, 0)
 

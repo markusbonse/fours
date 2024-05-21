@@ -5,49 +5,43 @@ from datetime import datetime
 import numpy as np
 from tqdm.auto import tqdm
 
-from sklearn.model_selection import train_test_split
-
 import torch
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 
-from fours.models.noise import S4Noise
-from fours.models.normalization import S4FrameNormalization
+from fours.models.noise import FourSNoise
+from fours.models.normalization import FourSFrameNormalization
 from fours.models.rotation import FieldRotationModel
-from fours.utils.adi_tools import combine_residual_stack
+
 from fours.utils.data_handling import save_as_fits
 from fours.utils.logging import normalize_for_tensorboard
 from fours.utils.fwhm import get_fwhm
 
 
-class S4:
+class FourS:
 
     def __init__(
             self,
             science_cube,
             adi_angles,
             psf_template,
+            noise_model_lambda,
+            psf_fwhm=None,
+            right_reason_mask_factor=1.5,
+            rotation_grid_subsample=1,
             device=0,
             work_dir=None,
             verbose=True,
-            rotation_grid_subsample=1,
-            noise_model_lambda_init=1e3,
-            noise_cut_radius_psf=None,
-            noise_mask_radius=None,
-            negative_wing_suppression=False,
-            noise_normalization="normal",
-            noise_model_convolve=True
     ):
         # 0.) If some parameters are not given, set them to default values
-        fwhm = get_fwhm(psf_template)
-        if noise_cut_radius_psf is None:
-            noise_cut_radius_psf = fwhm
-        if noise_mask_radius is None:
-            noise_mask_radius = fwhm * 1.5
+        if psf_fwhm is None:
+            psf_fwhm = get_fwhm(psf_template)
+        right_reason_mask_radius = psf_fwhm * right_reason_mask_factor
 
         # 1.) Save all member data
-        self.negative_wing_suppression = negative_wing_suppression
+        self.right_reason_mask_factor = right_reason_mask_factor
         self.device = device
+        self.verbose = verbose
         self.adi_angles = adi_angles
         self.science_cube = torch.from_numpy(science_cube).float()
         self.psf_template = psf_template
@@ -58,18 +52,16 @@ class S4:
         else:
             self.work_dir = None
         self.residuals_dir, self.tensorboard_dir, self.models_dir = \
-            self._setup_working_dir()
+            self._setup_work_dir()
 
         # 2.) Create the noise model
-        self.noise_model = S4Noise(
+        self.noise_model = FourSNoise(
             data_image_size=self.data_image_size,
             psf_template=self.psf_template,
-            lambda_reg=noise_model_lambda_init,
-            cut_radius_psf=noise_cut_radius_psf,
-            # TODO the noise mask radius options should be removed
-            noise_mask_radius=noise_mask_radius,
-            convolve=noise_model_convolve,
-            verbose=verbose).float()
+            lambda_reg=noise_model_lambda,
+            cut_radius_psf=psf_fwhm,
+            right_reason_mask_radius=right_reason_mask_radius,
+            convolve=True).float()
 
         # 2.1) Create the rotation model
         self.rotation_model = FieldRotationModel(
@@ -80,10 +72,9 @@ class S4:
             register_grid=True).float()
 
         # 3.) Create normalization model
-        self.normalization_model = S4FrameNormalization(
-            train_mean=negative_wing_suppression,
+        self.normalization_model = FourSFrameNormalization(
             image_size=self.data_image_size,
-            normalization_type=noise_normalization).float()
+            normalization_type="normal").float()
         self.normalization_model.prepare_normalization(
             science_data=self.science_cube)
 
@@ -129,7 +120,7 @@ class S4:
     def _print_progress(msg):
         def decorator(function):
             def wrapper(self, *args, **kwargs):
-                if self.noise_model.verbose:
+                if self.verbose:
                     print(msg + " ... ", end='')
                     result = function(self, *args, **kwargs)
                     print("[DONE]")
@@ -139,7 +130,7 @@ class S4:
             return wrapper
         return decorator
 
-    def _setup_working_dir(self):
+    def _setup_work_dir(self):
         if self.work_dir is None:
             return None, None, None
 
@@ -156,106 +147,33 @@ class S4:
 
         return residuals_dir, tensorboard_dir, models_dir
 
-    @staticmethod
-    def _check_model_dir(function):
-        def check_workdir(self, *args, **kwargs):
-            if self.models_dir is None:
-                raise FileNotFoundError(
-                    "Saving the model requires a work directory.")
-            function(self, *args, **kwargs)
-        return check_workdir
-
-    @_check_model_dir
-    @_print_progress("S4 model: saving model")
+    @_print_progress("4S model: saving model")
     def save_models(
             self,
             file_name_noise_model,
             file_name_normalization_model):
+
+        if self.models_dir is None:
+            raise FileNotFoundError(
+                "Saving the model requires a work directory.")
+
         self.normalization_model.save(
             self.models_dir / file_name_normalization_model)
         self.noise_model.save(
             self.models_dir / file_name_noise_model)
 
-    @_print_progress("S4 model: restoring models")
+    @_print_progress("4S model: restoring models")
     def restore_models(
             self,
             file_noise_model=None,
-            file_normalization_model=None,
-            verbose=False):
+            file_normalization_model=None):
 
         if file_noise_model is not None:
-            self.noise_model = S4Noise.load(
-                file_noise_model,
-                verbose)
+            self.noise_model = FourSNoise.load(file_noise_model)
 
         if file_normalization_model is not None:
-            self.normalization_model = S4FrameNormalization.load(
+            self.normalization_model = FourSFrameNormalization.load(
                 file_normalization_model)
-            self.negative_wing_suppression = self.normalization_model.train_mean
-
-    @_print_progress("S4 model: validating noise model")
-    def validate_lambdas_noise(
-            self,
-            num_separations,
-            lambdas,
-            num_test_positions,
-            test_size=0.3,
-            approx_svd=5000):
-        """
-        First processing step
-        """
-
-        # 1.) split the data into training and test data
-        if isinstance(test_size, float):
-            train_idx, test_idx, = train_test_split(
-                np.arange(len(self.science_cube)),
-                test_size=test_size,
-                random_state=42,
-                shuffle=True)
-
-            x_train = self.science_cube[train_idx]
-            x_test = self.science_cube[test_idx]
-        else:
-            # Use an even/odd split
-            x_train = self.science_cube[0::2]
-            x_test = self.science_cube[1::2]
-
-        # 2.) Normalize the training and test data
-        tmp_normalization = S4FrameNormalization(
-            image_size=self.data_image_size,
-            normalization_type=self.normalization_model.normalization_type)
-        tmp_normalization.prepare_normalization(x_train)
-        x_test = tmp_normalization(x_test)
-        x_train = tmp_normalization(x_train)
-
-        # 3.) validate the lambda values of the noise model
-        all_results, best_lambda = self.noise_model.validate_lambdas(
-            num_separations=num_separations,
-            lambdas=lambdas,
-            science_data_train=x_train,
-            science_data_test=x_test,
-            num_test_positions=num_test_positions,
-            approx_svd=approx_svd,
-            device=self.device)
-
-        return all_results, best_lambda
-
-    @_print_progress("S4 model: finding closed form noise model")
-    def _find_closed_form_noise_model(
-            self,
-            fp_precision="float32"):
-        """
-        Second processing step
-        """
-
-        # 1.) normalize the data
-        x_train = self.normalization_model(self.science_cube)
-
-        # 2.) Train the noise model
-        self.noise_model.fit(
-            x_train,
-            device=self.device,
-            fp_precision=fp_precision)
 
     def _logg_loss_values(
             self,
@@ -321,43 +239,41 @@ class S4:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
-    @_print_progress("S4 model: Find noise model closed form and fine tune.")
-    def fit_noise_model_closed_form(
-            self,
-            num_epochs,
-            training_name="",
-            logging_interval=1,
-            learning_rate=1e-6):
+    def _get_residual_sequence(self):
+        # 0.) Normalize the science data
+        x_norm = self.normalization_model(self.science_cube)
+        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
 
-        # 1.) find the closed form solution
-        self._find_closed_form_noise_model()
+        # 1.) run the forward path of the noise model
+        self.noise_model.compute_betas()
+        noise_estimate = self.noise_model(science_norm_flatten)
 
-        # 2.) fix numerical issues with Gradient Descent
-        optimizer = optim.Adam
-        optimizer_kwargs = {"lr": learning_rate}
-        self.fit_noise_model(
-            num_epochs=num_epochs,
-            use_rotation_loss=False,
-            logging_interval=logging_interval,
-            training_name=training_name,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs)
+        # 2.) compute the residual and rotate it
+        residual_sequence = science_norm_flatten - noise_estimate
+        residual_sequence = residual_sequence.view(
+            residual_sequence.shape[0],
+            1,
+            self.data_image_size,
+            self.data_image_size)
+
+        rotated_residual_sequence = self.rotation_model(
+            residual_sequence,
+            parang_idx=torch.arange(len(residual_sequence)))
+
+        return rotated_residual_sequence, residual_sequence
 
     @_print_progress("S4 model: Fit noise model")
     def fit_noise_model(
             self,
             num_epochs,
-            use_rotation_loss,
             training_name="",
             logging_interval=1,
             optimizer=None,
             optimizer_kwargs=None):
 
-        # Create the tensorboard logger
+        # 1.) Create the tensorboard logger
         if self.work_dir is not None:
             self._create_tensorboard_logger(training_name)
-
-        # 1.) normalize the science data if not trained mean
 
         # 2.) move models to the GPU
         self.noise_model = self.noise_model.to(self.device)
@@ -367,8 +283,6 @@ class S4:
 
         # 3.) Create the optimizer and add the parameters we want to optimize
         trainable_params = [self.noise_model.betas_raw, ]
-        if self.negative_wing_suppression:
-            trainable_params.append(self.normalization_model.mean_frame_delta)
 
         if optimizer is not None:
             optimizer = optimizer(
@@ -384,55 +298,32 @@ class S4:
                 trainable_params,
                 **optimizer_kwargs)
 
-        # 5.) Run the optimization
+        # 4.) Run the optimization
         for epoch in tqdm(range(num_epochs)):
 
             def full_closure(compute_residuals):
                 optimizer.zero_grad()
 
-                # 0.) Normalize the science data
-                x_norm = self.normalization_model(self.science_cube)
-                science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+                # 4.1) Get the residual sequence
+                rotated_residual_sequence, residual_sequence = (
+                    self._get_residual_sequence())
 
-                # 1.) run the forward path of the noise model
-                self.noise_model.compute_betas()
-                noise_estimate = self.noise_model(science_norm_flatten)
-
-                # 2.) compute the residual and rotate it
-                residual_sequence = science_norm_flatten - noise_estimate
-                residual_sequence = residual_sequence.view(
-                    residual_sequence.shape[0],
-                    1,
-                    self.data_image_size,
-                    self.data_image_size)
-
-                rotated_frames = self.rotation_model(
-                    residual_sequence,
-                    parang_idx=torch.arange(len(residual_sequence)))
-
-                # 2.) Compute the loss
-                if use_rotation_loss:
-                    loss_recon = torch.var(rotated_frames, axis=0).sum()
-                    if self.negative_wing_suppression:
-                        mean_frames = torch.mean(rotated_frames, axis=0)
-                        loss_recon +=\
-                            ((mean_frames[mean_frames < 0]) ** 2).sum()
-                    loss_recon *= rotated_frames.shape[0]
-                else:
-                    loss_recon = ((science_norm_flatten -
-                                   noise_estimate)**2).sum()
+                # 4.2) Compute the loss
+                loss_recon = (residual_sequence**2).sum()
 
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
                     * self.noise_model.lambda_reg
 
-                # 3.) Backward
+                # 4.3) Backward
                 loss = loss_recon + loss_reg
                 loss.backward()
 
                 if compute_residuals:
-                    residual = torch.mean(rotated_frames, axis=0)[
+                    residual = torch.mean(
+                        rotated_residual_sequence, axis=0)[
                         0].detach().cpu().numpy()
-                    residual_median = torch.median(rotated_frames, axis=0)[0][
+                    residual_median = torch.median(
+                        rotated_residual_sequence, axis=0)[0][
                         0].detach().cpu().numpy()
 
                     return loss_recon, loss_reg, residual, residual_median
@@ -477,31 +368,20 @@ class S4:
 
     @_print_progress("S4 model: computing residual")
     @torch.no_grad()
-    def compute_residual(
-            self,
-            combine="median",
-            num_cpus=8
-    ):
-        # 1.) normalize science data
-        x_norm = self.normalization_model(self.science_cube)
-        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+    def compute_residuals(self):
 
-        # 2.) compute the noise estimate
-        noise_estimate = self.noise_model(science_norm_flatten)
+        # 1.) Get the residual sequence
+        rotated_residual_sequence, _ = (
+            self._get_residual_sequence())
 
-        # 3.) compute the residual sequence
-        residual_sequence = science_norm_flatten - noise_estimate
-        residual_stack = residual_sequence.view(
-            self.science_cube.shape[0],
-            self.noise_model.image_size,
-            self.noise_model.image_size).detach().cpu().numpy()
+        # 2.) Compute the residual image (mean)
+        mean_residual = torch.mean(
+            rotated_residual_sequence, axis=0)[
+            0].detach().cpu().numpy()
 
-        # 4.) Compute the residual image
-        residual_image = combine_residual_stack(
-            residual_stack=residual_stack,
-            angles=self.adi_angles,
-            combine=combine,
-            subtract_temporal_average=False,
-            num_cpus=num_cpus)
+        # 3.) Compute the residual image (median)
+        median_residual = torch.median(
+            rotated_residual_sequence, axis=0)[0][
+            0].detach().cpu().numpy()
 
-        return residual_image
+        return mean_residual, median_residual
