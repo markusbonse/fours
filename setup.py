@@ -1,10 +1,10 @@
 from setuptools import setup
 
-setup(name='s4hci',
+setup(name='fours',
       version='0.1',
-      description='Data post-processing for high-contrast imaging with the S4 '
+      description='Data post-processing for high-contrast imaging with the 4S '
                   'Algorithm.',
-      url='https://github.com/markusbonse/s4hci.git',
+      url='https://github.com/markusbonse/fours.git',
       author='Markus Bonse',
       author_email='m.bonse@gmx.de',
       license='GPL3',
@@ -21,5 +21,5 @@ setup(name='s4hci',
             'astropy',
             'tensorboard',
             'pandas'],
-      packages=['s4hci'],
+      packages=['fours'],
       zip_safe=False)
