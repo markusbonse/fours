@@ -47,11 +47,11 @@ def save_as_fits(
 
 
 def read_fours_root_dir() -> str:
-    root_dir = os.getenv('4S_ROOT_DIR')
+    root_dir = os.getenv('FOURS_ROOT_DIR')
 
     if not os.path.isdir(root_dir):
-        raise IOError("The path in 4S_ROOT_DIR does not exist. Make sure "
+        raise IOError("The path in FOURS_ROOT_DIR does not exist. Make sure "
                       "to download the data and specify its location.")
 
-    print("Data in the S4HCI_ROOT_DIR found. Location: " + str(root_dir))
+    print("Data in the FOURS_ROOT_DIR found. Location: " + str(root_dir))
     return root_dir

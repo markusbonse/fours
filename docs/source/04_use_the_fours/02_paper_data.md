@@ -13,5 +13,5 @@ Once downloaded, we need to tell fours where the data is on your local
 machine. You can do this by setting the following environment variable:
 
 ```bash
-export 4S_ROOT_DIR="/path/to/datasets/dir" ;
+export FOURS_ROOT_DIR="/path/to/datasets/dir" ;
 ```
