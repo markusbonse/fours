@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 import torch
 
-from s4hci.models.rotation import FieldRotationModel
+from fours.models.rotation import FieldRotationModel
 
 
 def cadi_psf_subtraction(

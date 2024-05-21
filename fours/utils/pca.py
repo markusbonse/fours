@@ -2,9 +2,9 @@ from tqdm import tqdm
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from s4hci.utils.logging import normalize_for_tensorboard
 
-from s4hci.models.rotation import FieldRotationModel
+from fours.utils.logging import normalize_for_tensorboard
+from fours.models.rotation import FieldRotationModel
 
 
 def pca_psf_subtraction_gpu(

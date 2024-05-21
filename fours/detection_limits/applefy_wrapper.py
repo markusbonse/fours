@@ -4,9 +4,9 @@ from pathlib import Path
 from datetime import datetime
 from applefy.detections.contrast import DataReductionInterface
 
-from s4hci.models.psf_subtraction import S4
-from s4hci.utils.pca import pca_psf_subtraction_gpu, pca_tensorboard_logging
-from s4hci.utils.adi_tools import cadi_psf_subtraction, cadi_psf_subtraction_gpu
+from fours.models.psf_subtraction import S4
+from fours.utils.pca import pca_psf_subtraction_gpu, pca_tensorboard_logging
+from fours.utils.adi_tools import cadi_psf_subtraction, cadi_psf_subtraction_gpu
 
 
 class cADIDataReduction(DataReductionInterface):

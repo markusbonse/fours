@@ -46,11 +46,11 @@ def save_as_fits(
     hdul.writeto(file_name, overwrite=overwrite)
 
 
-def read_s4hci_root_dir() -> str:
-    root_dir = os.getenv('S4HCI_ROOT_DIR')
+def read_fours_root_dir() -> str:
+    root_dir = os.getenv('4S_ROOT_DIR')
 
     if not os.path.isdir(root_dir):
-        raise IOError("The path in S4HCI_ROOT_DIR does not exist. Make sure "
+        raise IOError("The path in 4S_ROOT_DIR does not exist. Make sure "
                       "to download the data and specify its location.")
 
     print("Data in the S4HCI_ROOT_DIR found. Location: " + str(root_dir))

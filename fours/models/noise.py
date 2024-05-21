@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from s4hci.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
-from s4hci.utils.s4_rigde import compute_betas, compute_betas_svd
-from s4hci.utils.positions import get_validation_positions
+from fours.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
+from fours.utils.s4_rigde import compute_betas, compute_betas_svd
+from fours.utils.positions import get_validation_positions
 
 
 class S4Noise(nn.Module):

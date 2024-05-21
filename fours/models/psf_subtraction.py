@@ -11,13 +11,13 @@ import torch
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 
-from s4hci.models.noise import S4Noise
-from s4hci.models.normalization import S4FrameNormalization
-from s4hci.models.rotation import FieldRotationModel
-from s4hci.utils.adi_tools import combine_residual_stack
-from s4hci.utils.data_handling import save_as_fits
-from s4hci.utils.logging import normalize_for_tensorboard
-from s4hci.utils.fwhm import get_fwhm
+from fours.models.noise import S4Noise
+from fours.models.normalization import S4FrameNormalization
+from fours.models.rotation import FieldRotationModel
+from fours.utils.adi_tools import combine_residual_stack
+from fours.utils.data_handling import save_as_fits
+from fours.utils.logging import normalize_for_tensorboard
+from fours.utils.fwhm import get_fwhm
 
 
 class S4:
