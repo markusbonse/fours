@@ -12,7 +12,7 @@ def pca_psf_subtraction_gpu(
         angles: np.ndarray,
         pca_numbers: np.ndarray,
         device,
-        approx_svd: int,
+        approx_svd: int = -1,
         subsample_rotation_grid: int = 1,
         verbose: bool = False,
         combine: str = "mean"
@@ -30,7 +30,11 @@ def pca_psf_subtraction_gpu(
     # 4.) compute PCA basis
     if verbose:
         print("Compute PCA basis ...", end="")
-    _, _, V = torch.svd_lowrank(images_torch, niter=1, q=approx_svd)
+
+    if approx_svd == -1:
+        _, _, V = torch.linalg.svd(images_torch)
+    else:
+        _, _, V = torch.svd_lowrank(images_torch, niter=1, q=approx_svd)
     if verbose:
         print("[DONE]")
 
