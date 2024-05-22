@@ -33,6 +33,7 @@ def pca_psf_subtraction_gpu(
 
     if approx_svd == -1:
         _, _, V = torch.linalg.svd(images_torch)
+        V = V.T
     else:
         _, _, V = torch.svd_lowrank(images_torch, niter=1, q=approx_svd)
     if verbose:
