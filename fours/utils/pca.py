@@ -52,10 +52,8 @@ def pca_psf_subtraction_gpu(
     pca_residuals = []
     if verbose:
         print("Compute PCA residuals ...", end="")
-        iter_pca_numbers = tqdm(pca_numbers)
-    else:
-        iter_pca_numbers = pca_numbers
-    for pca_number in iter_pca_numbers:
+
+    for pca_number in pca_numbers:
         pca_rep = torch.matmul(images_torch, V[:, :pca_number])
         noise_estimate = torch.matmul(pca_rep, V[:, :pca_number].T)
         residual = images_torch - noise_estimate
