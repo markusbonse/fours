@@ -122,7 +122,7 @@ class PCADataReductionGPU(DataReductionInterface):
         return result_dict
 
 
-class S4DataReduction(DataReductionInterface):
+class FourSDataReduction(DataReductionInterface):
     def __init__(
             self,
             device,
@@ -162,14 +162,14 @@ class S4DataReduction(DataReductionInterface):
             return ["s4_mean_" + self.special_name,
                     "s4_median_" + self.special_name]
 
-    def _build_s4_noise_model(
+    def _build_4s_noise_model(
             self,
             stack_with_fake_planet: np.ndarray,
             parang_rad: np.ndarray,
             psf_template: np.ndarray,
             exp_id):
 
-        # 1.) Create the S4 model
+        # 1.) Create the 4S model
         self.fours_model = FourS(
             science_cube=stack_with_fake_planet,
             adi_angles=parang_rad,
@@ -190,7 +190,7 @@ class S4DataReduction(DataReductionInterface):
             training_name=name,
             logging_interval=self.logging_interval)
 
-    def _create_fours_residuals(self):
+    def _create_4s_residuals(self):
 
         mean_residual, median_residual = self.fours_model.compute_residuals()
 
@@ -214,7 +214,7 @@ class S4DataReduction(DataReductionInterface):
     ) -> Dict[str, np.ndarray]:
 
         # 1.) Create the S4 model
-        self._build_s4_noise_model(
+        self._build_4s_noise_model(
             stack_with_fake_planet=stack_with_fake_planet,
             parang_rad=parang_rad,
             psf_template=psf_template,
@@ -231,4 +231,4 @@ class S4DataReduction(DataReductionInterface):
                 "normalization_model_" + exp_id + name + ".pkl")
 
         # 2.) compute the residual
-        return self._create_fours_residuals()
+        return self._create_4s_residuals()
