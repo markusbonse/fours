@@ -310,7 +310,8 @@ class FourS:
                     self._get_residual_sequence())
 
                 # 4.2) Compute the loss
-                loss_recon = (residual_sequence**2).sum()
+                loss_recon = torch.var(rotated_residual_sequence, axis=0).sum()
+                loss_recon *= rotated_residual_sequence.shape[0]
 
                 loss_reg = (self.noise_model.betas_raw ** 2).sum() \
                     * self.noise_model.lambda_reg
