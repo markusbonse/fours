@@ -382,7 +382,7 @@ class FourS:
         # Use the more accurate interpolation method
         # 2.) Compute the residual image (mean)
         mean_residual = combine_residual_stack(
-            residual_stack=residual_sequence.cpu().numpy(),
+            residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
             angles=self.adi_angles,
             combine="mean",
             subtract_temporal_average=True,
@@ -390,7 +390,7 @@ class FourS:
 
         # 3.) Compute the residual image (median)
         median_residual = combine_residual_stack(
-            residual_stack=residual_sequence.cpu().numpy(),
+            residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
             angles=self.adi_angles,
             combine="median",
             subtract_temporal_average=True,
