@@ -373,23 +373,15 @@ class FourS:
     def compute_residuals(self, num_cpus=4):
 
         # 1.) Get the residual sequence
-        _, residual_sequence = self._get_residual_sequence()
+        rotated_residual_sequence, residual_sequence = (
+            self._get_residual_sequence())
 
-        # Use the more accurate interpolation method
         # 2.) Compute the residual image (mean)
-        mean_residual = combine_residual_stack(
-            residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
-            angles=self.adi_angles,
-            combine="mean",
-            subtract_temporal_average=False,
-            num_cpus=num_cpus)
+        mean_residual = torch.mean(rotated_residual_sequence,
+                                   axis=0)[0].cpu().numpy()
 
         # 3.) Compute the residual image (median)
-        median_residual = combine_residual_stack(
-            residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
-            angles=self.adi_angles,
-            combine="median",
-            subtract_temporal_average=False,
-            num_cpus=num_cpus)
+        median_residual = torch.median(rotated_residual_sequence,
+                                       axis=0)[0][0].cpu().numpy()
 
         return mean_residual, median_residual
