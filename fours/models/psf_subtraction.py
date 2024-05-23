@@ -240,7 +240,7 @@ class FourS:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
-    def _get_residual_sequence(self, subtract_mean=False):
+    def _get_residual_sequence(self):
         # 0.) Normalize the science data
         x_norm = self.normalization_model(self.science_cube)
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
@@ -256,10 +256,6 @@ class FourS:
             1,
             self.data_image_size,
             self.data_image_size)
-
-        if subtract_mean:
-            residual_sequence = residual_sequence - torch.mean(
-                residual_sequence, axis=0)
 
         rotated_residual_sequence = self.rotation_model(
             residual_sequence,
@@ -376,8 +372,7 @@ class FourS:
     def compute_residuals(self, num_cpus=4):
 
         # 1.) Get the residual sequence
-        _, residual_sequence = (
-            self._get_residual_sequence(True))
+        _, residual_sequence = self._get_residual_sequence()
 
         # Use the more accurate interpolation method
         # 2.) Compute the residual image (mean)
