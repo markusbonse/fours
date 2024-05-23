@@ -16,6 +16,7 @@ from fours.models.rotation import FieldRotationModel
 from fours.utils.data_handling import save_as_fits
 from fours.utils.logging import normalize_for_tensorboard
 from fours.utils.fwhm import get_fwhm
+from fours.utils.adi_tools import combine_residual_stack
 
 
 class FourS:
@@ -372,20 +373,27 @@ class FourS:
 
     @_print_progress("S4 model: computing residual")
     @torch.no_grad()
-    def compute_residuals(self):
+    def compute_residuals(self, num_cpus=4):
 
         # 1.) Get the residual sequence
-        rotated_residual_sequence, _ = (
+        _, residual_sequence = (
             self._get_residual_sequence(True))
 
+        # Use the more accurate interpolation method
         # 2.) Compute the residual image (mean)
-        mean_residual = torch.mean(
-            rotated_residual_sequence, axis=0)[
-            0].detach().cpu().numpy()
+        mean_residual = combine_residual_stack(
+            residual_stack=residual_sequence.cpu().numpy(),
+            angles=self.adi_angles,
+            combine="mean",
+            subtract_temporal_average=True,
+            num_cpus=num_cpus)
 
         # 3.) Compute the residual image (median)
-        median_residual = torch.median(
-            rotated_residual_sequence, axis=0)[0][
-            0].detach().cpu().numpy()
+        median_residual = combine_residual_stack(
+            residual_stack=residual_sequence.cpu().numpy(),
+            angles=self.adi_angles,
+            combine="median",
+            subtract_temporal_average=True,
+            num_cpus=num_cpus)
 
         return mean_residual, median_residual
