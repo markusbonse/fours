@@ -380,7 +380,7 @@ class FourS:
             residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
             angles=self.adi_angles,
             combine="mean",
-            subtract_temporal_average=True,
+            subtract_temporal_average=False,
             num_cpus=num_cpus)
 
         # 3.) Compute the residual image (median)
@@ -388,7 +388,7 @@ class FourS:
             residual_stack=residual_sequence.cpu().numpy()[:, 0, :, :],
             angles=self.adi_angles,
             combine="median",
-            subtract_temporal_average=True,
+            subtract_temporal_average=False,
             num_cpus=num_cpus)
 
         return mean_residual, median_residual
