@@ -92,7 +92,7 @@ html_static_path = ['_static']
 
 # Setups for furo theme
 html_theme_options = {
-    "announcement": "<em>Important</em> This is an ALPHA version of the package. More documentation will be added after acceptance of our paper!",
+    #"announcement": "<em>Important</em> ",
     "light_logo": "4s_logo.svg",
     "dark_logo": "4s_logo.svg",
     "sidebar_hide_name": True,

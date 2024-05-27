@@ -22,3 +22,5 @@ please `download <02_paper_data.rst>`_ the required data from Zenodo.
    paper_experiments/10_AF_Lep_S4_PCA.ipynb
    paper_experiments/10_AF_Lep_MCMC.ipynb
    paper_experiments/0a_residual_noise_distributions.ipynb
+   paper_experiments/1a_residual_gallery_af_lep.ipynb
+   paper_experiments/2a_residual_gallery_fake_planets.ipynb
