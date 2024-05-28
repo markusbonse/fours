@@ -5,11 +5,11 @@ from pathlib import Path
 import numpy as np
 from applefy.detections.contrast import Contrast
 
-from s4hci.utils.data_handling import load_adi_data
-from s4hci.detection_limits.applefy_wrapper import S4DataReduction
+from fours.utils.data_handling import load_adi_data
+from fours.detection_limits.applefy_wrapper import FourSDataReduction
 
-from s4hci.utils.logging import print_message, setup_logger
-from s4hci.utils.setups import contrast_grid_setup_1
+from fours.utils.logging import print_message, setup_logger
+from fours.utils.setups import contrast_grid_setup_1
 
 
 if __name__ == "__main__":
@@ -87,22 +87,20 @@ if __name__ == "__main__":
 
         print_message("Run fake planet experiments " + special_name)
 
-        s4_model = S4DataReduction(
+        s4_model = FourSDataReduction(
             device=0,
             lambda_reg=lambda_reg,
-            special_name=special_name,
+            psf_fwhm=fwhm,
+            right_reason_mask_factor=1.5,
             rotation_grid_down_sample=1,
             logging_interval=50,
             save_models=True,
-            convolve=True,
             train_num_epochs=num_epochs,
-            noise_cut_radius_psf=fwhm,
-            noise_mask_radius=fwhm * 1.5,
+            special_name=special_name,
             work_dir=str(work_dir),
             verbose=True)
 
         # 5.) Run the fake planet experiments
-
         _ = contrast_instance._run_fake_planet_experiment(
             algorithm_function=s4_model,
             exp_id=exp_id)

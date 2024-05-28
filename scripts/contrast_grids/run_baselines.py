@@ -7,9 +7,9 @@ import numpy as np
 from applefy.detections.contrast import Contrast
 from applefy.utils.file_handling import load_adi_data
 
-from s4hci.utils.setups import contrast_grid_setup_1
-from s4hci.utils.logging import print_message, setup_logger
-from s4hci.detection_limits.applefy_wrapper import cADIDataReductionGPU, \
+from fours.utils.setups import contrast_grid_setup_1
+from fours.utils.logging import print_message, setup_logger
+from fours.detection_limits.applefy_wrapper import CADIDataReductionGPU, \
     PCADataReductionGPU
 
 if __name__ == "__main__":
@@ -74,13 +74,13 @@ if __name__ == "__main__":
 
     # 1. Run fake planet experiments for cADI
     print_message("Run fake planet experiments for cADI")
-    cadi_algorithm_function = cADIDataReductionGPU(0)
+    cadi_algorithm_function = CADIDataReductionGPU(0)
     contrast_instance.run_fake_planet_experiments(
         algorithm_function=cadi_algorithm_function,
         num_parallel=1)
 
     print_message("Finished Main")
-    sys.exit(0)
+
     # 2. Run fake planet experiments for PCA
     print_message("Run fake planet experiments for PCA")
     pca_numbers = np.concatenate(
@@ -91,7 +91,6 @@ if __name__ == "__main__":
 
     work_dir = contrast_instance.scratch_dir / Path("tensorboard_pca")
     pca_algorithm_function = PCADataReductionGPU(
-        approx_svd=svd_approx,
         pca_numbers=pca_numbers,
         device=0,
         work_dir=work_dir,

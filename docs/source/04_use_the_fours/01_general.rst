@@ -25,3 +25,12 @@ please `download <02_paper_data.rst>`_ the required data from Zenodo.
    paper_experiments/0a_residual_noise_distributions.ipynb
    paper_experiments/1a_residual_gallery_af_lep.ipynb
    paper_experiments/2a_residual_gallery_fake_planets.ipynb
+
+In addition to the code used for the plots we used some ``scripts`` to compute
+the fake planet residuals. You can find the code in our github repository.
+
+.. nbgallery::
+
+   paper_experiments/fake_planet_experiments/01_create_dataset_config_files.ipynb
+   paper_experiments/fake_planet_experiments/02_compute_contrast_grids.ipynb
+   paper_experiments/x_methods_explained_material.ipynb

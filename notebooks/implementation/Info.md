@@ -1,1 +1,0 @@
-## Jupyter notebooks used to implement new functionality

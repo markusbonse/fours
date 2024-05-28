@@ -9,7 +9,7 @@ from fours.utils.pca import pca_psf_subtraction_gpu, pca_tensorboard_logging
 from fours.utils.adi_tools import cadi_psf_subtraction, cadi_psf_subtraction_gpu
 
 
-class cADIDataReduction(DataReductionInterface):
+class CADIDataReduction(DataReductionInterface):
 
     def get_method_keys(self) -> List[str]:
         return ["cADI", ]
@@ -31,7 +31,7 @@ class cADIDataReduction(DataReductionInterface):
         return result_dict
 
 
-class cADIDataReductionGPU(DataReductionInterface):
+class CADIDataReductionGPU(DataReductionInterface):
 
     def __init__(self, device):
         self.device = device

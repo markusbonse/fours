@@ -15,10 +15,6 @@ the package.
 
 ### Installation from PyPI
 **Currently not available**
-Just run:
-```bash
-pip install fours
-```
 
 ### Installation from GitHub
 
@@ -44,12 +40,6 @@ If you install `fours` from GitHub you can add them by:
 
 ```bash
 pip install -e ".[option1,option2,...]"
-```
-
-If you install `fours` from PiPy you can add them by:
-
-```bash
-pip install "fours[option1,option2,...]"
 ```
 
 The following options are available:
