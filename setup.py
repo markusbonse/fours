@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name='fours',
-      version='0.1',
+      version='0.0.3',
       description='Data post-processing for high-contrast imaging with the 4S '
                   'Algorithm.',
       url='https://github.com/markusbonse/fours.git',
