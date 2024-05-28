@@ -124,30 +124,6 @@ class FourSNoise(nn.Module):
 
         self.prev_betas = tmp_weights
 
-    def predict_noise(
-            self,
-            science_data_norm
-    ):
-        """
-        science_cube: shape: (time, x, y), normalized raw data
-        """
-
-        # 1.) predict the noise
-        with torch.no_grad():
-            science_norm_flatten = science_data_norm.view(
-                science_data_norm.shape[0], -1)
-
-            self.compute_betas()
-            noise_estimate = self.forward(science_norm_flatten)
-
-        # 2.) reshape the result
-        noise_estimate = noise_estimate.view(
-            science_data_norm.shape[0],
-            self.image_size,
-            self.image_size)
-
-        return noise_estimate
-
     def forward(
             self,
             science_norm_flatten: torch.Tensor
