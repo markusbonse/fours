@@ -14,7 +14,10 @@ to use a [virtual environment](https://virtualenv.pypa.io/en/latest/) to install
 the package.
 
 ### Installation from PyPI
-**Currently not available**
+Just run:
+```bash
+pip install fours
+```
 
 ### Installation from GitHub
 

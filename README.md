@@ -31,7 +31,10 @@ the package.
 
 ### Installation from PyPI
 
-**Note**: The package is currently in the process of being uploaded to PyPI.
+Just run:
+```bash
+pip install fours
+```
 
 ### Installation from GitHub
 
