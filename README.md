@@ -1,6 +1,6 @@
 # Use the 4S (Signal Safe Speckle Subtraction) for High-Contrast Imaging
 ![Python 3.8 | 3.9](https://img.shields.io/badge/python-3.8_|_3.9-blue)
-[![Documentation Status](https://readthedocs.org/projects/fours/badge/?version=latest)](https://applefy.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/fours/badge/?version=latest)](https://fours.readthedocs.io/en/latest/?badge=latest)
 ---
 
 This is the documentation of ``fours``, a Python package for PSF subtraction
@@ -16,7 +16,7 @@ our paper (**paper in preparation**).
 
 ## Documentation
 A full documentation of the package, including several examples and tutorials 
-can be found [on ReadTheDocs](https://applefy.readthedocs.io).
+can be found [on ReadTheDocs](https://fours.readthedocs.io).
 
 This short guide will walk you through the required steps to set up and install
 `fours`.
