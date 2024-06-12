@@ -44,6 +44,10 @@ class FourSNoise(nn.Module):
             dtype=torch.float32))
 
         self.prev_betas = None
+        # intercept
+        self.intercept = nn.Parameter(torch.zeros(
+            self.image_size, self.image_size,
+            dtype=torch.float32))
 
         # 4.) Set up the buffers for the two masks
         right_reason_mask = construct_rfrr_mask(
@@ -134,6 +138,6 @@ class FourSNoise(nn.Module):
 
         # we have to @beta.T because we have convolved the beta values along the
         # second axis.
-        noise_estimate = science_norm_flatten @ self.betas.T
+        noise_estimate = (science_norm_flatten - self.intercept) @ self.betas.T
 
         return noise_estimate

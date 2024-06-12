@@ -214,6 +214,12 @@ class FourS:
             epoch,
             dataformats="HW")
 
+        self.tensorboard_logger.add_image(
+            "Images/Intercept",
+            normalize_for_tensorboard(self.noise_model.intercept),
+            epoch,
+            dataformats="HW")
+
         tmp_residual_dir = self.residuals_dir / \
             Path(training_name + "_" + self.fine_tune_start_time)
         tmp_residual_dir.mkdir(exist_ok=True)
@@ -269,6 +275,7 @@ class FourS:
             num_epochs,
             training_name="",
             logging_interval=1,
+            fit_intercept=False,
             optimizer=None,
             optimizer_kwargs=None):
 
@@ -284,6 +291,8 @@ class FourS:
 
         # 3.) Create the optimizer and add the parameters we want to optimize
         trainable_params = [self.noise_model.betas_raw, ]
+        if fit_intercept:
+            trainable_params.append(self.noise_model.intercept)
 
         if optimizer is not None:
             optimizer = optimizer(
