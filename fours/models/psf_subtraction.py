@@ -362,14 +362,14 @@ class FourS:
                     residual_median=current_residual_median,
                     training_name=training_name)
 
+                self._logg_loss_values(
+                    epoch=epoch,
+                    loss_recon=current_loss_recon,
+                    loss_reg=current_loss_reg)
+
             else:
                 # Logg the loss information
                 _, current_loss_recon, current_loss_reg = full_closure(False)
-
-            self._logg_loss_values(
-                epoch=epoch,
-                loss_recon=current_loss_recon,
-                loss_reg=current_loss_reg)
 
         # 7.) Clean up GPU
         self.noise_model = self.noise_model.cpu()
