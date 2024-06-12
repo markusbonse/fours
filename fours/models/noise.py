@@ -139,6 +139,6 @@ class FourSNoise(nn.Module):
         # we have to @beta.T because we have convolved the beta values along the
         # second axis.
         noise_estimate = (science_norm_flatten -
-                          (self.intercept.flatten()**2)) @ self.betas.T
+                          self.intercept.flatten()) @ self.betas.T
 
         return noise_estimate
