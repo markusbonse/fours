@@ -45,9 +45,9 @@ class FourSNoise(nn.Module):
 
         self.prev_betas = None
         # intercept
-        self.intercept = nn.Parameter(torch.zeros(
+        self.intercept = nn.Parameter(torch.ones(
             self.image_size, self.image_size,
-            dtype=torch.float32))
+            dtype=torch.float32)*0.00001)
 
         # 4.) Set up the buffers for the two masks
         right_reason_mask = construct_rfrr_mask(
