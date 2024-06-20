@@ -217,7 +217,7 @@ class FourS:
         self.tensorboard_logger.add_image(
             "Images/Intercept",
             normalize_for_tensorboard(
-                (self.noise_model.intercept**2).detach().cpu().numpy()),
+                self.noise_model.intercept.detach().cpu().numpy()),
             epoch,
             dataformats="HW")
 
