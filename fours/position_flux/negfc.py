@@ -38,11 +38,13 @@ class NegFC(nn.Module):
         # save the angles
         self.register_buffer(
             "par_angles",
-            torch.Tensor(all_angles,
-                         dtype=torch.float32))
+            torch.from_numpy(all_angles).float())
 
         # pad the psf template
-        pad_size = (psf_template.shape[0] - self.m_input_size) // 2
+        pad_size = (self.m_input_size - psf_template.shape[0]) // 2
+        if pad_size < 0:
+            raise ValueError(
+                "The input size is smaller than the PSF template size")
 
         padded_psf = np.pad(
             psf_template,
@@ -52,7 +54,7 @@ class NegFC(nn.Module):
 
         self.register_buffer(
             "psf_template",
-            torch.Tensor(padded_psf))
+            torch.from_numpy(padded_psf).float())
 
     def get_forward_model(self):
 
@@ -100,4 +102,3 @@ class NegFC(nn.Module):
 
         # apply the forward model
         return science_sequence - forward_model
-
