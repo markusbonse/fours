@@ -62,7 +62,7 @@ class NegFC(nn.Module):
         ang = torch.deg2rad(self.pos_angle) + torch.pi / 2 - self.par_angles
 
         psf_torch = (self.psf_template *
-                     self.flux_ratio *
+                     torch.abs(self.flux_ratio) *
                      self.integration_time_factor)
 
         x_shift = self.separation * torch.cos(ang)
