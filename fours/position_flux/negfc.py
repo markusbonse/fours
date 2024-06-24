@@ -14,7 +14,7 @@ class NegFC(nn.Module):
             input_size,
             init_separation,
             init_pos_angle,
-            init_flux_ratio,
+            init_magnitude,
             dit_science,
             dit_psf_template,
             nd_factor,
@@ -25,9 +25,7 @@ class NegFC(nn.Module):
 
         # initialize the three parameters
         self.pos_angle = nn.Parameter(torch.Tensor([init_pos_angle]))
-        self.magnitude = nn.Parameter(
-            torch.Tensor([flux_ratio2mag(init_flux_ratio)]))
-        # self.flux_ratio = init_flux_ratio
+        self.magnitude = nn.Parameter(torch.Tensor([init_magnitude]))
         self.separation = nn.Parameter(torch.Tensor([init_separation]))
         self.interpolation = interpolation
 
