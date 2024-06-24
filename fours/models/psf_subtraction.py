@@ -27,6 +27,7 @@ class FourS:
             adi_angles,
             psf_template,
             noise_model_lambda,
+            normalization_type="normal",
             psf_fwhm=None,
             right_reason_mask_factor=1.5,
             rotation_grid_subsample=1,
@@ -75,7 +76,7 @@ class FourS:
         # 3.) Create normalization model
         self.normalization_model = FourSFrameNormalization(
             image_size=self.data_image_size,
-            normalization_type="normal").float()
+            normalization_type=normalization_type).float()
         self.normalization_model.prepare_normalization(
             science_data=self.science_cube)
 
