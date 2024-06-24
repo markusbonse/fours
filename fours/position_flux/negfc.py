@@ -20,13 +20,14 @@ class NegFC(nn.Module):
             nd_factor,
             interpolation="bicubic"
     ):
-
         super(NegFC, self).__init__()
         self.m_input_size = input_size
 
         # initialize the three parameters
         self.pos_angle = nn.Parameter(torch.Tensor([init_pos_angle]))
-        self.flux_ratio = nn.Parameter(torch.Tensor([init_flux_ratio]))
+        self.magnitude = nn.Parameter(
+            torch.Tensor([flux_ratio2mag(init_flux_ratio)]))
+        # self.flux_ratio = init_flux_ratio
         self.separation = nn.Parameter(torch.Tensor([init_separation]))
         self.interpolation = interpolation
 
@@ -57,12 +58,13 @@ class NegFC(nn.Module):
             torch.from_numpy(padded_psf).float())
 
     def get_forward_model(self):
-
         # calculate the correct position angle and x/y shifts
         ang = torch.deg2rad(self.pos_angle) + torch.pi / 2 - self.par_angles
 
+        flux_ratio = 10 ** (-self.magnitude / 2.5)
+
         psf_torch = (self.psf_template *
-                     torch.abs(self.flux_ratio) *
+                     flux_ratio *
                      self.integration_time_factor)
 
         x_shift = self.separation * torch.cos(ang)
