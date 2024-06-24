@@ -59,6 +59,11 @@ class FourSFrameNormalization(nn.Module):
             self.mean_frame = torch.median(science_data, dim=0).values
             iqr_frame = iqr(science_data.numpy(), axis=0, scale=1.349)
             self.std_frame = torch.from_numpy(iqr_frame).float()
+
+        elif self.normalization_type == "dynamic":
+            # the mean and std are calculated during the forward pass
+            self.mean_frame = torch.zeros_like(science_data[0], axis=0)
+            self.std_frame = torch.ones_like(science_data[0], axis=0)
         else:
             raise ValueError("normalization type unknown.")
 
@@ -66,6 +71,10 @@ class FourSFrameNormalization(nn.Module):
             self,
             science_data,
             re_center=True):
+        if self.normalization_type == "dynamic":
+            # update the mean and std
+            self.mean_frame = torch.mean(science_data, axis=0)
+            self.std_frame = torch.std(science_data, axis=0)
 
         if re_center:
             science_data_mean_shift = science_data - self.mean_frame

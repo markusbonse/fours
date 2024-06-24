@@ -395,3 +395,58 @@ class FourS:
                                        axis=0)[0][0].cpu().numpy()
 
         return mean_residual, median_residual
+
+    # new code for the forward modeling (should be cleaned up in the future)
+    def forward(self, science_data):
+        # 0.) Normalize the science data
+        x_norm = self.normalization_model(science_data)
+        science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
+
+        # 1.) run the forward path of the noise model
+        noise_estimate = self.noise_model(science_norm_flatten)
+
+        # 2.) compute the residual and rotate it
+        residual_sequence = science_norm_flatten - noise_estimate
+        residual_sequence = residual_sequence.view(
+            residual_sequence.shape[0],
+            1,
+            self.data_image_size,
+            self.data_image_size)
+
+        rotated_residual_sequence = self.rotation_model(
+            residual_sequence,
+            parang_idx=torch.arange(len(residual_sequence)))
+
+        return torch.mean(rotated_residual_sequence, axis=0)
+
+    def update_noise_model(
+            self,
+            images,
+            num_epochs,
+            training_name="",
+            logging_interval=1):
+
+        # 1.) update the science cube
+        self.science_cube = images
+
+        # 2.) move everything to the GPU
+        self.noise_model = self.noise_model.to(self.device)
+        self.rotation_model = self.rotation_model.to(self.device)
+        self.science_cube = self.science_cube.to(self.device)
+        self.normalization_model = self.normalization_model.to(self.device)
+
+        # 3.) Run the optimization
+        self.fit_noise_model(
+            num_epochs=num_epochs,
+            training_name=training_name,
+            logging_interval=logging_interval,
+            fit_intercept=False,
+            optimizer=None,
+            optimizer_kwargs=None)
+
+        # 4.) Clean up GPU
+        self.noise_model = self.noise_model.cpu()
+        self.rotation_model = self.rotation_model.cpu()
+        self.normalization_model = self.normalization_model.cpu()
+        self.science_cube = self.science_cube.cpu()
+        torch.cuda.empty_cache()
