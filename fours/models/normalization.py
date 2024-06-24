@@ -62,8 +62,8 @@ class FourSFrameNormalization(nn.Module):
 
         elif self.normalization_type == "dynamic":
             # the mean and std are calculated during the forward pass
-            self.mean_frame = torch.zeros_like(science_data[0], axis=0)
-            self.std_frame = torch.ones_like(science_data[0], axis=0)
+            self.mean_frame = torch.zeros_like(science_data[0])
+            self.std_frame = torch.ones_like(science_data[0])
         else:
             raise ValueError("normalization type unknown.")
 
