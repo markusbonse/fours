@@ -14,7 +14,7 @@ class FourSFrameNormalization(nn.Module):
         super(FourSFrameNormalization, self).__init__()
 
         self.normalization_type = normalization_type
-        if self.normalization_type not in ["normal", "robust"]:
+        if self.normalization_type not in ["normal", "robust", "dynamic"]:
             raise ValueError("normalization type unknown.")
 
         self.register_buffer(
