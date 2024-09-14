@@ -100,9 +100,9 @@ class NegFCLoss(torch.nn.Module):
         if self.metric_function == "hessian":
             hxx, hxy, hyy = hessian_matrix(
                 residual_image,
-                self.Hxx_kernel,
-                self.Hxy_kernel,
-                self.Hyy_kernel)
+                self.hxx_kernel,
+                self.hxy_kernel,
+                self.hyy_kernel)
 
             # calculate the determinant of the hessian
             hes_det = (hxx * hyy) - (hxy * hxy)
