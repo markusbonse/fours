@@ -71,3 +71,34 @@ def construct_rfrr_mask(cut_off_radius,
     regularization_mask = np.abs(regularization_mask - 1)
 
     return regularization_mask
+
+
+def create_aperture_mask(
+        image_shape,
+        separation_pixel,
+        pos_angle_deg,
+        aperture_radius):
+    """
+    This function is needed to mask the area around a potential detection.
+    """
+
+    # calculate the x, y position of the mask
+    image_center = np.array(image_shape) / 2
+    image_center -= 0.5
+
+    # + 90 deg for the conventions in HCI
+    y_shift = separation_pixel * np.cos(np.deg2rad(pos_angle_deg + 90))
+    x_shift = separation_pixel * np.sin(np.deg2rad(pos_angle_deg + 90))
+
+    y_pos = image_center[0] + y_shift
+    x_pos = image_center[1] + x_shift
+
+    # create a round mask around the (x_pos, y_pos)
+    # position with radius = aperture_radius
+    y, x = np.ogrid[
+           -x_pos:image_shape[0] - x_pos,
+           -y_pos:image_shape[1] - y_pos]
+
+    mask = x ** 2 + y ** 2 <= aperture_radius ** 2
+
+    return mask

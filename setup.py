@@ -24,6 +24,7 @@ setup(name='fours',
             'torch',
             'h5py',
             'astropy',
+            'scipy',
             'tensorboard',
             'pandas'],
       extras_require={
