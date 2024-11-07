@@ -26,6 +26,7 @@ please `download <02_paper_data.rst>`_ the required data from Zenodo.
    paper_experiments/1a_residual_gallery_af_lep.ipynb
    paper_experiments/2a_residual_gallery_fake_planets.ipynb
    paper_experiments/3a_masked_saliency_maps.ipynb
+   paper_experiments/4a_AF_Lep_4S_fake_planets.ipynb
 
 In addition to the code used for the plots we used some ``scripts`` to compute
 the fake planet residuals. You can find the code in our github repository.
