@@ -65,7 +65,9 @@ residual is affected.**
     :hidden:
     :caption: Package
 
+    03_package/models
     03_package/utils
+
 
 .. toctree::
     :maxdepth: 2
