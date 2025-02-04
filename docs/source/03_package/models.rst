@@ -16,3 +16,12 @@ Linear Noise Model
    :members:
    :special-members: __init__, _apply
 
+Image Rotation
+--------------
+This class makes it possible to back-propagate through the ADI rotation
+using Spatial Transformer Networks. It might be useful for some applications.
+
+.. automodule:: fours.models.rotation
+   :members:
+   :special-members: __init__, _build_grid_from_angles
+

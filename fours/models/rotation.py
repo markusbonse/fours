@@ -1,20 +1,45 @@
+from typing import Optional
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class FieldRotationModel(nn.Module):
+    """
+    This class implements a field rotation model which rotates the input data
+    by a sequence of angles. This model is needed to back-propagate through
+    the rotation as needed for the 4S loss function.
+    """
 
-    def __init__(self,
-                 all_angles,
-                 input_size,
-                 subsample=1,
-                 inverse=False,
-                 register_grid=False):
+    def __init__(
+            self,
+            all_angles: np.ndarray,
+            input_size: int,
+            subsample: int = 1,
+            inverse: bool = False,
+            register_grid: bool = False
+    ) -> None:
         """
-        :param all_angles: The para angles are needed in advance in order to
-        save computational costs. A re-calculation of the affine grid which is
-        expensive can be avoided.
+        Initializes the FieldRotationModel with the given parameters.
+
+        Args:
+            all_angles: Predefined rotation angles used to create the affine 
+                grid. This avoids expensive grid recalculation and improves 
+                computational efficiency.
+            input_size: The size of the input frames, assumed to have equal 
+                height and width.
+            subsample: Reduces the number of angles by sampling every nth 
+                angle based on this value. Defaults to 1 for no subsampling.
+                This is useful for speeding up the forward pass and reduce
+                GPU memory consumption.
+            inverse: If True, applies the inverse rotation using negative 
+                angles. Defaults to False.
+            register_grid: Specifies whether to precompute and register the 
+                affine grid as a buffer. If it is set as a buffer, the full grid
+                will be moved to the GPU during the forward pass.
+                Defaults to False.
         """
 
         super(FieldRotationModel, self).__init__()
@@ -32,9 +57,25 @@ class FieldRotationModel(nn.Module):
             self.m_grid = self._build_grid_from_angles(
                 all_angles, self.m_subsample)
 
-    def _build_grid_from_angles(self,
-                                angles,
-                                subsample):
+    def _build_grid_from_angles(
+            self,
+            angles: np.ndarray,
+            subsample: int = 1
+    ) -> torch.Tensor:
+        """
+        Builds an affine grid from a sequence of angles. The grid is used to
+        rotate the input data by specified angles, either forward or inverse 
+        based on the model's settings.
+    
+        Args:
+            angles: Sequence of rotation angles in degrees.
+            subsample: Sampling rate for reducing the number of angles. A value
+                of 1 uses all angles, while higher values skip every nth angle.
+    
+        Returns:
+            A torch.Tensor containing the affine grid used for data rotation.
+        """
+
         # subsample angles if needed
         if subsample != 1:
             sub_angles = angles[::subsample]
@@ -61,11 +102,34 @@ class FieldRotationModel(nn.Module):
             align_corners=True)
         return grid
 
-    def forward(self,
-                frame_stack,
-                parang_idx=None,
-                new_angles=None,
-                output_dimensions=None):
+    def forward(
+            self,
+            frame_stack: torch.Tensor,
+            parang_idx: Optional[torch.Tensor] = None,
+            new_angles: Optional[torch.Tensor] = None,
+            output_dimensions=None
+    ) -> torch.Tensor:
+        """
+        Rotates the input data by the specified angles using the predefined
+        affine grid. The rotation is performed either using `parang_idx` or
+        `new_angles`, which are mutually exclusive.
+        
+        Args:
+            frame_stack: Batch of input frames to be rotated, of shape 
+                (batch_size, channels, height, width).
+            parang_idx: Indices to select precomputed affine grids for the 
+                rotation. Required if `new_angles` is not specified.
+            new_angles: Custom angles in degrees to build new affine grids for
+                rotation. Expensive operation, used for test data or finer 
+                control. Cannot be used with `parang_idx`.
+            output_dimensions: Target size for up/downscaling the rotated 
+                frames, specified as a tuple (height, width). Defaults to the 
+                model's input size.
+        
+        Returns:
+            Rotated tensor of shape (batch_size, channels, target_height, 
+            target_width), with frames rotated by given or indexed angles.
+        """
 
         if parang_idx is None and new_angles is None:
             raise ValueError("Either parang_idx or new_angles needs to be "
