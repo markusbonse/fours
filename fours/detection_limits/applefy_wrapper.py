@@ -10,6 +10,11 @@ from fours.utils.adi_tools import cadi_psf_subtraction, cadi_psf_subtraction_gpu
 
 
 class CADIDataReduction(DataReductionInterface):
+    """
+    Wrapper for the cADI algorithm. This is a simple wrapper around the
+    cADI algorithm, which is implemented in the fours package. The wrapper
+    is used to make the cADI algorithm compatible with the applefy framework.
+    """
 
     def get_method_keys(self) -> List[str]:
         return ["cADI", ]
@@ -32,6 +37,13 @@ class CADIDataReduction(DataReductionInterface):
 
 
 class CADIDataReductionGPU(DataReductionInterface):
+    """
+    Wrapper for the cADI algorithm. This is a simple wrapper around the
+    cADI algorithm, which is implemented in the fours package. The wrapper
+    is used to make the cADI algorithm compatible with the applefy framework.
+
+    This is the GPU version of the cADI algorithm.
+    """
 
     def __init__(self, device):
         self.device = device
@@ -58,6 +70,13 @@ class CADIDataReductionGPU(DataReductionInterface):
 
 
 class PCADataReductionGPU(DataReductionInterface):
+    """
+    Wrapper for the PCA algorithm. This is a simple wrapper around the
+    PCA algorithm, which is implemented in the fours package. The wrapper
+    is used to make the PCA algorithm compatible with the applefy framework.
+
+    This is the GPU version of the PCA algorithm.
+    """
 
     def __init__(
             self,
@@ -66,7 +85,22 @@ class PCADataReductionGPU(DataReductionInterface):
             work_dir: Union[str, Path] = None,
             special_name: str = None,
             device: Union[int, str] = "cpu",
-            verbose: bool = False):
+            verbose: bool = False) -> None:
+        """
+        Initializes the PCADataReductionGPU wrapper.
+
+        Args:
+            pca_numbers: Array of integers specifying the number of  PCA
+                components to use for reconstruction.
+            approx_svd: Number of iterations for low-rank SVD approximation
+                (-1 for exact SVD). Defaults to -1.
+            work_dir: Directory to store results. Defaults to None.
+            special_name: Special name to append to the output keys.
+                Defaults to None.
+            device: Device to use for computation (e.g., 'cuda' or 'cpu').
+            verbose: If True, print progress updates. Defaults to False.
+        """
+
         self.pca_numbers = pca_numbers
         self.approx_svd = approx_svd
         self.device = device
@@ -123,6 +157,12 @@ class PCADataReductionGPU(DataReductionInterface):
 
 
 class FourSDataReduction(DataReductionInterface):
+    """
+    Wrapper for the 4S algorithm. This is a simple wrapper around the
+    4S algorithm, which is implemented in the fours package. The wrapper
+    is used to make the 4S algorithm compatible with the applefy framework.
+    """
+
     def __init__(
             self,
             device,
@@ -135,7 +175,33 @@ class FourSDataReduction(DataReductionInterface):
             train_num_epochs: int = 500,
             special_name: str = None,
             work_dir: str = None,
-            verbose: bool = False):
+            verbose: bool = False
+    ) -> None:
+        """
+        Initializes the FourSDataReduction wrapper. For details on the parameters,
+        see the documentation of the FourS class in the fours package.
+        
+        Args:
+            device: Device to use for computation (e.g., 'cpu' or 'cuda').
+            lambda_reg: Regularization parameter for the noise model.
+            psf_fwhm: Full width at half maximum of the PSF, used for masking.
+            right_reason_mask_factor: Factor for creating the masking region
+                around the planet location. Defaults to 1.5.
+            rotation_grid_down_sample: Down-sampling factor for the rotation
+                grid. Defaults to 1 (no down-sampling).
+            logging_interval: Interval for logging progress during training.
+                Defaults to 1.
+            save_models: If True, saves 4S noise and normalization models upon
+                completion of training. Defaults to True.
+            train_num_epochs: Number of epochs for noise model training.
+                Defaults to 500.
+            special_name: Optional special name for output keys. Defaults to
+                None.
+            work_dir: Directory to store output and model files. Defaults to
+                None.
+            verbose: If True, prints detailed progress during computation.
+                Defaults to False.
+        """
 
         # 0.) parameters for the wrapper
         self.special_name = special_name
@@ -191,6 +257,15 @@ class FourSDataReduction(DataReductionInterface):
             logging_interval=self.logging_interval)
 
     def _create_4s_residuals(self):
+        """
+        Computes residuals (mean and median) for the 4S noise model using the
+        fitted 4S model attributes.
+    
+        Returns:
+            A dictionary where keys are either "s4_mean" and "s4_median" or
+            their respective variants based on `special_name`, and values
+            are NumPy arrays of computed residuals.
+        """
 
         mean_residual, median_residual = self.fours_model.compute_residuals()
 

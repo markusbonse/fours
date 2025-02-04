@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional, Tuple, Dict
 from pathlib import Path
 from datetime import datetime
 
@@ -16,24 +16,60 @@ from fours.models.rotation import FieldRotationModel
 from fours.utils.data_handling import save_as_fits
 from fours.utils.logging import normalize_for_tensorboard
 from fours.utils.fwhm import get_fwhm
-from fours.utils.adi_tools import combine_residual_stack
 
 
 class FourS:
+    """
+    This is the main class that should be used to perform PSF subtraction with
+    the FourS algorithm. It combines the noise model, the normalization model,
+    and the rotation model. For an example of how to use this class, see the
+    `Examples <../04_use_the_fours/paper_experiments/10_AF_Lep_S4_PCA.ipynb>`_.
+    """
 
     def __init__(
             self,
-            science_cube,
-            adi_angles,
-            psf_template,
-            noise_model_lambda,
-            psf_fwhm=None,
-            right_reason_mask_factor=1.5,
-            rotation_grid_subsample=1,
-            device=0,
-            work_dir=None,
-            verbose=True,
+            science_cube: np.ndarray,
+            adi_angles: np.ndarray,
+            psf_template: np.ndarray,
+            noise_model_lambda: float,
+            psf_fwhm: Optional[float] = None,
+            right_reason_mask_factor: float = 1.5,
+            rotation_grid_subsample: int = 1,
+            device: Union[int, str] = 0,
+            work_dir: Optional[str] = None,
+            verbose: bool = True,
     ):
+        """
+        Initializes the FourS class for PSF subtraction.
+        
+        Args:
+            science_cube: A 3D numpy array representing the science data cube.
+                Shape: (n_frames, image_size, image_size).
+            adi_angles: A 1D array of parallactic angles in radians.
+            psf_template: A 2D numpy array representing the PSF template.
+            noise_model_lambda: Regularization parameter for controlling the
+                L2 penalty applied to the weights of the noise model. This is
+                the most important hyperparameter for the noise model. Start
+                with a very large value (10^8) and decrease it by a factor of
+                10. Large values correspond to strong regularization (weak
+                noise model, small risk of overfitting).
+            psf_fwhm: Full width at half maximum (FWHM) of the PSF. If not
+                provided, it is estimated using the `psf_template`.
+            right_reason_mask_factor: Size of the right reason mask in units
+                of the FWHM of the PSF.
+            rotation_grid_subsample: Sub-sampling factor for the rotation grid
+                in the ADI process. Can be used if the GPU memory is not
+                sufficient for the full resolution.
+            device: GPU device identifier for computation. Use 0 for the first
+                GPU, "cuda:1" for the second GPU, or "cpu" for CPU computation.
+            work_dir: Directory path to save models, residuals, and logs. If
+                given, a tensorboard log is created. See `documentation of
+                tensorboard for an example how to use it
+                <https://www.tensorflow.org/tensorboard>`_.
+            verbose: If True, prints progress information during the
+                computation.
+        """
+        
         # 0.) If some parameters are not given, set them to default values
         if psf_fwhm is None:
             psf_fwhm = get_fwhm(psf_template)
@@ -93,7 +129,32 @@ class FourS:
             adi_angles: np.ndarray,
             psf_template: np.ndarray,
             device: Union[int, str],
-            verbose: bool = True):
+            verbose: bool = True
+    ) -> 'FourS':
+        """
+        Create a FourS object from a saved checkpoint. This can be used to
+        restore a trained FourS model for further processing. It is possible
+        to restore the noise and continue the training with a stronger
+        regularization.
+        
+        Args:
+            noise_model_file: Path to the saved noise model checkpoint.
+            normalization_model_file: Path to the saved normalization model
+                checkpoint, or None if no normalization is required.
+            s4_work_dir: Directory for saving/loading models and residuals.
+                See __init__ for more information.
+            science_cube: The 3D numpy array representing the science data
+                cube (frames x size x size).
+            adi_angles: Array of parallactic angles in radians.
+            psf_template: A 2D numpy array representing the PSF template.
+            device: Device identifier for computation (e.g., "cuda:0",
+                "cuda:1", or "cpu").
+            verbose: If True, progress information will be printed.
+        
+        Returns:
+            A loaded FourS instance with the restored noise and normalization
+            models.
+        """
 
         # create the s4 model
         s4_model = cls(
@@ -117,21 +178,14 @@ class FourS:
 
         return s4_model
 
-    @staticmethod
-    def _print_progress(msg):
-        def decorator(function):
-            def wrapper(self, *args, **kwargs):
-                if self.verbose:
-                    print(msg + " ... ", end='')
-                    result = function(self, *args, **kwargs)
-                    print("[DONE]")
-                else:
-                    result = function(self, *args, **kwargs)
-                return result
-            return wrapper
-        return decorator
-
     def _setup_work_dir(self):
+        """
+        Creates the directories for saving residuals, tensorboard logs, and
+        models.
+        
+        If no work directory is given, the function returns None.
+        """
+        
         if self.work_dir is None:
             return None, None, None
 
@@ -148,11 +202,22 @@ class FourS:
 
         return residuals_dir, tensorboard_dir, models_dir
 
-    @_print_progress("4S model: saving model")
     def save_models(
             self,
-            file_name_noise_model,
-            file_name_normalization_model):
+            file_name_noise_model: str,
+            file_name_normalization_model: str
+    ) -> None:
+        """
+        Saves the noise model and normalization model to the specified file
+        paths.
+        
+        Args:
+            file_name_noise_model: File name of the noise model to save.
+            file_name_normalization_model: File name of the normalization
+                model to save.
+        """
+        if self.verbose:
+            print("Saving models ... ", end='')
 
         if self.models_dir is None:
             raise FileNotFoundError(
@@ -163,33 +228,62 @@ class FourS:
         self.noise_model.save(
             self.models_dir / file_name_noise_model)
 
-    @_print_progress("4S model: restoring models")
+        if self.verbose:
+            print("[DONE]")
+
     def restore_models(
             self,
-            file_noise_model=None,
-            file_normalization_model=None):
-
+            file_noise_model: Optional[str] = None,
+            file_normalization_model: Optional[str] = None) -> None:
+        """
+        Restores the noise and normalization models from checkpoint files.
+    
+        Args:
+            file_noise_model: Path to the saved noise model file. If None,
+                the noise model is not restored.
+            file_normalization_model: Path to the saved normalization model
+                file. If None, the normalization model is not restored.
+    
+        Returns:
+            None: This method does not return any value. It updates the
+                `noise_model` and/or `normalization_model` in place.
+        """
+        if self.verbose:
+            print("Restoring models ... ", end='')
+    
         if file_noise_model is not None:
             self.noise_model = FourSNoise.load(file_noise_model)
-
+    
         if file_normalization_model is not None:
             self.normalization_model = FourSFrameNormalization.load(
                 file_normalization_model)
 
+        if self.verbose:
+            print("[DONE]")
+
     def _logg_loss_values(
             self,
-            epoch,
-            loss_recon,
-            loss_reg):
-
+            epoch: int,
+            loss_recon: float,
+            loss_reg: float
+    ) -> None:
+        """
+        Logs reconstruction and regularization loss values to tensorboard.
+    
+        Args:
+            epoch: The current epoch during training.
+            loss_recon: The reconstruction loss to be logged.
+            loss_reg: The regularization loss to be logged.
+        """
+    
         if self.work_dir is None:
             return
-
+    
         self.tensorboard_logger.add_scalar(
             "Loss/Reconstruction_loss",
             loss_recon,
             epoch)
-
+    
         self.tensorboard_logger.add_scalar(
             "Loss/Regularization_loss",
             loss_reg,
@@ -197,10 +291,20 @@ class FourS:
 
     def _logg_residuals(
             self,
-            epoch,
-            residual_mean,
-            residual_median,
-            training_name):
+            epoch: int,
+            residual_mean: np.ndarray,
+            residual_median: np.ndarray,
+            training_name: str
+    ) -> None:
+        """
+        Logs residual images to tensorboard and saves them as FITS files.
+    
+        Args:
+            epoch: The current training epoch for which residuals are logged.
+            residual_mean: The mean residual image computed during training.
+            residual_median: The median residual image computed during training.
+            training_name: The name of the current training session.
+        """
 
         self.tensorboard_logger.add_image(
             "Images/Residual",
@@ -232,7 +336,18 @@ class FourS:
                  + ".fits"),
             overwrite=True)
 
-    def _create_tensorboard_logger(self, training_name):
+    def _create_tensorboard_logger(
+            self,
+            training_name: str
+    ) -> None:
+        """
+        Creates a TensorBoard logger for tracking training metrics and residuals.
+    
+        Args:
+            training_name: A string used to name the training session. The
+                directory for storing logs will append the current timestamp
+                to maintain unique logging sessions.
+        """
         time_str = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
         self.fine_tune_start_time = time_str
         current_logdir = self.tensorboard_dir / \
@@ -240,7 +355,20 @@ class FourS:
         current_logdir.mkdir()
         self.tensorboard_logger = SummaryWriter(current_logdir)
 
-    def _get_residual_sequence(self):
+    def _get_residual_sequence(
+            self) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Computes the residual sequence and its rotated version after applying
+        the noise model and the rotation model.
+    
+        Returns:
+            A tuple containing:
+                1. rotated_residual_sequence -  The residual sequence aligned
+                    to the common frame via the rotation model.
+                2. residual_sequence - The raw residual sequence in its original
+                    frame.
+        """
+        
         # 0.) Normalize the science data
         x_norm = self.normalization_model(self.science_cube)
         science_norm_flatten = x_norm.view(x_norm.shape[0], -1)
@@ -263,14 +391,43 @@ class FourS:
 
         return rotated_residual_sequence, residual_sequence
 
-    @_print_progress("S4 model: Fit noise model")
     def fit_noise_model(
             self,
-            num_epochs,
-            training_name="",
-            logging_interval=1,
-            optimizer=None,
-            optimizer_kwargs=None):
+            num_epochs: int,
+            training_name: str = "",
+            logging_interval: int = 1,
+            optimizer: Optional[torch.optim.Optimizer] = None,
+            optimizer_kwargs: Optional[Dict] = None
+    ) -> None:
+        """
+        Fits the noise model using the specified optimizer and training
+        parameters. Call this function before calculating the residuals using
+        the function `compute_residuals`.
+    
+        Args:
+            num_epochs: The total number of epochs to train the noise model.
+                The training process should converge within the number of
+                epochs specified. Please check the tensorboard logs for the
+                convergence of the training process. It is possible to resume
+                training by calling this function again. You can even increase
+                the regularization parameter to improve the noise model.
+            training_name: A string to name the current training session. This
+                string will be used for TensorBoard logs and residual folders.
+            logging_interval: Number of epochs between logging residuals and
+                losses to TensorBoard and saving residual FITS files.
+            optimizer: An optional optimizer for training. If not provided,
+                a default LBFGS optimizer is used.
+            optimizer_kwargs: Optional arguments to initialize the optimizer.
+                These include parameters such as "max_iter" and "history_size"
+                for LBFGS. If the GPU memory is limited consider reducing the
+                "history_size" parameter.
+    
+        Returns:
+            None: This method performs in-place updates to the noise model
+            parameters and logs the training progress or residual results.
+        """
+        if self.verbose:
+            print("Fitting noise model ...")
 
         # 1.) Create the tensorboard logger
         if self.work_dir is not None:
@@ -368,9 +525,22 @@ class FourS:
         self.science_cube = self.science_cube.cpu()
         torch.cuda.empty_cache()
 
-    @_print_progress("S4 model: computing residual")
+        if self.verbose:
+            print("Fitting noise model ... [DONE]")
+
     @torch.no_grad()
-    def compute_residuals(self, num_cpus=4):
+    def compute_residuals(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Computes the final residuals for the science data by applying the 
+        trained noise and rotation models to the normalized input data.
+
+        Returns:
+            A tuple containing two 2D arrays:
+                1. The mean residual image created by averaging the residuals
+                   in the aligned frame.
+                2. The median residual image computed as the pixel-wise median
+                   of the aligned residual sequence.
+        """
 
         # 1.) Get the residual sequence
         rotated_residual_sequence, residual_sequence = (
