@@ -66,6 +66,7 @@ residual is affected.**
     :caption: Package
 
     03_package/models
+    03_package/wrappers
     03_package/utils
 
 

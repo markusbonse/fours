@@ -24,7 +24,7 @@ copyright = '2024, Markus Johannes Bonse'
 author = 'Markus Johannes Bonse'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.3'
+release = '0.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -54,7 +54,7 @@ autodoc_member_order = 'bysource'
 autodoc_default_options = {
     "members": True, "undoc-members": True, "show-inheritance": True}
 
-autodoc_mock_imports = ["vip_hci", "pynpoint"]
+autodoc_mock_imports = ["vip_hci", "pynpoint", "applefy"]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

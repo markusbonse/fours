@@ -25,3 +25,7 @@ using Spatial Transformer Networks. It might be useful for some applications.
    :members:
    :special-members: __init__, _build_grid_from_angles
 
+Normalisation
+-------------
+.. automodule:: fours.models.normalization
+   :members:
