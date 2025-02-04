@@ -61,11 +61,11 @@ residual is affected.**
     04_use_the_fours/01_general
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :hidden:
     :caption: Package
 
-    03_package/placeholder.rst
+    03_package/utils
 
 .. toctree::
     :maxdepth: 2

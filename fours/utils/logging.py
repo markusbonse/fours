@@ -63,11 +63,10 @@ def normalize_for_tensorboard(
     0 and the maximum value becomes 1.
 
     Args:
-        frame_in (np.ndarray): The input image or array that needs normalization.
+        frame_in: The input image or array that needs normalization.
 
     Returns:
-        np.ndarray: A normalized version of the input array with values between 
-        0 and 1.
+        A normalized version of the input array with values between 0 and 1.
     """
     
     image_for_tb = deepcopy(frame_in)

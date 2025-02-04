@@ -23,28 +23,25 @@ def pca_psf_subtraction_gpu(
     and then subtracted from the input images.
     This is a fast GPU implementation that uses PyTorch.
 
-    Parameters:
-        images (np.ndarray): 3D array of shape (n_frames, height, width)
-                             representing the input image frames.
-        angles (np.ndarray): 1D array of parallactic angles corresponding to 
-                             the image frames.
-        pca_numbers (np.ndarray): Array of integers specifying the number of 
-                                  PCA components to use for reconstruction.
-        device (str): Device to use for computation (e.g., 'cuda' or 'cpu').
-        approx_svd (int, optional): Number of iterations for low-rank SVD
-                                    approximation (-1 for exact SVD). 
-                                    Defaults to -1.
-        subsample_rotation_grid (int, optional): Subsampling factor for the 
-                                                 rotation grid. 
-                                                 Defaults to 1.
-        verbose (bool, optional): If True, print progress updates.
-                                  Defaults to False.
-        combine (str, optional): Method to combine rotated residual images,
-                                 either "mean" or "median". Defaults to "mean".
+    Args:
+        images: 3D array of shape (n_frames, height, width) representing the
+            input image frames.
+        angles: 1D array of parallactic angles corresponding to the image
+            frames.
+        pca_numbers: Array of integers specifying the number of  PCA components
+            to use for reconstruction.
+        device: Device to use for computation (e.g., 'cuda' or 'cpu').
+        approx_svd: Number of iterations for low-rank SVD approximation
+            (-1 for exact SVD). Defaults to -1.
+        subsample_rotation_grid: Subsampling factor for the rotation grid.
+            Defaults to 1.
+        verbose: If True, print progress updates. Defaults to False.
+        combine: Method to combine rotated residual images, either "mean" or
+            "median". Defaults to "mean".
 
     Returns:
-        np.ndarray: Array of PCA-subtracted residual mean or median images, 
-                    shape (len(pca_numbers), height, width).
+        Array of PCA-subtracted residual mean or median images, shape
+        (len(pca_numbers), height, width).
     """
       
     # 1.) Convert images to torch tensor
@@ -119,15 +116,12 @@ def pca_tensorboard_logging(
     """
     Log PCA-subtracted residual images to TensorBoard for visualization.
 
-    Parameters:
-        log_dir (str): Directory to save TensorBoard logs.
-        pca_residuals (np.ndarray): Array containing PCA residual images, 
-                                    of shape (n_components, height, width).
-        pca_numbers (np.ndarray): Array of PCA component numbers corresponding
-                                  to each residual image.
-
-    Returns:
-        None
+    Args:
+        log_dir: Directory to save TensorBoard logs.
+        pca_residuals: Array containing PCA residual images, of shape
+            (n_components, height, width).
+        pca_numbers: Array of PCA component numbers corresponding to each
+            residual image.
     """
     
 

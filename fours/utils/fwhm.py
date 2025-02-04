@@ -11,12 +11,11 @@ def get_fwhm(
     Compute the Full Width at Half Maximum (FWHM) of a 2D point spread 
     function (PSF) template using a Moffat model.
 
-    Parameters:
-    psf_template (np.ndarray): A 2D array representing the PSF intensity 
-                                distribution.
+    Args:
+        psf_template: A 2D array representing the PSF intensity distribution.
 
     Returns:
-    float: The computed FWHM value, rounded to one decimal place.
+        The computed FWHM value, rounded to one decimal place.
     """
     
     # Fit the data using astropy.modeling

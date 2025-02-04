@@ -13,19 +13,15 @@ def construct_round_rfrr_template(
     Constructs a circular Right for Right Reasons Mask (RFRR) template 
     for a given radius and PSF (Point Spread Function) input.
 
-    Parameters:
-        radius (float): The radius of the circular template (pixel). 
-        psf_template_in (np.ndarray): The input PSF template used to generate 
-                                       the RFRR template.
+    Args:
+        radius: The radius of the circular template (pixel).
+        psf_template_in: The input PSF template used to generate the RFRR
+            template.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]: A tuple containing:
-            - template (np.ndarray): The resulting RFRR template after applying 
-                                      the circular mask.
-            - template_mask (np.ndarray): The circular mask used to create 
-                                           the template.
+        1. The resulting RFRR template after applying the circular mask.
+        2. The circular mask used to create the template.
     """
-    
 
     if radius == 0:
         template_mask = np.zeros_like(psf_template_in)
@@ -50,19 +46,16 @@ def construct_rfrr_mask(
     Constructs the right reason mask for the full model parameter matrix.
     The mask is created by shifting the RFRR template (see function above).
 
-    Parameters:
-        cut_off_radius (float): The radius of the circular template. (pixel)
-        psf_template_in (np.ndarray): The input PSF template used to 
-                                       generate the mask stack.
-        mask_size_in (int): The dimensions (size x size) of the final mask.
-        use_template (bool): Whether to directly use the template as the 
-                             mask. Defaults to False. This feature is not used
-                             in the paper.
+    Args:
+        cut_off_radius: The radius of the circular template. (pixel)
+        psf_template_in: The input PSF template used to generate the mask stack.
+        mask_size_in: The dimensions (size x size) of the final mask.
+        use_template: Whether to directly use the template as the mask.
+            Defaults to False. This feature is not used in the paper.
 
     Returns:
-        np.ndarray: The full right reason mask for the model parameter matrix.
+        The full right reason mask for the model parameter matrix.
     """
-    
 
     # 1.) Create the template
     template, template_mask = construct_round_rfrr_template(

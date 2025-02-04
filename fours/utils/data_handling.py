@@ -25,10 +25,9 @@ def load_adi_data(
             "PARANG".
 
     Returns:
-        A tuple containing:
-        - data: A numpy array representing the science data cube.
-        - angles: A numpy array of parallactic angles in radians.
-        - psf_template_data: A numpy array representing the PSF template.
+        1. A numpy array representing the science data cube.
+        2. A numpy array of parallactic angles in radians.
+        3. A numpy array representing the PSF template.
     """
     
     hdf5_file = h5py.File(hdf5_dataset, 'r')
