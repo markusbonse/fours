@@ -11,9 +11,6 @@ code to `reproduce the plots <04_use_the_fours/01_general.rst>`_ in our paper.
 or `PynPoint <https://pynpoint.readthedocs.io/en/latest/>`_. Detection limits
 can be computed with `applefy <https://applefy.readthedocs.io/en/latest/>`_.
 
-**Note: This is an ALPHA version of the package.
-More documentation will be added after acceptance of our paper!**
-
 Please read the section about `Citation <05_citation.rst>`_ if you use ``fours``.
 
 Precovery of AF Lep b
@@ -59,9 +56,9 @@ residual is affected.**
 .. toctree::
     :maxdepth: 2
     :hidden:
-    :caption: User Documentation
+    :caption: Examples
 
-    02_user_documentation/placeholder.rst
+    04_use_the_fours/01_general
 
 .. toctree::
     :maxdepth: 2
@@ -69,13 +66,6 @@ residual is affected.**
     :caption: Package
 
     03_package/placeholder.rst
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-    :caption: Publications
-
-    04_use_the_fours/01_general
 
 .. toctree::
     :maxdepth: 2
