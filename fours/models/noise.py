@@ -8,15 +8,41 @@ from fours.utils.masks import construct_round_rfrr_template, construct_rfrr_mask
 
 
 class FourSNoise(nn.Module):
+    """
+    This class implements the noise model for the FourS algorithm. The noise
+    model consists of a linear model which is masked by a right reason mask.
+    Further, it is regularized by convolving the weights with a PSF template and
+    a simple L2 regularization term (lambda_reg).
+    """
 
     def __init__(
             self,
-            data_image_size,
-            psf_template,
-            lambda_reg,
-            cut_radius_psf,
-            right_reason_mask_radius,
-            convolve=True):
+            data_image_size: int,
+            psf_template: np.ndarray,
+            lambda_reg: float,
+            cut_radius_psf: float,
+            right_reason_mask_radius: float,
+            convolve: bool=True):
+        """
+        Initializes the FourSNoise noise model with the given parameters.
+        
+        Args:
+            data_image_size: The size of the image data. Only square data
+                supported. (pixels)
+            psf_template: A numpy array representing the point spread function
+                (PSF), which is used to convolve the weights.
+            lambda_reg: Regularization parameter for controlling the
+                L2 penalty applied to the weights. This is the most important
+                hyperparameter for the noise model. Start with a very large
+                value and decrease it by a factor of 10. Large values correspond
+                to strong regularization (weak noise model, small risk of
+                overfitting).
+            cut_radius_psf: The radius used to crop the PSF template.
+            right_reason_mask_radius: Radius to construct the right reason
+                mask (pixel). Should be around 1.5 times the FWHM of the PSF.
+            convolve: If True, enables convolution of weights with the
+                PSF template; This is the default behavior.
+        """
 
         super(FourSNoise, self).__init__()
 
@@ -60,7 +86,15 @@ class FourSNoise(nn.Module):
         self.prev_betas = None
         return self
 
-    def save(self, file_path):
+    def save(
+            self,
+            file_path: str) -> None:
+        """
+        Saves the noise model to a file.
+        Args:
+            file_path: The path to the file where the noise model should be saved.
+        """
+
         state_dict = self.state_dict()
 
         # add the other information we want to keep
@@ -72,7 +106,18 @@ class FourSNoise(nn.Module):
         torch.save(state_dict, file_path)
 
     @classmethod
-    def load(cls, file_path):
+    def load(
+            cls,
+            file_path: str) -> 'FourSNoise':
+        """
+        Factory method to load a noise model from a file.
+
+        Args:
+            file_path: The path to the file where the noise model is saved.
+
+        Returns:
+            A FourSNoise object.
+        """
 
         state_dict = torch.load(file_path)
 
@@ -93,12 +138,21 @@ class FourSNoise(nn.Module):
 
     @property
     def betas(self):
+        """
+        Returns the betas after applying the right reason mask and the PSF 
+        template.
+        """
+        
         if self.prev_betas is None:
             self.compute_betas()
 
         return self.prev_betas
 
     def compute_betas(self):
+        """
+        Called within the forward pass to compute the betas.
+        """
+        
         # reshape the raw betas
         raw_betas = self.betas_raw.view(
             -1,
@@ -129,7 +183,16 @@ class FourSNoise(nn.Module):
             science_norm_flatten: torch.Tensor
     ) -> torch.Tensor:
         """
-        science_norm_flatten: shape: (time, x*y) already normalized
+        Performs a forward pass to predict the noise estimate for the given 
+        science data.
+        
+        Args:
+            science_norm_flatten: Input tensor of shape
+                (time, x*y), where `time` is the temporal dimension and 
+                `x*y` is the flattened, already normalized image data.
+        
+        Returns:
+            Predicted noise estimates with a shape of (time, x*y).
         """
 
         # we have to @beta.T because we have convolved the beta values along the
