@@ -1,11 +1,27 @@
+from typing import List, Dict, Union, Tuple
+
 import numpy as np
 from scipy.ndimage import shift
 from photutils.aperture import CircularAperture
 
 
 def construct_round_rfrr_template(
-        radius,
-        psf_template_in):
+        radius: float,
+        psf_template_in: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Constructs a circular Right for Right Reasons Mask (RFRR) template 
+    for a given radius and PSF (Point Spread Function) input.
+
+    Args:
+        radius: The radius of the circular template (pixel).
+        psf_template_in: The input PSF template used to generate the RFRR
+            template.
+
+    Returns:
+        1. The resulting RFRR template after applying the circular mask.
+        2. The circular mask used to create the template.
+    """
 
     if radius == 0:
         template_mask = np.zeros_like(psf_template_in)
@@ -20,10 +36,26 @@ def construct_round_rfrr_template(
     return template, template_mask
 
 
-def construct_rfrr_mask(cut_off_radius,
-                        psf_template_in,
-                        mask_size_in: int,
-                        use_template=False):
+def construct_rfrr_mask(
+        cut_off_radius: float,
+        psf_template_in: np.ndarray,
+        mask_size_in: int,
+        use_template: bool =False
+) -> np.ndarray:
+    """
+    Constructs the right reason mask for the full model parameter matrix.
+    The mask is created by shifting the RFRR template (see function above).
+
+    Args:
+        cut_off_radius: The radius of the circular template. (pixel)
+        psf_template_in: The input PSF template used to generate the mask stack.
+        mask_size_in: The dimensions (size x size) of the final mask.
+        use_template: Whether to directly use the template as the mask.
+            Defaults to False. This feature is not used in the paper.
+
+    Returns:
+        The full right reason mask for the model parameter matrix.
+    """
 
     # 1.) Create the template
     template, template_mask = construct_round_rfrr_template(

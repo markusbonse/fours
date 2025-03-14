@@ -11,12 +11,39 @@ def pca_psf_subtraction_gpu(
         images: np.ndarray,
         angles: np.ndarray,
         pca_numbers: np.ndarray,
-        device,
+        device: str,
         approx_svd: int = -1,
         subsample_rotation_grid: int = 1,
         verbose: bool = False,
         combine: str = "mean"
 ) -> np.ndarray:
+    """
+    Perform PCA-based PSF subtraction on GPU for a data set taken with 
+    pupil-tracking. The PCA components are computed from the input images
+    and then subtracted from the input images.
+    This is a fast GPU implementation that uses PyTorch.
+
+    Args:
+        images: 3D array of shape (n_frames, height, width) representing the
+            input image frames.
+        angles: 1D array of parallactic angles corresponding to the image
+            frames.
+        pca_numbers: Array of integers specifying the number of  PCA components
+            to use for reconstruction.
+        device: Device to use for computation (e.g., 'cuda' or 'cpu').
+        approx_svd: Number of iterations for low-rank SVD approximation
+            (-1 for exact SVD). Defaults to -1.
+        subsample_rotation_grid: Subsampling factor for the rotation grid.
+            Defaults to 1.
+        verbose: If True, print progress updates. Defaults to False.
+        combine: Method to combine rotated residual images, either "mean" or
+            "median". Defaults to "mean".
+
+    Returns:
+        Array of PCA-subtracted residual mean or median images, shape
+        (len(pca_numbers), height, width).
+    """
+      
     # 1.) Convert images to torch tensor
     im_shape = images.shape
     images_torch = torch.from_numpy(images).to(device)
@@ -82,9 +109,21 @@ def pca_psf_subtraction_gpu(
 
 
 def pca_tensorboard_logging(
-        log_dir,
-        pca_residuals,
-        pca_numbers):
+        log_dir: str,
+        pca_residuals: np.ndarray,
+        pca_numbers: np.ndarray
+) -> None:
+    """
+    Log PCA-subtracted residual images to TensorBoard for visualization.
+
+    Args:
+        log_dir: Directory to save TensorBoard logs.
+        pca_residuals: Array containing PCA residual images, of shape
+            (n_components, height, width).
+        pca_numbers: Array of PCA component numbers corresponding to each
+            residual image.
+    """
+    
 
     summary_writer = SummaryWriter(log_dir=log_dir)
 
@@ -92,5 +131,5 @@ def pca_tensorboard_logging(
         summary_writer.add_image(
             tag="Images/Residual_Mean",
             img_tensor=normalize_for_tensorboard(pca_residuals[idx]),
-            global_step=pca_number,
+            global_step=int(pca_number),
             dataformats="HW")

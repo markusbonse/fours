@@ -73,14 +73,12 @@ which we use in our plots.
 ## Demonstration dataset
 If you want to reproduce our results or get some example data to play with 
 you can download the data used in our paper.
-The data is publicly available at **COMING SOON**.
+The data is publicly available: 
 
-The repository contains three files:
-
-1. `30_data`: These are the NACO L'-band datasets as hdf5 files. 
-The data was pre-processed with [PynPoint](https://pynpoint.readthedocs.io/en/latest/).
-2. `70_results`: Contains the intermediate results of our paper. If you don't 
-have access to a high-performance computing cluster you can use these files.
+The data is publicly available at Zenodo. There are two parts of the data available:
+1. `30_data`: The raw NACO L’ datasets after pre-processing with PynPoint. They are available [here](https://doi.org/10.5281/zenodo.11456704).
+2. `70_results`: The intermediate results of the paper. They are available [here](https://doi.org/10.5281/zenodo.11457071).
+Please download and unpack the files. the directory should contain three subdirectories:
 
 ## Reproduce our results
 Check out the [plot gallery](https://fours.readthedocs.io/en/latest/04_use_the_fours/01_general.html)

@@ -6,8 +6,13 @@ from copy import deepcopy
 
 def setup_logger() -> logging.Logger:
     """
-    Create a new logger object.
+    Sets up and configures a logger object with a specific format and stream 
+    handler for output to the console.
+
+    Returns:
+        logging.Logger: Configured logger instance with a DEBUG logging level.
     """
+    
 
     # Create a new logger
     logger = logging.getLogger("main")
@@ -31,13 +36,39 @@ def setup_logger() -> logging.Logger:
     return logger
 
 
-def print_message(message_in):
+def print_message(
+        message_in: str
+) -> None:
+    """
+    Logs a message at the INFO level using the logger named 'main'.
+
+    Args:
+        message_in (str): The string message to be logged.
+    """
+    
     logger = logging.getLogger("main")
     logger.info(message_in)
     del logger
 
 
-def normalize_for_tensorboard(frame_in):
+def normalize_for_tensorboard(
+        frame_in: np.ndarray
+) -> np.ndarray:
+    """
+    Normalizes an input image array to be scaled between 0 and 1 for visualization 
+    in TensorBoard.
+
+    The function takes a NumPy array as input, creates a deep copy to avoid 
+    modifying the original array, and scales it so that the minimum value becomes 
+    0 and the maximum value becomes 1.
+
+    Args:
+        frame_in: The input image or array that needs normalization.
+
+    Returns:
+        A normalized version of the input array with values between 0 and 1.
+    """
+    
     image_for_tb = deepcopy(frame_in)
     image_for_tb -= np.min(image_for_tb)
     image_for_tb /= np.max(image_for_tb)
