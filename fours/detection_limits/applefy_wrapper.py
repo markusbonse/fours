@@ -84,6 +84,7 @@ class PCADataReductionGPU(DataReductionInterface):
             approx_svd: int,
             work_dir: Union[str, Path] = None,
             special_name: str = None,
+            combine: str = "mean",
             device: Union[int, str] = "cpu",
             verbose: bool = False) -> None:
         """
@@ -93,16 +94,20 @@ class PCADataReductionGPU(DataReductionInterface):
             pca_numbers: Array of integers specifying the number of  PCA
                 components to use for reconstruction.
             approx_svd: Number of iterations for low-rank SVD approximation
-                (-1 for exact SVD). Defaults to -1.
+                (-1 for exact SVD). Defaults to -1. Note: If you want to
+                calculate analytical contrast curves you should use the exact
+                SVD. Only contrast grids can be use with approximated SVD.
             work_dir: Directory to store results. Defaults to None.
             special_name: Special name to append to the output keys.
                 Defaults to None.
+            combine: Method to combine the PCA residuals. Defaults to "mean".
             device: Device to use for computation (e.g., 'cuda' or 'cpu').
             verbose: If True, print progress updates. Defaults to False.
         """
 
         self.pca_numbers = pca_numbers
         self.approx_svd = approx_svd
+        self.combine = combine
         self.device = device
         self.verbose = verbose
         if work_dir is not None:
@@ -136,6 +141,7 @@ class PCADataReductionGPU(DataReductionInterface):
             pca_numbers=self.pca_numbers,
             device=self.device,
             approx_svd=self.approx_svd,
+            combine=self.combine,
             verbose=self.verbose)
 
         if self.work_dir is not None:
